@@ -1,0 +1,15 @@
+:root {
+  --color-primary: #4CAF50; /* Verde */
+  --color-secondary: #333333; /* Gris oscuro */
+  --color-background: #f4f4f4; /* Fondo claro */
+  --color-white: #ffffff; /* Blanco */
+  --font-primary: 'Poppins', sans-serif;
+  --font-secondary: 'Open Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-secondary);
+  background-color: var(--color-background); /* Aplica el fondo claro */
+  color: var(--color-secondary);
+}

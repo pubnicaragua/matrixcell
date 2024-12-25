@@ -1,0 +1,45 @@
+:root {
+    --color-primary: #4CAF50; /* Verde */
+    --color-secondary: #2c3e50; /* Gris oscuro */
+    --color-background: #f4f4f4; /* Fondo claro */
+    --color-white: #ffffff; /* Blanco */
+    --color-text: #333333; /* Texto */
+    --font-primary: 'Poppins', sans-serif;
+    --font-secondary: 'Open Sans', sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-secondary);
+    background-color: var(--color-background);
+    color: var(--color-text);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-primary);
+  }
+  
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  
+  button {
+    font-family: var(--font-primary);
+    cursor: pointer;
+  }
+  
+
+  .activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  .activity-table th,
+  .activity-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
