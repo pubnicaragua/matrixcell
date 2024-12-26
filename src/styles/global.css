@@ -6,6 +6,7 @@
     --color-text: #333333; /* Texto */
     --font-primary: 'Poppins', sans-serif;
     --font-secondary: 'Open Sans', sans-serif;
+    --color-danger: #ff0000;
   }
   
   body {
@@ -41,5 +42,9 @@
     padding: 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+  }
+  
+  .table-row:hover {
+    background-color: var(--color-light-gray);
   }
   

@@ -41,6 +41,7 @@ const Login = () => {
               type="text"
               id="username"
               name="username"
+              aria-label="Usuario"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               style={styles.input}
@@ -118,7 +119,7 @@ const styles = {
     background: 'var(--color-primary)',
     color: 'var(--color-white)',
     fontWeight: 'bold',
-    cursor: 'pointer',
+    cursor: 'wait',
     fontSize: '16px',
   },
   error: {
