@@ -7,4 +7,6 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // Inicializar el cliente de Supabase
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+
+// Exportar el cliente de Supabase
 export default supabase;
