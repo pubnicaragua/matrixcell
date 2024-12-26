@@ -10,10 +10,12 @@ const Login = () => {
 
   // Simulated backend user credentials
   const validCredentials = {  
-    username: 'admin',
+    username: 'avelortega',
     password: 'admin123',
   };
 
+
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
