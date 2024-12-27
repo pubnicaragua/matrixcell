@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaTrash, FaEdit, FaCheckCircle, FaClock } from "react-icons/fa";
+import { supabase } from "../api/supabase";
 
 interface Invoice {
   id: number;
-  number: string;
-  date: string;
-  amount: number;
-  status: "Paid" | "Pending";
+  numero: string;
+  created_at: string;
+  monto: number;
+  estado: number;  // 1: Pendiente, 2: Pagada
+  dispositivo_id?: number; // Campo de dispositivo asociado
+}
+
+interface Device {
+  id: number;
+  nombre: string;
 }
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);  // Lista de dispositivos
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
@@ -18,60 +26,116 @@ const Invoices = () => {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    // Simulated API call
+    // Fetch invoices
     const fetchInvoices = async () => {
-      const data: Invoice[] = [
-        { id: 1, number: "INV001", date: "2024-12-01", amount: 200, status: "Pending" },
-        { id: 2, number: "INV002", date: "2024-12-05", amount: 150, status: "Paid" },
-        { id: 3, number: "INV003", date: "2024-12-10", amount: 300, status: "Pending" },
-        { id: 4, number: "INV004", date: "2024-12-15", amount: 400, status: "Paid" },
-        { id: 5, number: "INV005", date: "2024-12-20", amount: 250, status: "Pending" },
-        { id: 6, number: "INV006", date: "2024-12-25", amount: 100, status: "Paid" },
-        { id: 7, number: "INV007", date: "2024-12-30", amount: 350, status: "Pending" },
-      ];
-      setInvoices(data);
+      const { data, error } = await supabase
+        .from('facturas')
+        .select('id, numero, created_at, monto, estado, dispositivo_id');  // Obtener también 'estado' y 'dispositivo_id'
+
+      if (error) {
+        console.error("Error fetching invoices:", error);
+      } else {
+        setInvoices(data);
+      }
+    };
+
+    // Fetch devices
+    const fetchDevices = async () => {
+      const { data, error } = await supabase
+        .from('dispositivos')
+        .select('id, nombre'); // Obtener id y nombre de los dispositivos
+
+      if (error) {
+        console.error("Error fetching devices:", error);
+      } else {
+        setDevices(data);
+      }
     };
 
     fetchInvoices();
+    fetchDevices();
   }, []);
 
   useEffect(() => {
-    // Update filtered invoices whenever the search term or invoices change
     const results = invoices.filter((invoice) =>
-      invoice.number.toLowerCase().includes(searchTerm.toLowerCase())
+      invoice.numero.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredInvoices(results);
   }, [searchTerm, invoices]);
 
-  const handleDelete = (id: number) => {
-    setInvoices(invoices.filter((invoice) => invoice.id !== id));
+  const handleDelete = async (id: number) => {
+    const { data, error } = await supabase
+      .from('facturas')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error("Error deleting invoice:", error);
+    } else {
+      setInvoices(invoices.filter((invoice) => invoice.id !== id));
+    }
   };
 
-  const handleMarkAsPaid = (id: number) => {
-    setInvoices(
-      invoices.map((invoice) =>
-        invoice.id === id ? { ...invoice, status: "Paid" } : invoice
-      )
-    );
+  const handleCreateInvoice = async (invoice: Invoice) => {
+    const { data, error } = await supabase
+      .from("facturas")
+      .insert([invoice]);
+
+    if (error) {
+      console.error("Error creating invoice:", error);
+    } else {
+      if (data) {
+        setInvoices([data[0], ...invoices]);
+      }
+    }
+  };
+
+  const handleMarkAsPaid = async (id: number) => {
+    const { data, error } = await supabase
+      .from('facturas')
+      .update({ estado: 2 })  // Cambiar estado a "Pagada" (2)
+      .eq('id', id);
+
+    if (error) {
+      console.error("Error updating invoice:", error);
+    } else {
+      // Actualizar el estado de la factura en la UI
+      setInvoices(invoices.map((invoice) =>
+        invoice.id === id ? { ...invoice, estado: 2 } : invoice
+      ));
+    }
   };
 
   const handleEdit = (invoice: Invoice) => {
     setEditingInvoice(invoice);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingInvoice) {
-      setInvoices(
-        invoices.map((invoice) =>
+      const { data, error } = await supabase
+        .from('facturas')
+        .update({
+          numero: editingInvoice.numero,
+          created_at: editingInvoice.created_at,
+          monto: editingInvoice.monto,
+          estado: editingInvoice.estado,
+          dispositivo_id: editingInvoice.dispositivo_id,  // Guardar dispositivo asociado
+        })
+        .eq('id', editingInvoice.id);
+
+      if (error) {
+        console.error("Error updating invoice:", error);
+      } else {
+        setInvoices(invoices.map((invoice) =>
           invoice.id === editingInvoice.id ? editingInvoice : invoice
-        )
-      );
-      setEditingInvoice(null);
+        ));
+        setEditingInvoice(null); // Reset the editing state
+      }
     }
   };
 
   const handleCancelEdit = () => {
-    setEditingInvoice(null);
+    setEditingInvoice(null); // Reset editing state
   };
 
   const paginatedInvoices = filteredInvoices.slice(
@@ -83,78 +147,57 @@ const Invoices = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1 style={{ fontFamily: "var(--font-primary)", color: "var(--color-primary)" }}>
-        Gestión de Facturas
-      </h1>
+      <h1>Gestión de Facturas</h1>
 
       {/* Search */}
-      <div style={{ margin: "20px 0", display: "flex", alignItems: "center" }}>
-        <FaSearch style={{ marginRight: "10px", color: "var(--color-secondary)" }} />
+      <div>
+        <FaSearch /> 
         <input
           type="text"
           placeholder="Buscar factura..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            width: "100%",
-            maxWidth: "300px",
-          }}
         />
       </div>
 
       {/* Table */}
-      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
+      <table>
         <thead>
-          <tr style={{ background: "var(--color-secondary)", color: "var(--color-white)" }}>
-            <th style={{ padding: "10px", textAlign: "left" }}>Número</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>Fecha</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>Monto</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>Estado</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>Acciones</th>
+          <tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Dispositivo</th> {/* Nueva columna */}
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {paginatedInvoices.map((invoice) => (
-            <tr
-              key={invoice.id}
-              style={{ borderBottom: "1px solid var(--color-background)" }}
-            >
-              <td style={{ padding: "10px" }}>{invoice.number}</td>
-              <td style={{ padding: "10px" }}>{invoice.date}</td>
-              <td style={{ padding: "10px" }}>${invoice.amount}</td>
-              <td
-                style={{
-                  padding: "10px",
-                  color: invoice.status === "Paid" ? "green" : "orange",
-                }}
-              >
-                {invoice.status === "Paid" ? (
-                  <>
-                    <FaCheckCircle style={{ marginRight: "5px" }} />
-                    Pagada
-                  </>
+            <tr key={invoice.id}>
+              <td>{invoice.numero}</td>
+              <td>{invoice.created_at}</td>
+              <td>{invoice.monto}</td>
+              <td>
+                {invoice.estado === 2 ? (
+                  <><FaCheckCircle style={{ marginRight: "5px" }} /> Pagada</>
                 ) : (
-                  <>
-                    <FaClock style={{ marginRight: "5px" }} />
-                    Pendiente
-                  </>
+                  <><FaClock style={{ marginRight: "5px" }} /> Pendiente</>
                 )}
               </td>
-              <td style={{ padding: "10px" }}>
-                {invoice.status === "Pending" && (
-                  <button
+              <td>{invoice.dispositivo_id ? devices.find(d => d.id === invoice.dispositivo_id)?.nombre : 'N/A'}</td> {/* Mostrar dispositivo asociado */}
+              <td>
+                {invoice.estado === 1 && (
+                  <button 
                     onClick={() => handleMarkAsPaid(invoice.id)}
                     style={{
-                      background: "var(--color-primary)",
-                      color: "var(--color-white)",
+                      backgroundColor: "green",
+                      color: "white",
+                      fontSize: "12px",
                       padding: "5px 10px",
-                      border: "none",
                       borderRadius: "4px",
                       cursor: "pointer",
-                      marginRight: "10px",
+                      marginRight: "5px"
                     }}
                   >
                     Marcar como pagada
@@ -163,29 +206,30 @@ const Invoices = () => {
                 <button
                   onClick={() => handleEdit(invoice)}
                   style={{
-                    background: "var(--color-secondary)",
-                    color: "var(--color-white)",
+                    backgroundColor: "#FF9800",
+                    color: "white",
+                    fontSize: "12px",
                     padding: "5px 10px",
-                    border: "none",
                     borderRadius: "4px",
                     cursor: "pointer",
-                    marginRight: "10px",
+                    marginRight: "5px"
                   }}
                 >
-                  <FaEdit /> Editar
+                  <FaEdit />
                 </button>
                 <button
                   onClick={() => handleDelete(invoice.id)}
                   style={{
-                    background: "var(--color-danger)",
-                    color: "var(--color-white)",
+                    backgroundColor: "#F44336",
+                    color: "white",
+                    fontSize: "12px",
                     padding: "5px 10px",
-                    border: "none",
                     borderRadius: "4px",
                     cursor: "pointer",
+                    marginRight: "5px"
                   }}
                 >
-                  <FaTrash /> Eliminar
+                  <FaTrash />
                 </button>
               </td>
             </tr>
@@ -194,21 +238,9 @@ const Invoices = () => {
       </table>
 
       {/* Pagination */}
-      <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>
+      <div>
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            style={{
-              background: page === currentPage ? "var(--color-secondary)" : "var(--color-primary)",
-              color: "var(--color-white)",
-              padding: "5px 10px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              margin: "0 5px",
-            }}
-          >
+          <button key={page} onClick={() => setCurrentPage(page)}>
             {page}
           </button>
         ))}
@@ -216,107 +248,50 @@ const Invoices = () => {
 
       {/* Edit Modal */}
       {editingInvoice && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              background: "var(--color-white)",
-              padding: "20px",
-              borderRadius: "8px",
-              width: "400px",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            }}
-          >
+        <div>
+          <div>
             <h2>Editar Factura</h2>
             <form>
-              <div style={{ marginBottom: "15px" }}>
+              <div>
                 <label>Número</label>
                 <input
                   type="text"
-                  value={editingInvoice.number}
-                  onChange={(e) =>
-                    setEditingInvoice({ ...editingInvoice, number: e.target.value })
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                  }}
+                  value={editingInvoice.numero}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, numero: e.target.value })}
                 />
               </div>
-              <div style={{ marginBottom: "15px" }}>
+              <div>
                 <label>Fecha</label>
                 <input
                   type="date"
-                  value={editingInvoice.date}
-                  onChange={(e) =>
-                    setEditingInvoice({ ...editingInvoice, date: e.target.value })
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                  }}
+                  value={editingInvoice.created_at}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, created_at: e.target.value })}
                 />
               </div>
-              <div style={{ marginBottom: "15px" }}>
+              <div>
                 <label>Monto</label>
                 <input
                   type="number"
-                  value={editingInvoice.amount}
-                  onChange={(e) =>
-                    setEditingInvoice({ ...editingInvoice, amount: Number(e.target.value) })
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                  }}
+                  value={editingInvoice.monto}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, monto: Number(e.target.value) })}
                 />
               </div>
-              <button
-                type="button"
-                onClick={handleSaveEdit}
-                style={{
-                  background: "var(--color-primary)",
-                  color: "var(--color-white)",
-                  padding: "10px 20px",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                Guardar
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                style={{
-                  background: "var(--color-danger)",
-                  color: "var(--color-white)",
-                  padding: "10px 20px",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancelar
-              </button>
+              <div>
+                <label>Dispositivo</label>
+                <select
+                  value={editingInvoice.dispositivo_id || ''}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, dispositivo_id: Number(e.target.value) })}
+                >
+                  <option value="">Seleccionar dispositivo</option>
+                  {devices.map((device) => (
+                    <option key={device.id} value={device.id}>
+                      {device.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="button" onClick={handleSaveEdit}>Guardar cambios</button>
+              <button type="button" onClick={handleCancelEdit}>Cancelar</button>
             </form>
           </div>
         </div>

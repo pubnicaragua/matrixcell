@@ -1,60 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../api/supabase";
+import { FaBell, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+
+interface Notification {
+  id: number;
+  mensaje: string;
+  leido: boolean;
+  created_at: string;
+}
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<
-    { id: number; message: string; read: boolean }[]
-  >([
-    { id: 1, message: "Factura INV001 está pendiente de pago.", read: false },
-    { id: 2, message: "Dispositivo bloqueado por mora.", read: true },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const handleMarkAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from("notificaciones")
+        .select("id, mensaje, leido, created_at")
+        .eq("leido", false) // Solo las no leídas
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching notifications:", error);
+      } else {
+        setNotifications(data);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const handleMarkAsRead = async (id: number) => {
+    const { data, error } = await supabase
+      .from("notificaciones")
+      .update({ leido: true })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error marking notification as read:", error);
+    } else {
+      setNotifications(notifications.filter((notification) => notification.id !== id));
+    }
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1 style={{ fontFamily: "var(--font-primary)", color: "var(--color-primary)" }}>
-        Notificaciones
-      </h1>
-      <ul style={{ listStyleType: "none", padding: 0 }}>
-        {notifications.map((notification) => (
-          <li
-            key={notification.id}
-            style={{
-              padding: "10px",
-              margin: "10px 0",
-              background: notification.read
-                ? "var(--color-background)"
-                : "var(--color-secondary)",
-              color: "var(--color-white)",
-              borderRadius: "4px",
-            }}
-          >
-            {notification.message}
-            {!notification.read && (
-              <button
-                onClick={() => handleMarkAsRead(notification.id)}
-                style={{
-                  marginLeft: "10px",
-                  background: "var(--color-primary)",
-                  color: "var(--color-white)",
-                  padding: "5px 10px",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Marcar como leído
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+      <h2>Notificaciones</h2>
+      {notifications.length > 0 ? (
+        <ul>
+          {notifications.map((notification) => (
+            <li
+              key={notification.id}
+              style={{
+                background: "var(--color-light)",
+                padding: "10px",
+                marginBottom: "10px",
+                borderRadius: "5px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+              }}
+              onClick={() => handleMarkAsRead(notification.id)}
+            >
+              <FaBell style={{ marginRight: "10px", color: "var(--color-primary)" }} />
+              <div>
+                <strong>{notification.mensaje}</strong>
+                <div style={{ fontSize: "0.8rem", color: "#555" }}>
+                  {new Date(notification.created_at).toLocaleString()}
+                </div>
+              </div>
+              <FaCheckCircle style={{ marginLeft: "10px", color: "green" }} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No tienes notificaciones nuevas.</p>
+      )}
     </div>
   );
 };

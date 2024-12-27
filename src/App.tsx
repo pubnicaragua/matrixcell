@@ -13,17 +13,19 @@ import InvoiceDetail from './pages/InvoiceDetail';
 import UserSettings from './pages/UserSettings';
 import Stores from './pages/Stores';
 import TechnicalServices from './pages/TechnicalServices';
+import Register from './pages/Register';
 
 const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/notifications" element={<Notifications />} />
-      <Route path="/invoices" element={<Invoices />} />
-      <Route path="/reports" element={<Reports />} />
+      <Route path="/" element={<Dashboard />} /> {/* Listo */}
+      <Route path="/register" element={<Register />} /> {/* Listo */}
+      <Route path="/login" element={<Login />} /> {/* Listo */}
+      <Route path="/notifications" element={<Notifications />} /> {/* Listo */}
+      <Route path="/invoices" element={<Invoices />} /> {/* Listo */}
+      <Route path="/reports" element={<Reports />} /> 
       <Route path="/settings" element={<Settings />} />
-      <Route path="/users" element={<Users />} />
+      <Route path="/users" element={<Users />} /> {/* Listo */}
       <Route path="/blockdevice" element={<BlockDevice />} />
       <Route path="/addclient" element={<AddClient />} />
       <Route path="/invoicedetail" element={<InvoiceDetail />} />

@@ -1,90 +1,190 @@
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
+/* Users.css */
+
+/* Variables */
+:root {
+  --primary-color: #4CAF50; /* Verde primario */
+  --secondary-color: #f4f4f4; /* Fondo claro */
+  --button-color: #ffffff;
+  --button-hover-color: #45a049; /* Verde más oscuro */
+  --font-family: 'Arial', sans-serif;
+  --font-size: 16px;
+  --border-radius: 8px;
+}
+
+body {
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+  background-color: var(--secondary-color);
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: var(--button-color);
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 1rem;
+}
+
+button:hover {
+  background-color: var(--button-hover-color);
+}
+
+button:focus {
+  outline: none;
+}
+
+table {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+}
+
+table th, table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+table th {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+table tr:hover {
+  background-color: #f1f1f1;
+}
+
+table .action-button {
+  padding: 6px 12px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+table .edit-button {
+  color: #007bff;
+}
+
+table .delete-button {
+  color: #e74c3c;
+}
+
+table .action-button:hover {
+  background-color: #f1f1f1;
+  border-radius: var(--border-radius);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  .users-table th,
-  .users-table td {
-    padding: 10px;
-    border-bottom: 1px solid var(--color-background);
+  to {
+    opacity: 1;
   }
-  
-  .users-table tr:hover {
-    background-color: var(--color-light-gray);
+}
+
+.modal h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.modal .form-group {
+  margin-bottom: 15px;
+}
+
+.modal label {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+.modal input:focus, .modal select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.modal button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--border-radius);
+  border: none;
+  background-color: var(--primary-color);
+  color: var(--button-color);
+  font-size: 1.1rem;
+}
+
+.modal button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.modal .cancel-button {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal .cancel-button:hover {
+  background-color: #ccc;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  table {
+    font-size: 14px;
   }
-  
-  .action-button {
-    margin-right: 10px;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  
-  .edit-button {
-    background: var(--color-primary);
-    color: var(--color-white);
-  }
-  
-  .delete-button {
-    background: var(--color-secondary);
-    color: var(--color-white);
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
+
   .modal-content {
-    background: var(--color-white);
-    padding: 20px;
-    border-radius: 8px;
-    width: 400px;
+    width: 90%;
   }
-  
-  .form-group {
-    margin-bottom: 15px;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  .form-group input {
+
+  button {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
   }
-  
-  .save-button {
-    margin-right: 10px;
-    background: var(--color-primary);
-    color: var(--color-white);
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .cancel-button {
-    background: var(--color-secondary);
-    color: var(--color-white);
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
+}
