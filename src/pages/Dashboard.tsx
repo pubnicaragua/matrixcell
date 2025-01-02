@@ -269,7 +269,7 @@ const quickActions = (
         borderRadius: '5px',
         cursor: 'pointer',
       }}
-      onClick={() => navigate('/block-device')}
+      onClick={() => navigate('/BlockDevice')}
     >
       Bloquear Dispositivo
     </button>

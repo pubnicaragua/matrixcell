@@ -17,6 +17,7 @@ import AuditLogs from './pages/AuditLogs';
 import ExportSicom from "./components/ExportSicom";
 import Profile from "./pages/Profile";
 import Security from "./pages/Security";
+import { AuthProvider } from './context/AuthContext';
 
 
 const App = () => {
