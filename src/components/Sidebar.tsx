@@ -65,6 +65,15 @@ const Sidebar = () => {
           </Link>
         </li>
 
+                {/* Equifax */}
+                <li style={styles.sectionTitle}>Consolidado Equifax</li>
+        <li style={styles.listItem}>
+          <FaChartLine style={styles.icon} />
+          <Link to="/exportsicom" style={styles.link}>
+          Consolidado Equifax
+          </Link>
+        </li>
+
         {/* Configuración */}
         <li style={styles.sectionTitle}>Configuración</li>
         <li style={styles.listItem}>
@@ -84,7 +93,7 @@ const Sidebar = () => {
         <li style={styles.sectionTitle}>Cuenta</li>
         <li style={styles.listItem}>
           <FaSignOutAlt style={styles.icon} />
-          <Link to="/logout" style={styles.link}>
+          <Link to="/login" style={styles.link}>
             Cerrar Sesión
           </Link>
         </li>

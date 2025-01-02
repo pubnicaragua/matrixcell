@@ -13,6 +13,11 @@ import InvoiceDetail from './pages/InvoiceDetail';
 import UserSettings from './pages/UserSettings';
 import Stores from './pages/Stores';
 import TechnicalServices from './pages/TechnicalServices';
+import AuditLogs from './pages/AuditLogs';
+import ExportSicom from "./components/ExportSicom";
+import Profile from "./pages/Profile";
+import Security from "./pages/Security";
+
 
 const App = () => {
   return (
@@ -30,6 +35,11 @@ const App = () => {
       <Route path="/usersettings" element={<UserSettings />} />
       <Route path="/stores" element={<Stores />} />
       <Route path="/technicalservices" element={<TechnicalServices />} />
+      <Route path="/auditlogs" element={<AuditLogs />} />
+      <Route path="/exportsicom" element={<ExportSicom />} />
+      <Route path="/profile" element={<Profile />} />
+        <Route path="/security" element={<Security />} />
+        <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
 };
