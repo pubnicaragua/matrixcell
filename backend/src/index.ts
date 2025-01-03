@@ -13,6 +13,8 @@ import storesRoutes from './routes/store.routes';
 import technicalServicesRoute from './routes/technicalService.routes';
 import devicesRoute from './routes/device.routes';
 import invoicesRoute from './routes/invoice.routes';
+import deviceLogRoute from './routes/deviceLog.routes';
+import auditLogRoute from './routes/auditLog.routes';
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
 // Cargar las variables de entorno
@@ -35,7 +37,9 @@ app.use('/permissions', permisosRoutes);
 app.use('/stores', storesRoutes);
 app.use('/technical_services', technicalServicesRoute)
 app.use('/devices', devicesRoute)
-app.use('/invoices', devicesRoute)
+app.use('/invoices', invoicesRoute)
+app.use('/device_logs', deviceLogRoute)
+app.use('/audit_logs', auditLogRoute)
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

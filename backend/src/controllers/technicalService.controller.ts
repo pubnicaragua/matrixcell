@@ -4,12 +4,12 @@ import { validateTechnicalService } from "../requests/technicalService.request";
 import { TechnicalServiceResource } from "../resources/technicalService.resource";
 import { BaseService } from "../services/base.service";
 
-const tableName = 'technicalservices'; // Nombre de la tabla en la base de datos
+const tableName = 'technical_services'; // Nombre de la tabla en la base de datos
 export const TechnicalServiceController = {
     async getAllTechnicalServices(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const technicalservices = await BaseService.getAll<TechnicalService>(tableName,['client','service_type','description','status','cost','store_id','stores(name)'],where);
+            const technicalservices = await BaseService.getAll<TechnicalService>(tableName,['client','service_type','description','status','cost','store_id','store(name)'],where);
             res.json(TechnicalServiceResource.formatTechnicalServices(technicalservices));
         } catch (error: any) {
             res.status(500).json({ message: error.message });

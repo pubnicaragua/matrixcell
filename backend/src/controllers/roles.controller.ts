@@ -10,7 +10,7 @@ export const RolController = {
     async getAllRols(req: Request, res: Response) {
         try {
             // Consulta para obtener roles y permisos relacionados
-            const { data: rolesWithPermissions, error } = await supabase
+           /* const { data: rolesWithPermissions, error } = await supabase
             .from("roles")
             .select(`
               rol_id,
@@ -22,6 +22,13 @@ export const RolController = {
                 )
               )
             `)
+            .neq("rol_id", 1); */
+            const { data: rolesWithPermissions, error } = await supabase
+            .from("roles")
+            .select(`
+              rol_id,
+              nombre
+            `)
             .neq("rol_id", 1); // Excluir el rol con rol_id = 1
 
             if (error) {
@@ -32,7 +39,7 @@ export const RolController = {
             const formattedRoles = rolesWithPermissions.map((role) => ({
                 id: role.rol_id,
                 nombre: role.nombre,
-                permissions: role.role_permissions.map((rp: any) => rp.permissions),
+               // permissions: role.role_permissions.map((rp: any) => rp.permissions),
             }));
 
             res.json(formattedRoles);
