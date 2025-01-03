@@ -1,18 +1,13 @@
 import supabase from '../api/supabase';
-import api from '../api/endpoints';
+// import api from '../api/endpoints';
+import axios from 'axios';
 
-// Ejemplo de función para obtener datos desde Supabase
-export const fetchUsers = async () => {
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) throw new Error(error.message);
-  return data;
-};
+const api = axios.create({
+  baseURL: 'https://xqryrzcpcjkhunfhfzmr.supabase.co',
+  headers: {
+      apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcnlyemNwY2praHVuZmhmem1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTM2ODEsImV4cCI6MjA1MDgyOTY4MX0.UPQKYkIdATVRxPQyXtklOzrXSR_touHP9WoKq_oJQWY',
+      // Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcnlyemNwY2praHVuZmhmem1yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTI1MzY4MSwiZXhwIjoyMDUwODI5NjgxfQ.zPIQl-V0XBau1klqwOo_HUDlPmO0W8BgXCLtdEeIC_M'
+  },
+});
 
-// Ejemplo de función para enviar datos a una API externa
-export const sendNotification = async (token: string, message: string) => {
-  return await api.post('/notifications', {
-    to: token,
-    body: message,
-    title: 'Nueva Notificación',
-  });
-};
+export default api;

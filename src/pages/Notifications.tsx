@@ -1,198 +1,159 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import supabase from "../api/supabase";
+import { FaBell, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 interface Notification {
   id: number;
-  message: string;
-  read: boolean;
-  timestamp: Date;
+  mensaje: string;
+  estado_id: number;
+  created_at: string;
 }
 
-const Notifications: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      message: "Factura INV001 está pendiente de pago.",
-      read: false,
-      timestamp: new Date("2024-12-20T10:00:00"),
-    },
-    {
-      id: 2,
-      message: "Dispositivo bloqueado por mora.",
-      read: true,
-      timestamp: new Date("2024-12-21T14:30:00"),
-    },
-  ]);
-
+const Notifications = () => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<"all" | "read" | "unread">("all");
 
-  const handleMarkAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  // Obtener las notificaciones desde Supabase
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from("notificaciones")
+        .select("id, mensaje, estado_id, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching notifications:", error);
+      } else {
+        setNotifications(data);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  // Marcar una notificación como leída
+  const handleMarkAsRead = async (id: number) => {
+    const { error } = await supabase
+      .from("notificaciones")
+      .update({ estado_id: 2 }) // Actualizamos el estado_id a '2' (leído)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error marking notification as read:", error);
+    } else {
+      setNotifications(
+        notifications.map((notification) =>
+          notification.id === id ? { ...notification, estado_id: 2 } : notification
+        )
+      );
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    );
+  // Marcar todas las notificaciones como leídas
+  const handleMarkAllAsRead = async () => {
+    const { error } = await supabase
+      .from("notificaciones")
+      .update({ estado_id: 2 }) // Cambiar a estado_id = 2 (leído)
+      .in("id", notifications.map((notif) => notif.id));
+
+    if (error) {
+      console.error("Error marking all notifications as read:", error);
+    } else {
+      setNotifications(notifications.map((notification) => ({ ...notification, estado_id: 2 })));
+    }
   };
 
-  const handleDeleteNotification = (id: number) => {
-    setNotifications(notifications.filter((notification) => notification.id !== id));
+  // Eliminar una notificación
+  const handleDeleteNotification = async (id: number) => {
+    const { error } = await supabase.from("notificaciones").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting notification:", error);
+    } else {
+      setNotifications(notifications.filter((notification) => notification.id !== id));
+    }
   };
 
+  // Filtrar las notificaciones según el estado
   const filteredNotifications = notifications.filter((notification) => {
-    if (filter === "read") return notification.read;
-    if (filter === "unread") return !notification.read;
+    if (filter === "read") return notification.estado_id === 2;
+    if (filter === "unread") return notification.estado_id === 1;
     return true; // "all"
   });
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>Notificaciones</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-semibold text-center text-blue-600 mb-6">Notificaciones</h1>
 
       {/* Barra de acciones */}
-      <div style={styles.actions}>
-        <button onClick={() => setFilter("all")} style={styles.filterButton}>
+      <div className="flex justify-between mb-6">
+        <button
+          onClick={() => setFilter("all")}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
           Todas
         </button>
-        <button onClick={() => setFilter("unread")} style={styles.filterButton}>
+        <button
+          onClick={() => setFilter("unread")}
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+        >
           No Leídas
         </button>
-        <button onClick={() => setFilter("read")} style={styles.filterButton}>
+        <button
+          onClick={() => setFilter("read")}
+          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+        >
           Leídas
         </button>
-        <button onClick={handleMarkAllAsRead} style={styles.markAllButton}>
+        <button
+          onClick={handleMarkAllAsRead}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        >
           Marcar Todas como Leídas
         </button>
       </div>
 
       {/* Lista de notificaciones */}
-      <ul style={styles.list}>
+      <ul className="space-y-4">
         {filteredNotifications.length > 0 ? (
           filteredNotifications.map((notification) => (
             <li
               key={notification.id}
-              style={{
-                ...styles.notification,
-                backgroundColor: notification.read
-                  ? "#e0e0e0"
-                  : "#007BFF",
-                color: notification.read ? "#333" : "#fff",
-              }}
+              className={`flex items-center p-4 rounded-lg cursor-pointer ${
+                notification.estado_id === 2 ? "bg-gray-200" : "bg-blue-500 text-white"
+              } hover:bg-gray-300 transition`}
             >
-              <div>
-                <p style={styles.message}>{notification.message}</p>
-                <span style={styles.timestamp}>
-                  {notification.timestamp.toLocaleString()}
+              <FaBell className="mr-4" />
+              <div className="flex-1">
+                <strong className="block">{notification.mensaje}</strong>
+                <span className="text-sm text-gray-500">
+                  {new Date(notification.created_at).toLocaleString()}
                 </span>
               </div>
-              <div style={styles.actions}>
-                {!notification.read && (
+              <div className="ml-4 flex items-center">
+                {notification.estado_id === 1 && (
                   <button
                     onClick={() => handleMarkAsRead(notification.id)}
-                    style={styles.readButton}
+                    className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 mr-3"
                   >
                     Marcar como Leído
                   </button>
                 )}
                 <button
                   onClick={() => handleDeleteNotification(notification.id)}
-                  style={styles.deleteButton}
+                  className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
                 >
-                  Eliminar
+                  <FaTimesCircle />
                 </button>
               </div>
             </li>
           ))
         ) : (
-          <p style={styles.noNotifications}>No hay notificaciones.</p>
+          <p className="text-center text-gray-500">No hay notificaciones.</p>
         )}
       </ul>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: "20px",
-    maxWidth: "600px",
-    margin: "auto",
-    fontFamily: "Arial, sans-serif",
-  },
-  title: {
-    textAlign: "center" as const,
-    marginBottom: "20px",
-    fontSize: "24px",
-    color: "#007BFF",
-  },
-  actions: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "20px",
-  },
-  filterButton: {
-    padding: "10px 15px",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  markAllButton: {
-    padding: "10px 15px",
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-  list: {
-    listStyleType: "none",
-    padding: 0,
-  },
-  notification: {
-    padding: "15px",
-    borderRadius: "8px",
-    marginBottom: "10px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  message: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "bold" as const,
-  },
-  timestamp: {
-    fontSize: "12px",
-    color: "#666",
-  },
-  readButton: {
-    padding: "5px 10px",
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginRight: "5px",
-  },
-  deleteButton: {
-    padding: "5px 10px",
-    backgroundColor: "red",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  noNotifications: {
-    textAlign: "center" as const,
-    color: "#666",
-  },
 };
 
 export default Notifications;
