@@ -3,7 +3,7 @@ import { Store } from "../models/store.model";
 import { validateStore } from "../requests/store.request";
 import { BaseService } from "../services/base.service";
 import { StoreResource } from "../resources/store.resource";
-const tableName = 'stores'; // Nombre de la tabla en la base de datos
+const tableName = 'store'; // Nombre de la tabla en la base de datos
 export const StoreController = {
     async getAllStores(req: Request, res: Response) {
         try {
