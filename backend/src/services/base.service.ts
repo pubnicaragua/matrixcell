@@ -5,16 +5,16 @@ import supabase from "../config/supabaseClient";
 
 // Servicio genérico
 export const BaseService = {
-  async logAudit(action: string, userId: string, table: string, details: any) {
+  async logAudit(event: string, userId: string, table: string, details: any) {
     const auditLog = {
-      action,
+      event,
       table_name: table,
-      user_id: userId,
+      user: userId,
       details,
       timestamp: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from('registroactividades').insert([auditLog]);
+    const { error } = await supabase.from('audit_logs').insert([auditLog]);
     if (error) console.error("Error al registrar auditoría:", error.message);
   },
   // Obtener todos los registros
