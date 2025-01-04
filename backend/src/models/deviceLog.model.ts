@@ -1,14 +1,14 @@
 export class DeviceLog{
     id?: number|null;
     device_id: number|null;
-    action: string | null;
-    performed_by: string | null;
-    timestamp: Date|null;
+    action_id: number | null;
+    perform_user_id: number | null;
+    created_at: Date|string|null;
 
     constructor(){
         this.device_id = null;
-        this.action = "Bloqueado";
-        this.performed_by = null;
-        this.timestamp = null;
+        this.action_id = null;
+        this.perform_user_id = null;
+        this.created_at = null;
     }
 }

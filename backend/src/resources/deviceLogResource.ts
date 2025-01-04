@@ -5,9 +5,9 @@ export const DeviceLogResource = {
         return {
             id: devicelog.id,
             device_id: devicelog.device_id,
-            action: devicelog.action,
-            performed_by: devicelog.performed_by,
-            timestamp: devicelog.performed_by,
+            action_id: devicelog.action_id,
+            perform_user_id: devicelog.perform_user_id,
+            created_at: devicelog.created_at,
         };
     },
 
