@@ -1,77 +1,108 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 interface Service {
   id: number;
   client: string;
-  serviceType: string;
+  service_type: string;
   description: string;
   status: string;
   cost: number;
+  store_id: string; // Añadir store_id
 }
 
 const TechnicalServices: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [newService, setNewService] = useState<Omit<Service, "id">>({
     client: "",
-    serviceType: "",
+    service_type: "",
     description: "",
     status: "Pendiente",
     cost: 0,
+    store_id: "",
   });
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [stores, setStores] = useState<any[]>([]); // Para almacenar las tiendas
   const [currentPage, setCurrentPage] = useState(1);
   const servicesPerPage = 5;
 
-  // Manejo de entradas
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/technical_services");
+        setServices(response.data);
+      } catch (err: any) {
+        setError(err.message || "Error fetching services");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchStores = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/stores");
+        setStores(response.data); // Guarda las tiendas
+      } catch (err: any) {
+        alert("Error al cargar las tiendas: " + err.message);
+      }
+    };
+
+    fetchServices();
+    fetchStores(); // Llama a la función para obtener las tiendas
+  }, []);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setNewService({ ...newService, [name]: name === "cost" ? parseFloat(value) : value });
   };
-  
+
   const validateService = () => {
     if (
       !newService.client ||
-      !newService.serviceType ||
+      !newService.service_type ||
       !newService.description ||
-      newService.cost <= 0
+      newService.cost <= 0 ||
+      !newService.store_id // Verifica que se haya seleccionado una tienda
     ) {
-      alert("Todos los campos son obligatorios y el costo debe ser mayor a 0.");
+      alert("Todos los campos son obligatorios, el costo debe ser mayor a 0 y debe seleccionar una tienda.");
       return false;
     }
     return true;
   };
 
-  // Agregar servicio
-  const handleAddService = () => {
+  const handleAddService = async () => {
     if (validateService()) {
-      const newServiceId = services.length + 1;
-      setServices([...services, { id: newServiceId, ...newService }]);
-      setNewService({ client: "", serviceType: "", description: "", status: "Pendiente", cost: 0 });
+      try {
+        const response = await axios.post("http://localhost:5000/technical_services", newService);
+        setServices([...services, response.data]);
+        setNewService({ client: "", service_type: "", description: "", status: "Pendiente", cost: 0, store_id: "" });
+      } catch (err: any) {
+        alert("Error al agregar el servicio: " + err.message);
+      }
     }
   };
 
-  // Edición
-  const handleEditService = (service: Service) => {
-    setEditingService(service);
-  };
-
-  const handleUpdateService = () => {
+  const handleUpdateService = async () => {
     if (editingService) {
-      setServices(
-        services.map((service) =>
-          service.id === editingService.id ? editingService : service
-        )
-      );
-      setEditingService(null);
-    }
-  };
-
-  const handleDeleteService = (id: number) => {
-    if (window.confirm("¿Estás seguro de eliminar este servicio?")) {
-      setServices(services.filter((service) => service.id !== id));
+      try {
+        const response = await axios.put(
+          `http://localhost:5000/technical_services/${editingService.id}`,
+          editingService
+        );
+        setServices(
+          services.map((service) =>
+            service.id === editingService.id ? response.data : service
+          )
+        );
+        setEditingService(null);
+      } catch (err: any) {
+        alert("Error al actualizar el servicio: " + err.message);
+      }
     }
   };
 
@@ -80,24 +111,10 @@ const TechnicalServices: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleExportToCSV = () => {
-    const csvHeader = "ID,Cliente,Tipo de Servicio,Descripción,Estado,Costo\n";
-    const csvRows = services.map(
-      (service) =>
-        `${service.id},${service.client},${service.serviceType},${service.description},${service.status},${service.cost}`
-    );
-    const csvContent = csvHeader + csvRows.join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "services.csv";
-    link.click();
-  };
-
   const filteredServices = services.filter(
     (service) =>
       service.client.toLowerCase().includes(search.toLowerCase()) ||
-      service.serviceType.toLowerCase().includes(search.toLowerCase()) ||
+      service.service_type.toLowerCase().includes(search.toLowerCase()) ||
       service.description.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -111,36 +128,21 @@ const TechnicalServices: React.FC = () => {
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ textAlign: "center", color: "#007BFF" }}>Servicios Técnicos</h1>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-3xl text-center text-blue-500 font-bold mb-6">Servicios Técnicos</h1>
 
-      {/* Búsqueda */}
-      <div style={{ marginBottom: "20px" }}>
+      <div className="mb-6">
         <input
           type="text"
           placeholder="Buscar por cliente, tipo o descripción"
           value={search}
           onChange={handleSearch}
-          style={{
-            padding: "10px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-            width: "100%",
-            fontSize: "16px",
-          }}
+          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:ring-blue-300"
         />
       </div>
 
-      {/* Formulario para agregar/editar servicios */}
-      <div
-        style={{
-          background: "#f9f9f9",
-          padding: "20px",
-          borderRadius: "8px",
-          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h2 style={{ color: "#007BFF" }}>
+      <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-2xl text-blue-500 font-semibold mb-4">
           {editingService ? "Editar Servicio" : "Agregar Servicio"}
         </h2>
         <input
@@ -153,55 +155,31 @@ const TechnicalServices: React.FC = () => {
               ? setEditingService({ ...editingService, client: e.target.value })
               : handleInputChange(e)
           }
-          style={{
-            display: "block",
-            marginBottom: "10px",
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
         />
         <input
           type="text"
-          name="serviceType"
+          name="service_type"
           placeholder="Tipo de Servicio"
-          value={
-            editingService ? editingService.serviceType : newService.serviceType
-          }
+          value={editingService ? editingService.service_type : newService.service_type}
           onChange={(e) =>
             editingService
-              ? setEditingService({ ...editingService, serviceType: e.target.value })
+              ? setEditingService({ ...editingService, service_type: e.target.value })
               : handleInputChange(e)
           }
-          style={{
-            display: "block",
-            marginBottom: "10px",
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
         />
         <textarea
           name="description"
           placeholder="Descripción"
-          value={
-            editingService ? editingService.description : newService.description
-          }
+          value={editingService ? editingService.description : newService.description}
           onChange={(e) =>
             editingService
               ? setEditingService({ ...editingService, description: e.target.value })
               : handleInputChange(e)
           }
-          style={{
-            display: "block",
-            marginBottom: "10px",
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            width: "100%",
-            height: "80px",
-          }}
-        />
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
+        ></textarea>
         <select
           name="status"
           value={editingService ? editingService.status : newService.status}
@@ -210,13 +188,7 @@ const TechnicalServices: React.FC = () => {
               ? setEditingService({ ...editingService, status: e.target.value })
               : handleInputChange(e)
           }
-          style={{
-            display: "block",
-            marginBottom: "10px",
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
         >
           <option value="Pendiente">Pendiente</option>
           <option value="En Proceso">En Proceso</option>
@@ -232,113 +204,81 @@ const TechnicalServices: React.FC = () => {
               ? setEditingService({ ...editingService, cost: parseFloat(e.target.value) })
               : handleInputChange(e)
           }
-          style={{
-            display: "block",
-            marginBottom: "10px",
-            padding: "10px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
         />
+        <select
+          name="store_id"
+          value={editingService ? editingService.store_id : newService.store_id}
+          onChange={(e) =>
+            editingService
+              ? setEditingService({ ...editingService, store_id: e.target.value })
+              : handleInputChange(e)
+          }
+          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
+        >
+          <option value="">Seleccionar tienda</option>
+          {stores.map((store) => (
+            <option key={store.id} value={store.id}>
+              {store.name}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={editingService ? handleUpdateService : handleAddService}
-          style={{
-            background: editingService ? "#28a745" : "#007BFF",
-            color: "white",
-            padding: "10px 20px",
-            borderRadius: "4px",
-            border: "none",
-            cursor: "pointer",
-            width: "100%",
-            fontSize: "16px",
-          }}
+          className={`w-full py-3 text-white font-semibold rounded-lg transition-colors ${editingService ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"}`}
         >
           {editingService ? "Actualizar Servicio" : "Agregar Servicio"}
         </button>
       </div>
 
-      {/* Lista de servicios */}
-      <div style={{ marginTop: "40px" }}>
-        <h2 style={{ textAlign: "center", color: "#007BFF" }}>
-          Lista de Servicios
-        </h2>
-        {currentServices.length === 0 ? (
-          <p>No hay servicios técnicos registrados.</p>
+      <div>
+        {loading ? (
+          <p className="text-center">Cargando servicios...</p>
+        ) : error ? (
+          <p className="text-red-500 text-center">{error}</p>
+        ) : currentServices.length === 0 ? (
+          <p className="text-center">No hay servicios técnicos registrados.</p>
         ) : (
           <div>
             {currentServices.map((service) => (
               <div
                 key={service.id}
-                style={{
-                  background: "#fff",
-                  padding: "15px",
-                  borderRadius: "8px",
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                  marginBottom: "20px",
-                }}
+                className="bg-white p-4 rounded-lg shadow-md mb-4"
               >
-                <h3 style={{ color: "#007BFF" }}>{service.client}</h3>
-                <p>
-                  <strong>Tipo de Servicio:</strong> {service.serviceType}
-                </p>
-                <p>
-                  <strong>Descripción:</strong> {service.description}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {service.status}
-                </p>
-                <p>
-                  <strong>Costo:</strong> ${service.cost.toFixed(2)}
-                </p>
-                <div>
-                  <button
-                    onClick={() => handleEditService(service)}
-                    style={{
-                      background: "#ffc107",
-                      color: "white",
-                      padding: "5px 15px",
-                      borderRadius: "4px",
-                      marginRight: "5px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDeleteService(service.id)}
-                    style={{
-                      background: "#dc3545",
-                      color: "white",
-                      padding: "5px 15px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+                <h3 className="text-xl text-blue-500 font-bold mb-2">{service.client}</h3>
+                <p><strong>Tipo de Servicio:</strong> {service.service_type}</p>
+                <p><strong>Descripción:</strong> {service.description}</p>
+                <p><strong>Estado:</strong> {service.status}</p>
+                <p><strong>Costo:</strong> {service.cost} $</p>
+                <p><strong>Tienda:</strong> {stores.find((store) => store.id === service.store_id)?.name || "Desconocida"}</p>
+                <button
+                  onClick={() => setEditingService(service)}
+                  className="mt-4 text-blue-500 hover:text-blue-600"
+                >
+                  Editar
+                </button>
               </div>
             ))}
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                disabled={currentPage * servicesPerPage >= filteredServices.length}
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Exportar servicios */}
-      <button
-        onClick={handleExportToCSV}
-        style={{
-          marginTop: "20px",
-          background: "#007BFF",
-          color: "white",
-          padding: "10px 20px",
-          borderRadius: "4px",
-          border: "none",
-          cursor: "pointer",
-          width: "100%",
-        }}
-      >
-        Exportar a CSV
-      </button>
     </div>
   );
 };
