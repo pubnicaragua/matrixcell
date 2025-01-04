@@ -8,7 +8,7 @@ export const StoreController = {
     async getAllStores(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const stores = await BaseService.getAll<Store>(tableName,['name', 'address','phone','active'],where);
+            const stores = await BaseService.getAll<Store>(tableName,['id', 'name', 'address','phone','active'],where);
             res.json(StoreResource.formatStores(stores));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
