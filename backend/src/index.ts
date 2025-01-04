@@ -15,6 +15,7 @@ import devicesRoute from './routes/device.routes';
 import invoicesRoute from './routes/invoice.routes';
 import deviceLogRoute from './routes/deviceLog.routes';
 import auditLogRoute from './routes/auditLog.routes';
+import notificationRoute from './routes/notification.routes';
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
 // Cargar las variables de entorno
@@ -40,6 +41,7 @@ app.use('/devices', devicesRoute)
 app.use('/invoices', invoicesRoute)
 app.use('/device_logs', deviceLogRoute)
 app.use('/audit_logs', auditLogRoute)
+app.use('/notifications', notificationRoute)
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
