@@ -61,7 +61,7 @@ export const DeviceController = {
             }
             type DeviceRow = {
                 imei: string;
-                action: 'block' | 'unblock';
+                action: 'bloqueado' | 'desbloqueado';
             };
             // Lee el archivo Excel
             const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -79,21 +79,21 @@ export const DeviceController = {
                 const imei = row['imei'];
                 const action = row['action']; // "block" o "unblock"
 
-                if (!imei || !['block', 'unblock'].includes(action)) {
+                if (!imei || !['bloqueado', 'desbloqueado'].includes(action)) {
                     results.push({ imei, status: 'Datos inválidos.' });
                     continue;
                 }
 
                 // Lógica para bloquear/desbloquear el dispositivo (Supabase u otro servicio)
                 const { error } =
-                    action === 'block'
-                        ? await supabase.from('devices').update({ status: 'blocked' }).eq('imei', imei)
-                        : await supabase.from('devices').update({ status: 'unblocked' }).eq('imei', imei);
+                    action === 'bloqueado'
+                        ? await supabase.from('devices').update({ status: 'Bloqueado' }).eq('imei', imei)
+                        : await supabase.from('devices').update({ status: 'Desbloqueado' }).eq('imei', imei);
 
                 if (error) {
                     results.push({ imei, status: `Error: ${error.message}` });
                 } else {
-                    results.push({ imei, status: `${action === 'block' ? 'Bloqueado' : 'Desbloqueado'} exitosamente` });
+                    results.push({ imei, status: `${action === 'bloqueado' ? 'Bloqueado' : 'Desbloqueado'} exitosamente` });
                 }
             }
 
