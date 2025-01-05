@@ -149,12 +149,12 @@ export const AuthController = {
             const { error } = await supabase.auth.signOut();
             if (error) {
                 console.error('Error al cerrar sesión:', error.message);
-                 res.status(500).json({ error: 'Error al cerrar sesión.' });
+                res.status(500).json({ error: 'Error al cerrar sesión.' });
             }
-             res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
+            res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
         } catch (error) {
             console.error('Error inesperado:', error);
-             res.status(500).json({ error: 'Error inesperado al cerrar sesión.' });
+            res.status(500).json({ error: 'Error inesperado al cerrar sesión.' });
         }
     }
 }
