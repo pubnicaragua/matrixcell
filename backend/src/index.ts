@@ -16,8 +16,12 @@ import invoicesRoute from './routes/invoice.routes';
 import deviceLogRoute from './routes/deviceLog.routes';
 import auditLogRoute from './routes/auditLog.routes';
 import notificationRoute from './routes/notification.routes';
+import clientRoutes from './routes/client.routes'; // Importar rutas de clientes
+import { ClientController } from './controllers/client.controller'; // Importar controlador de clientes
+
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
+import { sessionAuth } from './middlewares/supabaseMidleware';
 // Cargar las variables de entorno
 dotenv.config();
 const app = express();
@@ -42,6 +46,9 @@ app.use('/invoices', invoicesRoute)
 app.use('/device_logs', deviceLogRoute)
 app.use('/audit_logs', auditLogRoute)
 app.use('/notifications', notificationRoute)
+app.use('/clients', clientRoutes); // Registrar rutas de clientes
+// Ruta independiente para generar el informe
+app.post('/generate-report',sessionAuth, ClientController.generateEquifaxReport);
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
