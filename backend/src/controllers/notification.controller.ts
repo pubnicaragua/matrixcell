@@ -8,7 +8,7 @@ export const NotificationController = {
     async getAllNotifications(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const notifications = await BaseService.getAll<Notification>(tableName,['created_at', 'message','user_id','invoice_id','status'],where);
+            const notifications = await BaseService.getAll<Notification>(tableName,['id', 'created_at', 'message','user_id','invoice_id','status'],where);
             res.json(NotificationResource.formatNotifications(notifications));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
