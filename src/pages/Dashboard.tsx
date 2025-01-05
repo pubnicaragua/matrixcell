@@ -1,7 +1,7 @@
-import React from 'react';
-import { Bar, Pie, Doughnut, Line } from 'react-chartjs-2';
-import '../styles/global.css';
+import { Bar, Pie } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import {
   ChartOptions,
   Chart as ChartJS,
@@ -16,9 +16,6 @@ import {
   LineElement,
 } from 'chart.js';
 
-import Sidebar from '../components/Sidebar';
-
-// Registrar elementos de Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -31,14 +28,86 @@ ChartJS.register(
   Legend
 );
 
+interface Invoice {
+  status: string;
+  [key: string]: any; // Agrega las propiedades reales si las conoces
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [chartData, setChartData] = useState({
+    labels: ['Pagadas', 'Pendientes'],
+    datasets: [
+      {
+        data: [0, 0],
+        backgroundColor: ['#4caf50', '#f44336'],
+        hoverBackgroundColor: ['#45a049', '#e53935'],
+      },
+    ],
+  });
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/invoices');
+        const invoices = response.data;
+
+        // Contar facturas por estado
+        const paidCount = invoices.filter((invoice: { status: string }) => invoice.status === 'Pagada').length;
+        const pendingCount = invoices.filter((invoice: { status: string }) => invoice.status === 'Pendiente').length;
+
+        setChartData((prevData: typeof chartData) => ({
+          ...prevData,
+          datasets: [
+            {
+              ...prevData.datasets[0],
+              data: [paidCount, pendingCount],
+            },
+          ],
+        }));
+
+
+        setInvoices(invoices);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching invoices');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
+
+  // Obtener los dispositivos bloqueados desde la API
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/devices');
+        setDevices(response.data);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching devices');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
+  }, []);
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
-  // Graph data
+  // Filtrar dispositivos bloqueados
+  const blockedDevices = devices.filter(device => device.status === 'Bloqueado');
+
+  if (loading) return <div className="text-center text-blue-500">Loading...</div>;
+  if (error) return <div className="text-center text-red-500">Error: {error}</div>;
+
   const monthlyRevenueData = {
     labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
     datasets: [
@@ -57,7 +126,7 @@ const Dashboard = () => {
     datasets: [
       {
         label: 'Facturas Pendientes',
-        data: [200, 150, 300, 400, 250],
+        data: [50, 100, 200, 150, 350, 300, 400, 250],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1,
@@ -87,41 +156,6 @@ const Dashboard = () => {
     ],
   };
 
-  const serviceByStoreData = {
-    labels: ['Tienda 1', 'Tienda 2', 'Tienda 3'],
-    datasets: [
-      {
-        label: 'Servicios Completados',
-        data: [120, 95, 60],
-        backgroundColor: ['#ffcc00', '#00cc99', '#cc0000'],
-        borderColor: ['#e6b800', '#009966', '#990000'],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const serviceStatusData = {
-    labels: ['Pendientes', 'En Proceso', 'Completados'],
-    datasets: [
-      {
-        data: [40, 30, 60],
-        backgroundColor: ['#ffc107', '#17a2b8', '#28a745'],
-        hoverBackgroundColor: ['#e0a800', '#138496', '#218838'],
-      },
-    ],
-  };
-
-  const storeStatusData = {
-    labels: ['Activas', 'Inactivas'],
-    datasets: [
-      {
-        data: [5, 2],
-        backgroundColor: ['#28a745', '#dc3545'],
-        hoverBackgroundColor: ['#218838', '#c82333'],
-      },
-    ],
-  };
-
   const activities = [
     { id: 1, action: 'Bloqueo', device: 'Dispositivo 1', date: '2024-12-20' },
     { id: 2, action: 'Pago', device: 'Cliente 2', date: '2024-12-22' },
@@ -140,12 +174,12 @@ const Dashboard = () => {
     ));
 
   const activityTable = (
-    <table className="activity-table" style={{ width: '100%', marginTop: '20px', borderCollapse: 'collapse' }}>
+    <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
       <thead>
-        <tr style={{ backgroundColor: '#f4f4f4', textAlign: 'left' }}>
-          <th style={{ padding: '10px', fontWeight: 'bold' }}>Acción</th>
-          <th style={{ padding: '10px', fontWeight: 'bold' }}>Dispositivo/Cliente</th>
-          <th style={{ padding: '10px', fontWeight: 'bold' }}>Fecha</th>
+        <tr className="bg-gray-100">
+          <th className="px-4 py-2 text-left font-bold">Acción</th>
+          <th className="px-4 py-2 text-left font-bold">Dispositivo/Cliente</th>
+          <th className="px-4 py-2 text-left font-bold">Fecha</th>
         </tr>
       </thead>
       <tbody>{renderTableRows()}</tbody>
@@ -153,28 +187,28 @@ const Dashboard = () => {
   );
 
   const quickActions = (
-    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+    <div className="flex gap-4 mt-6">
       <button
-        style={styles.button}
-        onClick={() => handleNavigation('/BlockDevice')}
+        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        onClick={() => handleNavigation('/blockdevice')}
       >
         Bloquear Dispositivo
       </button>
       <button
-        style={styles.button}
-        onClick={() => handleNavigation('/add-client')}
+        className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+        onClick={() => handleNavigation('/addclient')}
       >
         Agregar Cliente
       </button>
       <button
-        style={styles.button}
+        className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
         onClick={() => handleNavigation('/generate-invoice')}
       >
         Generar Factura
       </button>
       <button
-        style={{ ...styles.button, backgroundColor: '#ffc107', color: 'var(--color-black)' }}
-        onClick={() => handleNavigation('/technical-services')}
+        className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+        onClick={() => handleNavigation('/technicalservices')}
       >
         Registrar Servicio Técnico
       </button>
@@ -182,132 +216,64 @@ const Dashboard = () => {
   );
 
   return (
-    <div style={styles.container}>
-      <div style={styles.content}>
-        <h1 style={styles.title as React.CSSProperties}>Dashboard</h1>
+    <div className="flex bg-gray-100 min-h-screen">
+      <div className="flex-1 p-6">
+        <h1 className="text-3xl font-semibold text-center text-blue-600 mb-6">Dashboard</h1>
 
-        <div style={styles.chartContainer}>
-          <Bar data={barChartData} options={styles.barChartOptions} />
-          <Pie data={pieChartData} options={styles.pieChartOptions} />
-          <Bar data={deviceData} options={styles.deviceChartOptions} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <Bar data={barChartData} options={{ responsive: true, plugins: { title: { display: true, text: 'Facturas Pendientes por Mes' } } }} />
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Estado de las Facturas</h3>
+            <Pie
+              data={chartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Facturas: Pagadas vs Pendientes',
+                  },
+                },
+              }}
+            />
+          </div>
         </div>
 
-        <div style={styles.statsContainer}>
-          <div style={styles.statCard}>
-            <h3 style={styles.statTitle}>Dispositivos Bloqueados</h3>
-            <ul>
-              <li>Dispositivo 1 - IMEI: 123456789</li>
-              <li>Dispositivo 2 - IMEI: 987654321</li>
-            </ul>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <Bar data={deviceData} options={{ responsive: true, plugins: { title: { display: true, text: 'Estado de los Dispositivos' } } }} />
           </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statTitle}>Facturas Pendientes</h3>
-            <ul>
-              <li>Factura #001 - $200</li>
-              <li>Factura #002 - $150</li>
-            </ul>
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Dispositivos Bloqueados</h3>
+            {blockedDevices.length > 0 ? (
+              <ul className="list-disc pl-6">
+                {blockedDevices.map((device) => (
+                  <li key={device.id}>IMEI: {device.imei}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No hay dispositivos bloqueados.</p>
+            )}
           </div>
         </div>
 
-        <div style={styles.activityContainer}>
-          <h2>Últimas Actividades</h2>
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Últimas Actividades</h2>
           {activityTable}
         </div>
 
-        <div style={styles.quickActionsContainer}>
-          <h2>Acciones Rápidas</h2>
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
           {quickActions}
         </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    backgroundColor: 'var(--color-background)',
-    minHeight: '100vh',
-  },
-  content: {
-    flex: 1,
-    padding: '20px',
-  },
-  title: {
-    fontFamily: 'var(--font-primary)',
-    color: 'var(--color-primary)',
-    fontSize: '2.5rem',
-    textAlign: 'center',
-    marginBottom: '20px',
-  },
-  chartContainer: {
-    marginTop: '40px',
-    padding: '20px',
-    background: 'var(--color-white)',
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    marginBottom: '20px',
-  },
-  statsContainer: {
-    display: 'flex',
-    gap: '20px',
-    marginTop: '20px',
-  },
-  statCard: {
-    flex: 1,
-    padding: '20px',
-    backgroundColor: 'var(--color-white)',
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  },
-  statTitle: {
-    fontSize: '1.5rem',
-    fontFamily: 'var(--font-secondary)',
-  },
-  activityContainer: {
-    marginTop: '40px',
-  },
-  quickActionsContainer: {
-    marginTop: '40px',
-  },
-  button: {
-    padding: '10px 20px',
-    fontSize: '16px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    transition: 'background-color 0.3s ease',
-  },
-  barChartOptions: {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: 'Facturas Pendientes por Mes',
-      },
-    },
-  },
-  pieChartOptions: {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: 'Estado de las Facturas',
-      },
-    },
-  },
-  deviceChartOptions: {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: 'Estado de los Dispositivos',
-      },
-    },
-  },
 };
 
 export default Dashboard;
