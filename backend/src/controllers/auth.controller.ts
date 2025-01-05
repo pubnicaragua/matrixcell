@@ -45,24 +45,24 @@ export const AuthController = {
             const rolId = usuarioData.rol_id;
 
             // Consultar los permisos asociados al `rol_id`
-          /*  const { data: permissions, error: permissionsError } = await supabase
-                .from("role_permissions")
-                .select("permissions(name)")
-                .eq("role_id", rolId);
-
-            if (permissionsError) {
-                throw new Error("Error al obtener permisos: " + permissionsError.message);
-            }
-
-            // Extraer los nombres de los permisos
-            const permissionsList = (permissions as { permissions: { name: string }[] }[])
-                .flatMap((item) => item.permissions)
-                .map((permission) => permission.name);*/
+            /*  const { data: permissions, error: permissionsError } = await supabase
+                  .from("role_permissions")
+                  .select("permissions(name)")
+                  .eq("role_id", rolId);
+  
+              if (permissionsError) {
+                  throw new Error("Error al obtener permisos: " + permissionsError.message);
+              }
+  
+              // Extraer los nombres de los permisos
+              const permissionsList = (permissions as { permissions: { name: string }[] }[])
+                  .flatMap((item) => item.permissions)
+                  .map((permission) => permission.name);*/
             res.status(200).json({
                 message: "Inicio de sesión exitoso",
                 user: authData.user,
                 usuario: usuarioData,
-               // permissions: permissionsList,
+                // permissions: permissionsList,
                 token: authData.session?.access_token || "",
             });
         } catch (err: unknown) {
@@ -141,6 +141,20 @@ export const AuthController = {
             res.status(200).json({ message: 'Check your email for the reset link.' });
         } catch (err) {
             res.status(500).json({ error: 'Internal Server Error' });
+        }
+    },
+    async logut(req: Request, res: Response) {
+        try {
+            // Invalida el refresh token en Supabase
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error al cerrar sesión:', error.message);
+                 res.status(500).json({ error: 'Error al cerrar sesión.' });
+            }
+             res.status(200).json({ message: 'Sesión cerrada exitosamente.' });
+        } catch (error) {
+            console.error('Error inesperado:', error);
+             res.status(500).json({ error: 'Error inesperado al cerrar sesión.' });
         }
     }
 }
