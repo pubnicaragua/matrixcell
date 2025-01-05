@@ -7,7 +7,8 @@ export const InvoiceResource = {
             amount: invoice.amount,
             number: invoice.number,
             device_id: invoice.device_id,
-            status: invoice.status
+            status: invoice.status,
+            created_at: invoice.created_at,
         };
     },
 
