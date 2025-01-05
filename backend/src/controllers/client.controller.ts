@@ -11,7 +11,7 @@ export const ClientController = {
     async getAllClients(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const clients = await BaseService.getAll<Client>(tableName, ['id', 'name', 'email', 'phone', 'address', 'category', 'status'], where);
+            const clients = await BaseService.getAll<Client>(tableName, ['id','identity_number','identity_type', 'name','address', 'phone',  'city', 'due_date','deubt_type','operation_number','device_id','created_at'], where);
             res.json(ClientResource.formatClients(clients));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -65,12 +65,11 @@ export const ClientController = {
             return {
                 id: client.id,
                 name: client.name,
-                status: client.status,
                 operations: clientOperations.length,
                 total_due: clientOperations.reduce((sum, op) => sum + op.amount_due, 0),
             };
         });
-        const columns = ['id', 'name', 'status', 'operations', 'total_due']
+        const columns = ['id', 'name',  'operations', 'total_due']
         // Crear documento PDF
         const doc = new PDFDocument({
             size: 'letter',

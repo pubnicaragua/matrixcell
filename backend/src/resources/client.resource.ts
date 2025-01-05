@@ -4,12 +4,17 @@ export const ClientResource = {
     formatClient(client: Client) {
         return {
             id: client.id,
+            identity_number: client.identity_number,
+            identity_type: client.identity_type,
             name: client.name,
-            email: client.email,
-            phone: client.phone,
             address: client.address,
-            category: client.category,
-            status: client.status,
+            phone: client.phone,
+            city: client.city,
+            due_date: client.due_date,
+            deubt_type: client.deubt_type,
+            operation_number: client.operation_number,
+            device_id: client.device_id,
+            created_at: client.created_at
         };
     },
 
