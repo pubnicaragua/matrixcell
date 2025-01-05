@@ -10,6 +10,7 @@ export class Operation {
     days_overdue: number;
     status: string | null;
     judicial_action: boolean ;
+    client_id: number | null;
     updated_at: Date |string | null;
 
     constructor() {
@@ -24,6 +25,7 @@ export class Operation {
         this.status = null;
         this.judicial_action = false;
         this.updated_at = null;
+        this.client_id = null;
     }
 
 }
