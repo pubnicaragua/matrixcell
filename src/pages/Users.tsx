@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getUsers, addUser, updateUser, deleteUser } from '../api/endpoints';
+import axios from 'axios';
 
 interface User {
   id: string;
@@ -23,8 +23,13 @@ const Users = () => {
       if (!accessToken) {
         throw new Error('Access token is missing');
       }
-      const data = await getUsers(accessToken);  // Pasar el accessToken
-      setUsers(data);
+      // Asegúrate de pasar el token en el encabezado Authorization
+      const response = await axios.get('http://localhost:5000/usuarios', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Agregar el token en la cabecera
+        },
+      });
+      setUsers(response.data);
     } catch (error: any) {
       console.error('Error al cargar usuarios:', error);
       setError(error.message || 'No se pudieron cargar los usuarios.');
@@ -42,8 +47,16 @@ const Users = () => {
         setLoading(false);
         return;
       }
-      await addUser(newUser, accessToken);  // También pasas el accessToken
-      fetchUsers();  // Refrescar la lista de usuarios
+      await axios.post(
+        'http://localhost:5000/usuarios', // Endpoint de la API para agregar usuarios
+        newUser,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // También pasas el token
+          },
+        }
+      );
+      fetchUsers(); // Refrescar la lista de usuarios
     } catch (error: any) {
       console.error('Error al agregar usuario:', error);
       setError(error.message || 'No se pudo agregar el usuario.');
@@ -58,8 +71,16 @@ const Users = () => {
         setError('No tienes acceso. Por favor, inicia sesión.');
         return;
       }
-      await updateUser(id, updatedData, accessToken);  // Pasar el token también
-      fetchUsers();  // Refrescar la lista de usuarios
+      await axios.put(
+        `http://localhost:5000/usuarios/${id}`, // Endpoint de la API para actualizar usuarios
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Pasar el token también
+          },
+        }
+      );
+      fetchUsers(); // Refrescar la lista de usuarios
     } catch (error: any) {
       console.error('Error al actualizar usuario:', error);
       setError(error.message || 'No se pudo actualizar el usuario.');
@@ -73,8 +94,12 @@ const Users = () => {
         setError('No tienes acceso. Por favor, inicia sesión.');
         return;
       }
-      await deleteUser(id, accessToken);  // Pasar el token para autenticación
-      fetchUsers();  // Refrescar la lista de usuarios
+      await axios.delete(`http://localhost:5000/usuarios/${id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Pasar el token para autenticación
+        },
+      });
+      fetchUsers(); // Refrescar la lista de usuarios
     } catch (error: any) {
       console.error('Error al eliminar usuario:', error);
       setError(error.message || 'No se pudo eliminar el usuario.');
@@ -84,7 +109,7 @@ const Users = () => {
   // Cargar usuarios al montar el componente
   useEffect(() => {
     fetchUsers();
-  }, []);  // Este efecto solo se ejecuta una vez al cargar el componente
+  }, []); // Este efecto solo se ejecuta una vez al cargar el componente
 
   return (
     <div className="container mx-auto p-4">
