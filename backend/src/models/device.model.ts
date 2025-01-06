@@ -5,6 +5,7 @@ export class Device{
     status: string ;
     owner: number | null;
     created_at: Date|null;
+    cliente?: string |null;
 
     constructor(){
         this.owner = null;
