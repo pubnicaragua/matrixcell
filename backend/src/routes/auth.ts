@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/login", AuthController.login);
 router.post("/logout", sessionAuth,AuthController.logut);
 // Ruta para cambiar la contraseña
+router.post("/update-password", AuthController.updatePassword);
 router.post("/change-password", AuthController.changePassword);
 router.post('/reset-password', AuthController.resetPassword);
 export default router;

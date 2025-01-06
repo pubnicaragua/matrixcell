@@ -143,6 +143,29 @@ export const AuthController = {
             res.status(500).json({ error: 'Internal Server Error' });
         }
     },
+    async updatePassword(req: Request, res: Response) {
+        try {
+            // Obtener la nueva contraseña desde el cuerpo de la solicitud
+            const { newPassword } = req.body;
+
+            if (!newPassword || newPassword.length < 6) {
+                res.status(400).json({ message: "La nueva contraseña debe tener al menos 6 caracteres" });
+            }
+
+            // Actualizar la contraseña del usuario autenticado
+            const { data, error } = await supabase.auth.updateUser({
+                password: newPassword,
+            });
+
+            if (error) {
+                res.status(400).json({ message: error.message });
+            }
+
+            res.json({ message: "Contraseña actualizada exitosamente", data });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    },
     async logut(req: Request, res: Response) {
         try {
             // Invalida el refresh token en Supabase

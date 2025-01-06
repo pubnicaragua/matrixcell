@@ -11,7 +11,7 @@ export const ClientController = {
     async getAllClients(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const clients = await BaseService.getAll<Client>(tableName, ['id','identity_number','identity_type', 'name','address', 'phone',  'city', 'due_date','deubt_type','operation_number','device_id','created_at'], where);
+            const clients = await BaseService.getAll<Client>(tableName, ['id','identity_number','identity_type', 'name','address', 'phone',  'city', 'due_date','deubt_type','operation_number','device_id','client_id','created_at'], where);
             res.json(ClientResource.formatClients(clients));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -56,8 +56,8 @@ export const ClientController = {
         // Define el nombre de las tablas (asegúrate de que sean válidas)
         const clientsTableName = 'clients';
         const operationsTableName = 'operations';
-        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'name', 'email', 'phone', 'address', 'category', 'status']);
-        const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'amount_due', 'operation_date', 'operation_type', 'client_id']);
+        const clients = await BaseService.getAll<Client>(clientsTableName, ['id','identity_number','identity_type', 'name','address', 'phone',  'city', 'due_date','deubt_type','operation_number','device_id','client_id','created_at']);
+        const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'operation_number', 'operation_type','operation_date','due_date','amount_due','amount_paid','days_overdue','status','judicial_action','created_at','updated_at']);
         // Procesar datos y generar archivo
         // Procesar datos y preparar información para el reporte
         const data = clients.map(client => {
