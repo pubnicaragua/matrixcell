@@ -29,6 +29,7 @@
     "pdfkit": "^0.15.1",
     "pdfkit-table": "^0.1.99",
     "underscore": "^1.13.6",
+    "vercel": "^39.2.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

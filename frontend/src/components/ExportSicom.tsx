@@ -28,8 +28,11 @@ const ExportEquifax: React.FC = () => {
   ];
 
   // Función para generar un código único basado en la cédula
-  const generateUniqueCode = (cedula: string) => {
-    const lastFiveDigits = cedula.slice(-5); // Obtener los últimos 5 dígitos
+  const generateUniqueCode = (cedula: string | number) => {
+    const cedulaString = cedula.toString(); // Asegurarse de que cedula sea un string
+    console.log(cedulaString);
+  
+    const lastFiveDigits = cedulaString.slice(-5); // Obtener los últimos 5 dígitos
     const randomLetters = Array(3)
       .fill(null)
       .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Generar 3 letras aleatorias
