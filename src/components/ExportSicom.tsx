@@ -30,9 +30,9 @@ const ExportEquifax: React.FC = () => {
   // Función para generar un código único basado en la cédula
   const generateUniqueCode = (cedula: string) => {
     const lastFiveDigits = cedula.slice(-5); // Obtener los últimos 5 dígitos
-    const randomLetters = Array(3)
+    const randomLetters = Array(5) // Generar 5 letras aleatorias
       .fill(null)
-      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Generar 3 letras aleatorias
+      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
       .join("");
     return `${lastFiveDigits}${randomLetters}`;
   };
@@ -56,9 +56,9 @@ const ExportEquifax: React.FC = () => {
           newRow[col] = row[col] || ""; // Completar valores faltantes con ""
         });
 
-        // Generar código único basado en cédula si existe
+        // Generar código único basado en cédula si existe y asignarlo a "NUMERO DE OPERACIÓN"
         if (newRow["CODIGO_ID_SUJETO"]) {
-          newRow["CODIGO_ID_SUJETO"] = generateUniqueCode(
+          newRow["NUMERO DE OPERACIÓN"] = generateUniqueCode(
             newRow["CODIGO_ID_SUJETO"]
           );
         }
