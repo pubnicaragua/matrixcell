@@ -27,7 +27,7 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
-  // Función para generar un código único basado en cédula
+  // Función para generar un código único basado en la cédula
   const generateUniqueCode = (cedula: string) => {
     const lastFiveDigits = cedula.slice(-5); // Obtener los últimos 5 dígitos
     const randomLetters = Array(3)
@@ -49,14 +49,14 @@ const ExportEquifax: React.FC = () => {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Agregar columnas faltantes y generar códigos únicos
+      // Formatear los datos cargados
       const formattedData = jsonData.map((row: any) => {
         const newRow: any = {};
         columns.forEach((col) => {
-          newRow[col] = row[col] || ""; // Completa columnas faltantes con valores vacíos
+          newRow[col] = row[col] || ""; // Completar valores faltantes con ""
         });
 
-        // Generar código único basado en la cédula
+        // Generar código único basado en cédula si existe
         if (newRow["CODIGO_ID_SUJETO"]) {
           newRow["CODIGO_ID_SUJETO"] = generateUniqueCode(
             newRow["CODIGO_ID_SUJETO"]
