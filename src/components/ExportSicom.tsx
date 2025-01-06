@@ -27,6 +27,16 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
+  // Función para generar un código único basado en cédula
+  const generateUniqueCode = (cedula: string) => {
+    const lastFiveDigits = cedula.slice(-5); // Obtener los últimos 5 dígitos
+    const randomLetters = Array(3)
+      .fill(null)
+      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Generar 3 letras aleatorias
+      .join("");
+    return `${lastFiveDigits}${randomLetters}`;
+  };
+
   // Cargar archivo y convertir a JSON
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -39,12 +49,20 @@ const ExportEquifax: React.FC = () => {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Agregar columnas faltantes y inicializar valores vacíos
+      // Agregar columnas faltantes y generar códigos únicos
       const formattedData = jsonData.map((row: any) => {
         const newRow: any = {};
         columns.forEach((col) => {
           newRow[col] = row[col] || ""; // Completa columnas faltantes con valores vacíos
         });
+
+        // Generar código único basado en la cédula
+        if (newRow["CODIGO_ID_SUJETO"]) {
+          newRow["CODIGO_ID_SUJETO"] = generateUniqueCode(
+            newRow["CODIGO_ID_SUJETO"]
+          );
+        }
+
         return newRow;
       });
 
