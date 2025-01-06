@@ -32,8 +32,59 @@ const ExportEquifax: React.FC = () => {
   const excelDateToJSDate = (serial: number): string => {
     const utcDays = Math.floor(serial - 25569); // Restar 25569 para convertir a epoch time
     const date = new Date(utcDays * 86400 * 1000); // Multiplicar por los milisegundos en un día
-    const formattedDate = date.toISOString().split("T")[0]; // Convertir a formato YYYY-MM-DD
-    return formattedDate;
+    return date.toISOString().split("T")[0]; // Convertir a formato YYYY-MM-DD
+  };
+
+  // Generar un número de operación único basado en la cédula
+  const generateUniqueCode = (cedula: any) => {
+    const cedulaStr = String(cedula).trim(); // Convertir a cadena de texto y limpiar espacios
+    const lastFiveDigits = cedulaStr.slice(-5); // Obtener los últimos 5 dígitos
+    const randomLetters = Array(5)
+      .fill(null)
+      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Letras aleatorias
+      .join("");
+    return `${lastFiveDigits}${randomLetters}`;
+  };
+
+  // Calcular valores automáticos
+  const calculateFields = (client: any) => {
+    const paymentInfo = paymentData.find(
+      (item: any) => String(item["CODIGO_ID_SUJETO"]).trim() === String(client["CODIGO_ID_SUJETO"]).trim()
+    );
+
+    if (!paymentInfo || !client["FECHA_CONCESION"]) {
+      return client;
+    }
+
+    const creditTerm = parseInt(paymentInfo["PLAZO DEL CREDITO"]?.split(" ")[0]) || 0; // Meses
+    const startDate = new Date(client["FECHA_CONCESION"]);
+    if (isNaN(startDate.getTime())) {
+      console.error(`Fecha de concesión inválida: ${client["FECHA_CONCESION"]}`);
+      return client;
+    }
+
+    // Calcular fecha de vencimiento
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + creditTerm);
+
+    // Calcular número de días vencidos
+    const today = new Date();
+    const daysOverdue = today > endDate ? Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    // Calcular fecha del siguiente vencimiento (30 días desde la concesión)
+    const nextPaymentDate = new Date(startDate);
+    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30); // 30 días después de la fecha de concesión
+
+    // Generar número de operación
+    const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
+
+    return {
+      ...client,
+      "NUMERO DE OPERACIÓN": operationNumber,
+      NUM_DIAS_VENCIDOS: daysOverdue,
+      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0], // Fecha en formato YYYY-MM-DD
+      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0], // Fecha del siguiente vencimiento
+    };
   };
 
   // Cargar archivo de valores y pagos mensuales
@@ -51,43 +102,6 @@ const ExportEquifax: React.FC = () => {
       setPaymentData(jsonData); // Guardar los datos cargados
     };
     reader.readAsBinaryString(file);
-  };
-
-  // Calcular valores automáticos
-  const calculateFields = (client: any) => {
-    const paymentInfo = paymentData.find(
-      (item: any) => String(item["CODIGO_ID_SUJETO"]).trim() === String(client["CODIGO_ID_SUJETO"]).trim()
-    );
-
-    if (!paymentInfo || !client["FECHA_CONCESION"]) {
-      return client;
-    }
-
-    const creditTerm = parseInt(paymentInfo["PLAZO DEL CREDITO"]?.split(" ")[0]) || 0; // Meses
-    const monthlyPayment = parseFloat(paymentInfo["VALOR MENSUAL"]?.split(" ")[0]) || 0;
-    const totalValue = parseFloat(paymentInfo["VALOR A PAGAR"]) || 0;
-
-    // Convertir FECHA_CONCESION de número de Excel a fecha
-    const startDate = new Date(client["FECHA_CONCESION"]);
-    if (isNaN(startDate.getTime())) {
-      console.error(`Fecha de concesión inválida: ${client["FECHA_CONCESION"]}`);
-      return client;
-    }
-
-    // Calcular fecha de vencimiento
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + creditTerm);
-
-    // Calcular fecha del siguiente vencimiento
-    const nextPaymentDate = new Date(startDate);
-    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30); // 30 días después de la fecha de concesión
-
-    return {
-      ...client,
-      NUM_DIAS_VENCIDOS: 0, // Inicialmente 0
-      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0], // Fecha en formato YYYY-MM-DD
-      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0], // Fecha del siguiente vencimiento
-    };
   };
 
   // Cargar archivo macro_sicom
