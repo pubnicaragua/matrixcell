@@ -28,14 +28,16 @@ const ExportEquifax: React.FC = () => {
   ];
 
   // Función para generar un código único basado en la cédula
-  const generateUniqueCode = (cedula: string) => {
-    const lastFiveDigits = cedula.slice(-5); // Obtener los últimos 5 dígitos
-    const randomLetters = Array(5) // Generar 5 letras aleatorias
-      .fill(null)
-      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
-      .join("");
-    return `${lastFiveDigits}${randomLetters}`;
-  };
+// Función para generar un código único basado en la cédula
+const generateUniqueCode = (cedula: any) => {
+  const cedulaStr = String(cedula); // Convertir a cadena de texto
+  const lastFiveDigits = cedulaStr.slice(-5); // Obtener los últimos 5 dígitos
+  const randomLetters = Array(5) // Generar 5 letras aleatorias
+    .fill(null)
+    .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+    .join("");
+  return `${lastFiveDigits}${randomLetters}`;
+};
 
   // Cargar archivo y convertir a JSON
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,18 +55,17 @@ const ExportEquifax: React.FC = () => {
       const formattedData = jsonData.map((row: any) => {
         const newRow: any = {};
         columns.forEach((col) => {
-          newRow[col] = row[col] || ""; // Completar valores faltantes con ""
+          newRow[col] = row[col] !== undefined ? row[col] : ""; // Completar valores faltantes con ""
         });
-
+      
         // Generar código único basado en cédula si existe y asignarlo a "NUMERO DE OPERACIÓN"
         if (newRow["CODIGO_ID_SUJETO"]) {
-          newRow["NUMERO DE OPERACIÓN"] = generateUniqueCode(
-            newRow["CODIGO_ID_SUJETO"]
-          );
+          newRow["NUMERO DE OPERACIÓN"] = generateUniqueCode(newRow["CODIGO_ID_SUJETO"]);
         }
-
+      
         return newRow;
       });
+      
 
       setData(formattedData);
     };
