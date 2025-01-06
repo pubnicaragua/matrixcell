@@ -34,7 +34,7 @@ export const AuthController = {
             // Consultar la información del usuario con su `rol_id`
             const { data: usuarioData, error: usuarioError } = await supabase
                 .from("profile")
-                .select("name,created_at, rol_id, roles(nombre)")
+                .select("name,created_at, rol_id, roles(name)")
                 .eq("auth_id", userId)
                 .single();
 
@@ -45,24 +45,24 @@ export const AuthController = {
             const rolId = usuarioData.rol_id;
 
             // Consultar los permisos asociados al `rol_id`
-            /*  const { data: permissions, error: permissionsError } = await supabase
-                  .from("role_permissions")
-                  .select("permissions(name)")
-                  .eq("role_id", rolId);
-  
-              if (permissionsError) {
-                  throw new Error("Error al obtener permisos: " + permissionsError.message);
-              }
-  
-              // Extraer los nombres de los permisos
-              const permissionsList = (permissions as { permissions: { name: string }[] }[])
-                  .flatMap((item) => item.permissions)
-                  .map((permission) => permission.name);*/
+            const { data: permissions, error: permissionsError } = await supabase
+                .from("role_permissions")
+                .select("permissions(name)")
+                .eq("role_id", rolId);
+
+            if (permissionsError) {
+                throw new Error("Error al obtener permisos: " + permissionsError.message);
+            }
+
+            // Extraer los nombres de los permisos
+            const permissionsList = (permissions as { permissions: { name: string }[] }[])
+                .flatMap((item) => item.permissions)
+                .map((permission) => permission.name);
             res.status(200).json({
                 message: "Inicio de sesión exitoso",
                 user: authData.user,
                 usuario: usuarioData,
-                // permissions: permissionsList,
+                permissions: permissionsList,
                 token: authData.session?.access_token || "",
             });
         } catch (err: unknown) {
