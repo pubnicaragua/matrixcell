@@ -1,7 +1,7 @@
 {
   "functions": {
-    "index.js": {
-      "runtime": "nodejs20"
+    "dist/index.js": {
+      "runtime": "nodejs20.x"
     }
   }
 }
