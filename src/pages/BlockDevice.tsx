@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig';  // Importa la configuración de axios
 
 interface Device {
   id: number;
@@ -17,7 +17,7 @@ const DevicesView: React.FC = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/devices');
+        const response = await api.get('/devices'); // Usamos 'api' en lugar de 'axios'
         setDevices(response.data);
       } catch (err: any) {
         setError(err.message || 'Error fetching devices');
@@ -32,7 +32,7 @@ const DevicesView: React.FC = () => {
   const toggleDeviceStatus = async (device: Device) => {
     const newStatus = device.status === 'Bloqueado' ? 'Desbloqueado' : 'Bloqueado';
     try {
-      await axios.put(`http://localhost:5000/devices/${device.id}`, { status: newStatus });
+      await api.put(`/devices/${device.id}`, { status: newStatus }); // Usamos 'api' aquí también
       setDevices((prevDevices) =>
         prevDevices.map((d) =>
           d.id === device.id ? { ...d, status: newStatus } : d

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../axiosConfig"; // Importa la configuración de axios
 
 interface Service {
   id: number;
@@ -8,7 +8,7 @@ interface Service {
   description: string;
   status: string;
   cost: number;
-  store_id: string; // Añadir store_id
+  store_id: string;
 }
 
 const TechnicalServices: React.FC = () => {
@@ -25,14 +25,14 @@ const TechnicalServices: React.FC = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [stores, setStores] = useState<any[]>([]); // Para almacenar las tiendas
+  const [stores, setStores] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const servicesPerPage = 5;
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/technical_services");
+        const response = await api.get("http://localhost:5000/technical_services");
         setServices(response.data);
       } catch (err: any) {
         setError(err.message || "Error fetching services");
@@ -43,15 +43,15 @@ const TechnicalServices: React.FC = () => {
 
     const fetchStores = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/stores");
-        setStores(response.data); // Guarda las tiendas
+        const response = await api.get("http://localhost:5000/stores");
+        setStores(response.data);
       } catch (err: any) {
         alert("Error al cargar las tiendas: " + err.message);
       }
     };
 
     fetchServices();
-    fetchStores(); // Llama a la función para obtener las tiendas
+    fetchStores();
   }, []);
 
   const handleInputChange = (
@@ -67,7 +67,7 @@ const TechnicalServices: React.FC = () => {
       !newService.service_type ||
       !newService.description ||
       newService.cost <= 0 ||
-      !newService.store_id // Verifica que se haya seleccionado una tienda
+      !newService.store_id
     ) {
       alert("Todos los campos son obligatorios, el costo debe ser mayor a 0 y debe seleccionar una tienda.");
       return false;
@@ -78,7 +78,7 @@ const TechnicalServices: React.FC = () => {
   const handleAddService = async () => {
     if (validateService()) {
       try {
-        const response = await axios.post("http://localhost:5000/technical_services", newService);
+        const response = await api.post("http://localhost:5000/technical_services", newService);
         setServices([...services, response.data]);
         setNewService({ client: "", service_type: "", description: "", status: "Pendiente", cost: 0, store_id: "" });
       } catch (err: any) {
@@ -90,7 +90,7 @@ const TechnicalServices: React.FC = () => {
   const handleUpdateService = async () => {
     if (editingService) {
       try {
-        const response = await axios.put(
+        const response = await api.put(
           `http://localhost:5000/technical_services/${editingService.id}`,
           editingService
         );

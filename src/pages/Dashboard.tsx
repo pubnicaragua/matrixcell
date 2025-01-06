@@ -1,6 +1,7 @@
 import { Bar, Pie } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../axiosConfig';  // Importamos la configuración de axios
+
 import React, { useState, useEffect } from 'react';
 import {
   ChartOptions,
@@ -52,8 +53,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchInvoices = async () => {
+      const token = localStorage.getItem('token');  // Obtener el token de localStorage
       try {
-        const response = await axios.get('http://localhost:5000/invoices');
+        const response = await api.get('/invoices', {  // Usar api configurado
+          headers: {
+            Authorization: `Bearer ${token}`  // Agregar token en los headers
+          }
+        });
         const invoices = response.data;
 
         // Contar facturas por estado
@@ -70,7 +76,6 @@ const Dashboard = () => {
           ],
         }));
 
-
         setInvoices(invoices);
       } catch (err: any) {
         setError(err.message || 'Error fetching invoices');
@@ -85,8 +90,13 @@ const Dashboard = () => {
   // Obtener los dispositivos bloqueados desde la API
   useEffect(() => {
     const fetchDevices = async () => {
+      const token = localStorage.getItem('token');  // Obtener el token de localStorage
       try {
-        const response = await axios.get('http://localhost:5000/devices');
+        const response = await api.get('/devices', {  // Usar api configurado
+          headers: {
+            Authorization: `Bearer ${token}`  // Agregar token en los headers
+          }
+        });
         setDevices(response.data);
       } catch (err: any) {
         setError(err.message || 'Error fetching devices');
@@ -216,7 +226,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="flex min-h-screen">
       <div className="flex-1 p-6">
         <h1 className="text-3xl font-semibold text-center text-blue-600 mb-6">Dashboard</h1>
 

@@ -6,7 +6,7 @@ import { ReactNode } from 'react';
 
 const Layout = ({ children }: { children: ReactNode }) => {
   return (
-    <div style={styles.layout}>
+    <div  style={styles.layout}>
       <Sidebar />
       <div style={styles.content}>
         {children}

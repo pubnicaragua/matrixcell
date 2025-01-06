@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig'; // Importar la configuración de axios
 
 interface Invoice {
   id: number;
@@ -7,7 +7,7 @@ interface Invoice {
   number: string;
   device_id: string;
   status: string;
-  created_at: string
+  created_at: string;
 }
 
 const InvoicesView = () => {
@@ -18,17 +18,16 @@ const InvoicesView = () => {
 
   useEffect(() => {
     const fetchInvoices = async () => {
-  try {
-    const response = await axios.get('http://localhost:5000/invoices');
-    console.log(response.data); // Verifica los datos aquí
-    setInvoices(response.data);
-  } catch (err: any) {
-    setError(err.message || 'Error fetching invoices');
-  } finally {
-    setLoading(false);
-  }
-};
-
+      try {
+        const response = await api.get('/invoices');  // Llama a la API usando axiosConfig
+        console.log(response.data);
+        setInvoices(response.data);
+      } catch (err: any) {
+        setError(err.message || 'Error al obtener facturas');
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchInvoices();
   }, []);
@@ -36,7 +35,7 @@ const InvoicesView = () => {
   const handleToggleStatus = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === 'Pendiente' ? 'Pagada' : 'Pendiente';
     try {
-      const response = await axios.put(`http://localhost:5000/invoices/${id}`, { status: newStatus });
+      const response = await api.put(`/invoices/${id}`, { status: newStatus });
       if (response.status === 200) {
         setInvoices((prevInvoices) =>
           prevInvoices.map((invoice) =>
@@ -47,7 +46,7 @@ const InvoicesView = () => {
         throw new Error(`Unexpected response status: ${response.status}`);
       }
     } catch (err: any) {
-      setError(err.message || 'Error updating invoice status');
+      setError(err.message || 'Error al actualizar el estado de la factura');
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig'; // Importa la configuración de Axios
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -26,7 +26,7 @@ const StoreList = () => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/stores');
+        const response = await api.get('/stores'); // Usar 'api' en lugar de 'axios'
         setStores(response.data);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -71,7 +71,7 @@ const StoreList = () => {
   const handleAddStore = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/stores', newStore);
+      const response = await api.post('/stores', newStore); // Usar 'api' en lugar de 'axios'
       setStores((prevStores) => [...prevStores, response.data]);
       setNewStore({ name: '', address: '', phone: '', active: true });
     } catch (err: unknown) {
@@ -88,7 +88,7 @@ const StoreList = () => {
     event.preventDefault();
     if (editStore) {
       try {
-        await axios.put(`http://localhost:5000/stores/${editStore.id}`, editStore);
+        await api.put(`/stores/${editStore.id}`, editStore); // Usar 'api' en lugar de 'axios'
         setStores((prevStores) =>
           prevStores.map((store) =>
             store.id === editStore.id ? editStore : store
@@ -107,7 +107,7 @@ const StoreList = () => {
     if (store) {
       try {
         const updatedStore = { ...store, active: !store.active };
-        await axios.put(`http://localhost:5000/stores/${id}`, updatedStore);
+        await api.put(`/stores/${id}`, updatedStore); // Usar 'api' en lugar de 'axios'
         setStores((prevStores) =>
           prevStores.map((s) => (s.id === id ? updatedStore : s))
         );
@@ -121,7 +121,7 @@ const StoreList = () => {
   const handleDeleteStore = async (id: number) => {
     if (window.confirm('¿Estás seguro de eliminar esta tienda?')) {
       try {
-        await axios.delete(`http://localhost:5000/stores/${id}`);
+        await api.delete(`/stores/${id}`); // Usar 'api' en lugar de 'axios'
         setStores((prevStores) => prevStores.filter((store) => store.id !== id));
       } catch (err: unknown) {
         setError('Error al eliminar la tienda: ' + (err instanceof Error ? err.message : 'Desconocido'));
