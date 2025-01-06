@@ -16,21 +16,12 @@ export const UsuarioController = {
             .listUsers(); // Función administrativa para listar usuarios
 
         if (error) {
-            return res.status(400).json({ message: error.message });
+             res.status(400).json({ message: error.message });
         }
 
-        // Filtrar los usuarios con el rol 'authenticated' en user_metadata
-        const usuariosAutenticados = usuarios.filter((usuario: { user_metadata: {id:number, role: string,email:string }; }) => 
-            usuario.user_metadata && usuario.user_metadata.role === 'authenticated'
-        );
-
-        // Si no hay usuarios autenticados
-        if (usuariosAutenticados.length === 0) {
-            return res.status(404).json({ message: 'No authenticated users found.' });
-        }
-
+       
         // Responder solo con los usuarios autenticados
-        res.json(usuariosAutenticados);
+        res.json(usuarios);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
