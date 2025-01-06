@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
+  const [paymentData, setPaymentData] = useState<any[]>([]); // Datos de valores y pagos mensuales
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
 
   const columns = [
@@ -27,20 +28,16 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
-  // Función para generar un código único basado en la cédula
-// Función para generar un código único basado en la cédula
-const generateUniqueCode = (cedula: any) => {
-  const cedulaStr = String(cedula); // Convertir a cadena de texto
-  const lastFiveDigits = cedulaStr.slice(-5); // Obtener los últimos 5 dígitos
-  const randomLetters = Array(5) // Generar 5 letras aleatorias
-    .fill(null)
-    .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
-    .join("");
-  return `${lastFiveDigits}${randomLetters}`;
-};
+  // Función para convertir un número de Excel a fecha
+  const excelDateToJSDate = (serial: number): string => {
+    const utcDays = Math.floor(serial - 25569); // Restar 25569 para convertir a epoch time
+    const date = new Date(utcDays * 86400 * 1000); // Multiplicar por los milisegundos en un día
+    const formattedDate = date.toISOString().split("T")[0]; // Convertir a formato YYYY-MM-DD
+    return formattedDate;
+  };
 
-  // Cargar archivo y convertir a JSON
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Cargar archivo de valores y pagos mensuales
+  const handlePaymentFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -51,21 +48,75 @@ const generateUniqueCode = (cedula: any) => {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+      setPaymentData(jsonData); // Guardar los datos cargados
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // Calcular valores automáticos
+  const calculateFields = (client: any) => {
+    const paymentInfo = paymentData.find(
+      (item: any) => String(item["CODIGO_ID_SUJETO"]).trim() === String(client["CODIGO_ID_SUJETO"]).trim()
+    );
+
+    if (!paymentInfo || !client["FECHA_CONCESION"]) {
+      return client;
+    }
+
+    const creditTerm = parseInt(paymentInfo["PLAZO DEL CREDITO"]?.split(" ")[0]) || 0; // Meses
+    const monthlyPayment = parseFloat(paymentInfo["VALOR MENSUAL"]?.split(" ")[0]) || 0;
+    const totalValue = parseFloat(paymentInfo["VALOR A PAGAR"]) || 0;
+
+    // Convertir FECHA_CONCESION de número de Excel a fecha
+    const startDate = new Date(client["FECHA_CONCESION"]);
+    if (isNaN(startDate.getTime())) {
+      console.error(`Fecha de concesión inválida: ${client["FECHA_CONCESION"]}`);
+      return client;
+    }
+
+    // Calcular fecha de vencimiento
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + creditTerm);
+
+    // Calcular fecha del siguiente vencimiento
+    const nextPaymentDate = new Date(startDate);
+    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30); // 30 días después de la fecha de concesión
+
+    return {
+      ...client,
+      NUM_DIAS_VENCIDOS: 0, // Inicialmente 0
+      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0], // Fecha en formato YYYY-MM-DD
+      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0], // Fecha del siguiente vencimiento
+    };
+  };
+
+  // Cargar archivo macro_sicom
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const binaryStr = e.target?.result as string;
+      const workbook = XLSX.read(binaryStr, { type: "binary" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+
       // Formatear los datos cargados
       const formattedData = jsonData.map((row: any) => {
         const newRow: any = {};
         columns.forEach((col) => {
           newRow[col] = row[col] !== undefined ? row[col] : ""; // Completar valores faltantes con ""
         });
-      
-        // Generar código único basado en cédula si existe y asignarlo a "NUMERO DE OPERACIÓN"
-        if (newRow["CODIGO_ID_SUJETO"]) {
-          newRow["NUMERO DE OPERACIÓN"] = generateUniqueCode(newRow["CODIGO_ID_SUJETO"]);
+
+        // Convertir fecha si es un número
+        if (typeof newRow["FECHA_CONCESION"] === "number") {
+          newRow["FECHA_CONCESION"] = excelDateToJSDate(newRow["FECHA_CONCESION"]);
         }
-      
-        return newRow;
+
+        // Calcular valores automáticos
+        return calculateFields(newRow);
       });
-      
 
       setData(formattedData);
     };
@@ -87,22 +138,22 @@ const generateUniqueCode = (cedula: any) => {
     alert("Archivo exportado exitosamente!");
   };
 
-  // Manejar cambios en las celdas de la tabla
-  const handleCellChange = (
-    rowIndex: number,
-    columnKey: string,
-    value: string
-  ) => {
-    const updatedData = [...data];
-    updatedData[rowIndex][columnKey] = value;
-    setData(updatedData);
-  };
-
   return (
     <div style={{ padding: "20px" }}>
       <h2>Gestión de Macro Sicom</h2>
 
-      {/* Cargar archivo */}
+      {/* Cargar archivo de valores y pagos mensuales */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="paymentFileUpload">Cargar archivo de valores y pagos mensuales:</label>
+        <input
+          id="paymentFileUpload"
+          type="file"
+          accept=".xlsm, .xlsx"
+          onChange={handlePaymentFileUpload}
+        />
+      </div>
+
+      {/* Cargar archivo macro_sicom */}
       <div style={{ marginBottom: "20px" }}>
         <label htmlFor="fileUpload">Cargar archivo `macro_sicom`:</label>
         <input
@@ -112,52 +163,6 @@ const generateUniqueCode = (cedula: any) => {
           onChange={handleFileUpload}
         />
       </div>
-
-      {/* Tabla de datos cargados */}
-      {data.length > 0 && (
-        <div style={{ marginBottom: "20px", overflowX: "auto" }}>
-          <h3>Datos cargados</h3>
-          <table
-            border={1}
-            cellPadding={5}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              borderCollapse: "collapse",
-            }}
-          >
-            <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th key={col}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {columns.map((col) => (
-                    <td key={col}>
-                      <input
-                        type="text"
-                        value={row[col]}
-                        onChange={(e) =>
-                          handleCellChange(rowIndex, col, e.target.value)
-                        }
-                        style={{
-                          width: "100%",
-                          border: "none",
-                          outline: "none",
-                        }}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {/* Exportar archivo */}
       <div>
