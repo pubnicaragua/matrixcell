@@ -8,11 +8,34 @@ import * as XLSX from 'xlsx';
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
+
     async getAllDevices(req: Request, res: Response) {
         try {
+            type DeviceFormat = {
+                id?: number|null;
+                store_id?: number|null;
+                imei: string | null;
+                status: string ;
+                owner: number | null;
+                created_at: Date|null;
+                clients: {
+                    name: string;
+                };
+            };
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const devices = await BaseService.getAll<Device>(tableName, ['id', 'imei', 'status', 'owner', 'store_id'], where);
-            res.json(DeviceResource.formatDevices(devices));
+            const devices = await BaseService.getAll<DeviceFormat>(tableName, ['id', 'imei', 'status', 'owner', 'store_id','devices(name)'], where);
+            const resultados = devices!.map((device) => ({
+                id: device.id,
+            imei: device.imei,
+            status: device.status,
+            owner: device.owner,
+            store_id: device.store_id,
+            cliente: Array.isArray(device.clients)
+                    ? device.clients[0]?.name || "Sin Cliente"
+                    : device.clients?.name || "Sin Cliente",
+            created_at: device.created_at,
+            }));
+            res.json(DeviceResource.formatDevices(resultados));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

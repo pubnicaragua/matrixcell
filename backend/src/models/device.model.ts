@@ -3,8 +3,9 @@ export class Device{
     store_id?: number|null;
     imei: string | null;
     status: string ;
-    owner: string | null;
+    owner: number | null;
     created_at: Date|null;
+    cliente?: string |null;
 
     constructor(){
         this.owner = null;

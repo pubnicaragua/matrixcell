@@ -9,11 +9,13 @@ export const ClientResource = {
             name: client.name,
             address: client.address,
             phone: client.phone,
+            email: client.email,
             city: client.city,
             due_date: client.due_date,
             deubt_type: client.deubt_type,
             operation_number: client.operation_number,
-            device_id: client.device_id,
+            status: client.status,
+            category: client.category,
             created_at: client.created_at
         };
     },

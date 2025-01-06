@@ -8,5 +8,4 @@ const router = express.Router();
 router.get('/', sessionAuth, UsuarioController.getAllUsuarios);
 
 
-
 export default router;
