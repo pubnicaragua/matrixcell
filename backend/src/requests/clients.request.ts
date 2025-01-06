@@ -8,11 +8,13 @@ const clientSchema = Joi.object({
     name: Joi.string().required(),
     address: Joi.string().required(),
     phone: Joi.string().required(),
+    email: Joi.string().required(),
     city: Joi.string().required(),
     due_date: Joi.string().required(),
     deubt_type: Joi.string().required(),
     operation_number: Joi.number().required(),
-    device_id: Joi.number().required(),
+    status: Joi.string().required(),
+    category: Joi.string().required()
 });
 
 export const validateClient = (client: Client) => {

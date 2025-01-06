@@ -11,7 +11,7 @@ export const ClientController = {
     async getAllClients(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const clients = await BaseService.getAll<Client>(tableName, ['id','identity_number','identity_type', 'name','address', 'phone',  'city', 'due_date','deubt_type','operation_number','device_id','client_id','created_at'], where);
+            const clients = await BaseService.getAll<Client>(tableName, ['id','identity_number','identity_type', 'name','address', 'phone','email',  'city', 'due_date','deubt_type','operation_number','status','category','created_at'], where);
             res.json(ClientResource.formatClients(clients));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
