@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../axiosConfig';
 
 // Define la interfaz de notificación
 interface Notification {
@@ -17,9 +18,14 @@ const NotificationsView = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      const token = localStorage.getItem('token');  // Obtener el token de localStorage
       try {
-        const response = await axios.get('http://localhost:5000/notifications');
-        setNotifications(response.data); // TypeScript sabe que los datos son de tipo Notification[]
+        const response = await api.get('/notifications', {
+          headers: {
+            Authorization: `Bearer ${token}`  // Agregar token en los headers
+          }
+        });
+        setNotifications(response.data); 
       } catch (err: any) {
         setError(err.message || 'Error al obtener las notificaciones');
       } finally {
@@ -28,7 +34,8 @@ const NotificationsView = () => {
     };
 
     fetchNotifications();
-  }, []); // Obtén las notificaciones cuando el componente se monte
+}, []);
+
 
   const handleMarkAsRead = async (id: string) => {
     try {
