@@ -7,7 +7,7 @@ interface Invoice {
   number: string;
   device_id: string;
   status: string;
-  created_at: Date | null;
+  created_at: string
 }
 
 const InvoicesView = () => {
@@ -96,7 +96,7 @@ const InvoicesView = () => {
                   <td className="px-6 py-4 text-sm text-gray-800">{invoice.device_id}</td>
                   <td className="px-6 py-4 text-sm text-gray-800">{invoice.status}</td>
                   <td className="px-6 py-4 text-sm text-gray-800">
-                    {invoice.created_at ? new Date(invoice.created_at).toLocaleString() : 'N/A'}
+                    {new Date(invoice.created_at).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-800">
                     <button
