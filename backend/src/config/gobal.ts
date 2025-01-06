@@ -5,6 +5,7 @@ export const {
     ALLOWED_ORIGIN = '',
     SUPABASE_URL = '',
     SUPABASE_API_KEY = '',
+    SUPABASE_SERVICE_ROLE='',
     URL_RESET_PASSWORD=''
 } = process.env;
   
@@ -14,6 +15,7 @@ export const {
     db: {
       host: SUPABASE_URL,
       apiKey: SUPABASE_API_KEY,
+      secretKey:SUPABASE_SERVICE_ROLE
     },
   };
   
