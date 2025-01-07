@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx"; // Importación corregida
+import api from '../axiosConfig' // Asegúrate de que esta importación sea correcta
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
+  const [file, setFile] = useState<File | null>(null); // Agregar estado para almacenar el archivo cargado
 
   const columns = [
     "COD_TIPO_ID",
@@ -27,10 +29,12 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
-  // Cargar archivo y convertir a JSON
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
+    // Guardamos el archivo en el estado
+    setFile(file);
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -48,35 +52,40 @@ const ExportEquifax: React.FC = () => {
         return newRow;
       });
 
+      console.log("Datos cargados y formateados:", formattedData);
       setData(formattedData);
     };
     reader.readAsBinaryString(file);
   };
 
-  // Exportar archivo editado
+  // Función para manejar el cambio de valor en las celdas
+  const handleCellChange = (rowIndex: number, col: string, value: string) => {
+    const newData = [...data];
+    newData[rowIndex][col] = value;
+    setData(newData);
+  };
+
   const handleExport = () => {
-    if (!data.length) {
-      alert("No hay datos para exportar");
+    if (!file) {
+      alert("No se ha cargado ningún archivo para exportar.");
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
+    const formData = new FormData();
+    formData.append("file", file); // Agregamos el archivo al FormData
 
-    XLSX.writeFile(workbook, fileName);
-    alert("Archivo exportado exitosamente!");
-  };
+    console.log("Enviando archivo...", file);
 
-  // Manejar cambios en las celdas de la tabla
-  const handleCellChange = (
-    rowIndex: number,
-    columnKey: string,
-    value: string
-  ) => {
-    const updatedData = [...data];
-    updatedData[rowIndex][columnKey] = value;
-    setData(updatedData);
+    // Usando axios para enviar el archivo
+    api.post("/clients/insercion-consolidado", formData)
+      .then((response) => {
+        console.log("Respuesta del servidor:", response.data);
+        alert("Archivo enviado exitosamente!");
+      })
+      .catch((error) => {
+        console.error("Error al enviar el archivo:", error);
+        alert("Hubo un error al enviar el archivo.");
+      });
   };
 
   return (
@@ -85,7 +94,7 @@ const ExportEquifax: React.FC = () => {
 
       {/* Cargar archivo */}
       <div style={{ marginBottom: "20px" }}>
-        <label htmlFor="fileUpload">Cargar archivo `macro_sicom`:</label>
+        <label htmlFor="fileUpload">Cargar archivo macro_sicom:</label>
         <input
           id="fileUpload"
           type="file"
@@ -150,7 +159,7 @@ const ExportEquifax: React.FC = () => {
           onChange={(e) => setFileName(e.target.value)}
         />
         <button onClick={handleExport} style={{ marginLeft: "10px" }}>
-          Exportar Archivo
+          Enviar Archivo
         </button>
       </div>
     </div>

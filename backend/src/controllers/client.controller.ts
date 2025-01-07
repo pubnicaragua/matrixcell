@@ -60,8 +60,8 @@ export const ClientController = {
         // Define el nombre de las tablas (asegúrate de que sean válidas)
         const clientsTableName = 'clients';
         const operationsTableName = 'operations';
-        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'deubt_type', 'operation_number', 'device_id', 'client_id', 'created_at']);
-        const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'operation_number', 'operation_type', 'operation_date', 'due_date', 'amount_due', 'amount_paid', 'days_overdue', 'status', 'judicial_action', 'created_at', 'updated_at']);
+        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'deubt_type', 'created_at']);
+        const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'operation_number', 'operation_date', 'due_date', 'amount_due', 'amount_paid', 'days_overdue', 'status', 'judicial_action', 'created_at', 'updated_at']);
         // Procesar datos y generar archivo
         // Procesar datos y preparar información para el reporte
         const data = clients.map(client => {
@@ -172,16 +172,22 @@ export const ClientController = {
     
                 // Relaciona la operación con el cliente
                 const operation = {
-                    operation_number: row.NUMERO_DE_OPERACION,
-                    operation_date: new Date(row.FECHA_CONCESION),
+                    operation_number: row.NUMERO_DE_OPERACION == '' ? null:row.NUMERO_DE_OPERACION,
+                    operation_date: row.FECHA_CONCESION == '' ? null:row.FECHA_CONCESION,
+                    operation_value: row.VAL_OPERACION == 0 ? null:row.VAL_OPERACION,
                     amount_due: row.VAL_A_VENCER,
                     amount_paid: row.VAL_VENCIDO,
-                    days_overdue: row.NUM_DIAS_VENCIDOS,
                     judicial_action: row.VA_DEM_JUDICIAL > 0,
+                    cart_value: row.VAL_CART_CASTIGADA,
+                    days_overdue: row.NUM_DIAS_VENCIDOS,
+                    due_date: row.FECHA_DE_VENCIMIENTO == '' ? null:row.FECHA_CONCESION,
+                    refinanced_date: row.DEUDA_REFINANCIADA,
+                    prox_due_date: row.FECHA_SIG_VENCIMIENTO,
                     client_id: clientData.id, // Relación con el cliente insertado
                     created_at: new Date(),
                 };
     
+                console.log(operation)
                 const { error: operationError } = await supabase.from('operations').insert(operation);
                 if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
     
@@ -195,7 +201,9 @@ export const ClientController = {
                     created_at: new Date(),
                 };
     
+                console.log(status)
                 const { error: statusError } = await supabase.from('statuses').insert(status);
+                
                 if (statusError) throw new Error(`Error al insertar estado: ${statusError.message}`);
             }
     
