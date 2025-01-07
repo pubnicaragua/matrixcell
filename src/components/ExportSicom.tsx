@@ -58,54 +58,58 @@ const ExportEquifax: React.FC = () => {
     let creditTerm = 0;
     const creditTermStr = paymentInfo["PLAZO DEL CREDITO"]?.trim();
 
+    // Determinar el plazo en meses
     if (creditTermStr?.includes("MESES")) {
       creditTerm = parseInt(creditTermStr.split(" ")[0]) || 0;
     } else if (creditTermStr?.includes("SEMANAL")) {
       const weeks = parseInt(creditTermStr.split(" ")[0]) || 0;
-      creditTerm = Math.ceil(weeks / 4);
+      creditTerm = Math.ceil(weeks / 4); // Aproximadamente 4 semanas por mes
     }
 
     const startDate = new Date(client["FECHA_CONCESION"]);
     if (isNaN(startDate.getTime())) return client;
 
+    // Calcular fecha de vencimiento
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + creditTerm);
 
     const today = new Date();
+
+    // Calcular días vencidos
     const daysOverdue =
       today > endDate
         ? Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
-    const nextPaymentDate = new Date(startDate);
-    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+    // Calcular siguiente vencimiento (sumar un plazo al final)
+    const nextPaymentDate = new Date(endDate);
+    nextPaymentDate.setMonth(nextPaymentDate.getMonth() + creditTerm);
 
+    // Generar número de operación
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
 
     // Validar y calcular valores
     const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
     let valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || 0;
-    const valVencido = valOperacion - valAVencer;
-
-    if (isNaN(valOperacion) || isNaN(valAVencer)) {
-      console.error("Datos inválidos en el cliente:", client);
-      return client;
-    }
 
     if (!valAVencer && valOperacion > 0) {
-      valAVencer = valOperacion;
+      valAVencer = valOperacion; // Asegurar valor inicial
     }
+
+    const valVencido = valOperacion - valAVencer;
 
     return {
       ...client,
       "NUMERO DE OPERACION": operationNumber,
-      NUM_DIAS_VENCIDOS: daysOverdue,
-      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0],
-      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0],
-      VAL_VENCIDO: valVencido.toFixed(2),
-      VAL_A_VENCER: valAVencer.toFixed(2),
+      VAL_A_VENCER: valAVencer.toFixed(2), // Devolver con formato
+      VAL_VENCIDO: valVencido.toFixed(2), // Devolver con formato
+      NUM_DIAS_VENCIDOS: `${daysOverdue} días`, // Días vencidos en formato texto
+      FECHA_DE_VENCIMIENTO: endDate.toLocaleDateString("es-ES"), // Formato de fecha DD/MM/YYYY
+      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toLocaleDateString("es-ES"), // Siguiente vencimiento
     };
   };
+
+
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -160,14 +164,14 @@ const ExportEquifax: React.FC = () => {
       return;
     }
 
-    // Crear un nuevo libro de trabajo y agregarle la hoja de datos
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Datos Exportados");
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
 
-    // Descargar el archivo con el nombre configurado
-    XLSX.writeFile(wb, fileName);
+    // Descargar archivo
+    XLSX.writeFile(workbook, fileName);
   };
+
 
   const handleSendFile = () => {
     if (!file) {
