@@ -24,8 +24,7 @@ const App = () => {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/notifications" element={<Layout><Notifications /></Layout>} />
         <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
         <Route path="/reports" element={<Layout><Reports /></Layout>} />
