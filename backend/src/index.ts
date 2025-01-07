@@ -1,9 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors'; // Importar cors
-import multer, { DiskStorageOptions } from 'multer'; // Importar multer
 import dotenv from 'dotenv'; // Importar dotenv
 import bodyParser from 'body-parser';
-import { CronJob } from 'cron';
 // Importar rutas
 import authRoutes from './routes/auth';
 import usuarioRoutes from './routes/usuario.routes';
@@ -38,6 +36,9 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Registrar rutas
+app.get('/', (req: Request, res: Response) => {
+  res.send('Bienvenido al API');
+});
 app.use('/auth/', authRoutes);
 app.use('/usuarios', usuarioRoutes);
 app.use('/roles', rolRoutes);
