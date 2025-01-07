@@ -34,23 +34,20 @@ const Dashboard = () => {
   const [pieChartData, setPieChartData] = useState<any>(null);
   const [morosityChartData, setMorosityChartData] = useState<any>(null);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [invoice, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
     const fetchInvoicesAndDevices = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const [invoicesResponse, devicesResponse] = await Promise.all([
-          api.get('/invoices', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          api.get('/devices', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+      try {        
+        const invoicesResponse = await api.get('/invoices');
+
+        const devicesResponse = await api.get('/devices');
 
         const invoices: Invoice[] = invoicesResponse.data;
         const devices: Device[] = devicesResponse.data;
-        setDevices(devices);
+
+        setDevices(devicesResponse.data);
+        setInvoices(invoicesResponse.data);
 
         // Filtrar facturas pendientes
         const pendingInvoices = invoices.filter(invoice => invoice.status === 'Pendiente');
