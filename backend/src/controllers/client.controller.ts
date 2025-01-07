@@ -169,8 +169,6 @@ export const ClientController = {
             }
 
             for (const row of sheetData) {
-                console.log(row);
-
                 const client = {
                     identity_number: row.CODIGO_ID_SUJETO,
                     name: row.NOMBRE_SUJETO,
@@ -208,17 +206,16 @@ export const ClientController = {
                 const { error: operationError } = await supabase.from('operations').insert(operation);
                 if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
 
-                const status = {
+                /*const status = {
                     total_operations: 1,
-                    total_due: row.VAL_A_VENCER,
+                    total_due: 0,//row.VAL_A_VENCER,
                     total_overdue: row.NUM_DIAS_VENCIDOS > 0 ? row.VAL_VENCIDO : 0,
                     judicial_operations: row.VA_DEM_JUDICIAL > 0 ? 1 : 0,
                     client_id: clientData.id,
                     created_at: new Date(),
-                };
-                console.log(status);
-                const { error: statusError } = await supabase.from('statuses').insert(status);
-                if (statusError) throw new Error(`Error al insertar estado: ${statusError.message}`);
+                };*/
+                /*const { error: statusError } = await supabase.from('statuses').insert(status);
+                if (statusError) throw new Error(`Error al insertar estado: ${statusError.message}`);*/
             }
 
             res.status(200).json({ message: 'Datos procesados e insertados con éxito.' });
