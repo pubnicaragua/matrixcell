@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import * as XLSX from "xlsx"; // Importación corregida
-import api from '../axiosConfig' // Asegúrate de que esta importación sea correcta
+import * as XLSX from "xlsx";
+import api from '../axiosConfig'; // Asegúrate de que esta importación sea correcta
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
+  const [paymentData, setPaymentData] = useState<any[]>([]);
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
-  const [file, setFile] = useState<File | null>(null); // Agregar estado para almacenar el archivo cargado
+  const [file, setFile] = useState<File | null>(null);
 
   const columns = [
     "COD_TIPO_ID",
@@ -29,16 +30,57 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
-  // Función para generar un código único basado en la cédula (Ejemplo simple)
   const generateUniqueCode = (cedula: string): string => {
-    return `COD_${cedula}`; // Agregar un prefijo para hacerlo único
+    const lastFiveDigits = cedula.slice(-5);
+    const randomLetters = Array(3)
+      .fill(null)
+      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+      .join("");
+    return `${lastFiveDigits} ${randomLetters}`;
+  };
+
+  const excelDateToJSDate = (serial: number): string => {
+    const utcDays = Math.floor(serial - 25569);
+    const date = new Date(utcDays * 86400 * 1000);
+    return date.toISOString().split("T")[0];
+  };
+
+  const calculateFields = (client: any) => {
+    const valOperacion = parseFloat(client["VAL_OPERACION"]) || 0;
+    let valAVencer = parseFloat(client["VAL_A_VENCER"]) || 0;
+
+    const valVencido = valOperacion - valAVencer;
+
+    client["VAL_A_VENCER"] = valAVencer.toFixed(2);
+    client["VAL_VENCIDO"] = valVencido.toFixed(2);
+
+    const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
+
+    const startDate = new Date(client["FECHA_CONCESION"]);
+    if (isNaN(startDate.getTime())) return client;
+
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 12);
+
+    const today = new Date();
+    const daysOverdue = today > endDate ? Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    const nextPaymentDate = new Date(startDate);
+    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+
+    return {
+      ...client,
+      "NUMERO DE OPERACION": operationNumber,
+      NUM_DIAS_VENCIDOS: daysOverdue,
+      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0],
+      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0],
+    };
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
-    // Guardamos el archivo en el estado
+
     setFile(file);
 
     const reader = new FileReader();
@@ -46,133 +88,53 @@ const ExportEquifax: React.FC = () => {
       const binaryStr = e.target?.result as string;
       const workbook = XLSX.read(binaryStr, { type: "binary" });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
-      // Formatear los datos cargados
       const formattedData = jsonData.map((row: any) => {
         const newRow: any = {};
         columns.forEach((col) => {
-          newRow[col] = row[col] || ""; // Completar valores faltantes con ""
+          newRow[col] = row[col] !== undefined ? row[col] : "";
         });
 
-        // Generar código único basado en cédula si existe
-        if (newRow["CODIGO_ID_SUJETO"]) {
-          newRow["CODIGO_ID_SUJETO"] = generateUniqueCode(
-            newRow["CODIGO_ID_SUJETO"]
-          );
+        if (typeof newRow["FECHA_CONCESION"] === "number") {
+          newRow["FECHA_CONCESION"] = excelDateToJSDate(newRow["FECHA_CONCESION"]);
         }
 
-        return newRow;
+        return calculateFields(newRow);
       });
 
-      console.log("Datos cargados y formateados:", formattedData);
       setData(formattedData);
     };
     reader.readAsBinaryString(file);
   };
 
-  // Función para manejar el cambio de valor en las celdas
-  const handleCellChange = (rowIndex: number, col: string, value: string) => {
-    const newData = [...data];
-    newData[rowIndex][col] = value;
-    setData(newData);
-  };
-
   const handleExport = () => {
-    if (!file) {
-      alert("No se ha cargado ningún archivo para exportar.");
+    if (!data.length) {
+      alert("No hay datos para exportar.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file); // Agregamos el archivo al FormData
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Datos Exportados");
 
-    console.log("Enviando archivo...", file);
-
-    // Usando axios para enviar el archivo
-    api.post("/clients/insercion-consolidado", formData)
-      .then((response) => {
-        console.log("Respuesta del servidor:", response.data);
-        alert("Archivo enviado exitosamente!");
-      })
-      .catch((error) => {
-        console.error("Error al enviar el archivo:", error);
-        alert("Hubo un error al enviar el archivo.");
-      });
+    XLSX.writeFile(wb, fileName);
   };
 
   return (
     <div style={{ padding: "20px" }}>
       <h2>Gestión de Macro Sicom</h2>
 
-      {/* Cargar archivo */}
       <div style={{ marginBottom: "20px" }}>
         <label htmlFor="fileUpload">Cargar archivo macro_sicom:</label>
-        <input
-          id="fileUpload"
-          type="file"
-          accept=".xlsm, .xlsx"
-          onChange={handleFileUpload}
-        />
+        <input id="fileUpload" type="file" accept=".xlsm, .xlsx" onChange={handleFileUpload} />
       </div>
 
-      {/* Tabla de datos cargados */}
-      {data.length > 0 && (
-        <div style={{ marginBottom: "20px", overflowX: "auto" }}>
-          <h3>Datos cargados</h3>
-          <table
-            border={1}
-            cellPadding={5}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              borderCollapse: "collapse",
-            }}
-          >
-            <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th key={col}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {columns.map((col) => (
-                    <td key={col}>
-                      <input
-                        type="text"
-                        value={row[col]}
-                        onChange={(e) =>
-                          handleCellChange(rowIndex, col, e.target.value)
-                        }
-                        style={{
-                          width: "100%",
-                          border: "none",
-                          outline: "none",
-                        }}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Exportar archivo */}
       <div>
         <label htmlFor="fileName">Nombre del archivo a exportar:</label>
-        <input
-          id="fileName"
-          type="text"
-          value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
-        />
+        <input id="fileName" type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
         <button onClick={handleExport} style={{ marginLeft: "10px" }}>
-          Enviar Archivo
+          Exportar a Excel
         </button>
       </div>
     </div>
