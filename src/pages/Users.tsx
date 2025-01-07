@@ -1,164 +1,213 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 
 interface User {
   id: string;
   nombre: string;
   email: string;
+  rol: string;
+  permisos: string[];
 }
 
 const Users = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Lista estática de usuarios de ejemplo
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: '1',
+      nombre: 'Juan Pérez',
+      email: 'juan.perez@example.com',
+      rol: 'manager',
+      permisos: ['Ver dashboard', 'Editar usuarios', 'Crear reportes'],
+    },
+    {
+      id: '2',
+      nombre: 'Ana Gómez',
+      email: 'ana.gomez@example.com',
+      rol: 'tecnico',
+      permisos: ['Ver dashboard', 'Manejar servicios técnicos'],
+    },
+    {
+      id: '3',
+      nombre: 'Carlos Martínez',
+      email: 'carlos.martinez@example.com',
+      rol: 'lector',
+      permisos: ['Ver dashboard'],
+    },
+    {
+      id: '4',
+      nombre: 'Lucía Fernández',
+      email: 'lucia.fernandez@example.com',
+      rol: 'manager',
+      permisos: ['Ver dashboard', 'Editar usuarios', 'Crear reportes', 'Manejar servicios técnicos'],
+    },
+    {
+      id: '5',
+      nombre: 'Pedro Sánchez',
+      email: 'pedro.sanchez@example.com',
+      rol: 'tecnico',
+      permisos: ['Ver dashboard', 'Manejar servicios técnicos'],
+    },
+  ]);
 
-  // Obtener el token de acceso del almacenamiento (localStorage o donde lo tengas)
-  const accessToken = localStorage.getItem('access_token') || '';
+  // Estados para el formulario de agregar usuario
+  const [newUser, setNewUser] = useState({
+    nombre: '',
+    email: '',
+    rol: 'lector', // Valor predeterminado
+    permisos: ['Ver dashboard'],
+  });
 
-  // Función para obtener usuarios
-  const fetchUsers = async () => {
-    setLoading(true);
-    setError(null); // Limpiar errores anteriores
-    try {
-      if (!accessToken) {
-        throw new Error('Access token is missing');
-      }
-      // Asegúrate de pasar el token en el encabezado Authorization
-      const response = await axios.get('http://localhost:5000/usuarios', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`, // Agregar el token en la cabecera
-        },
-      });
-      setUsers(response.data);
-    } catch (error: any) {
-      console.error('Error al cargar usuarios:', error);
-      setError(error.message || 'No se pudieron cargar los usuarios.');
-    } finally {
-      setLoading(false);
-    }
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  // Opciones de roles
+  const roles = ['manager', 'tecnico', 'lector'];
+  // Opciones de permisos
+  const permisosOptions = [
+    'Ver dashboard',
+    'Editar usuarios',
+    'Crear reportes',
+    'Manejar servicios técnicos',
+  ];
+
+  // Función para manejar el cambio en el formulario
+  // Modificar la función handleInputChange para manejar diferentes tipos de elementos
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    setNewUser((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setNewUser((prevState) => {
+      const updatedPermissions = checked
+        ? [...prevState.permisos, value]
+        : prevState.permisos.filter((permiso) => permiso !== value);
+      return { ...prevState, permisos: updatedPermissions };
+    });
   };
 
   // Función para agregar un nuevo usuario
-  const handleAddUser = async () => {
-    const newUser = { nombre: 'Nuevo Usuario', email: 'nuevo@correo.com' };
-    try {
-      if (!accessToken) {
-        setError('No tienes acceso. Por favor, inicia sesión.');
-        setLoading(false);
-        return;
-      }
-      await axios.post(
-        'http://localhost:5000/usuarios', // Endpoint de la API para agregar usuarios
-        newUser,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // También pasas el token
-          },
-        }
-      );
-      fetchUsers(); // Refrescar la lista de usuarios
-    } catch (error: any) {
-      console.error('Error al agregar usuario:', error);
-      setError(error.message || 'No se pudo agregar el usuario.');
-    }
+  const handleAddUser = () => {
+    const newUserData = { ...newUser, id: String(users.length + 1) };
+    setUsers((prevUsers) => [...prevUsers, newUserData]);
+    setIsFormVisible(false); // Ocultar el formulario después de agregar
   };
-
-  // Función para actualizar un usuario
-  const handleUpdateUser = async (id: string) => {
-    const updatedData = { nombre: 'Usuario Actualizado' };
-    try {
-      if (!accessToken) {
-        setError('No tienes acceso. Por favor, inicia sesión.');
-        return;
-      }
-      await axios.put(
-        `http://localhost:5000/usuarios/${id}`, // Endpoint de la API para actualizar usuarios
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // Pasar el token también
-          },
-        }
-      );
-      fetchUsers(); // Refrescar la lista de usuarios
-    } catch (error: any) {
-      console.error('Error al actualizar usuario:', error);
-      setError(error.message || 'No se pudo actualizar el usuario.');
-    }
-  };
-
-  // Función para eliminar un usuario
-  const handleDeleteUser = async (id: string) => {
-    try {
-      if (!accessToken) {
-        setError('No tienes acceso. Por favor, inicia sesión.');
-        return;
-      }
-      await axios.delete(`http://localhost:5000/usuarios/${id}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`, // Pasar el token para autenticación
-        },
-      });
-      fetchUsers(); // Refrescar la lista de usuarios
-    } catch (error: any) {
-      console.error('Error al eliminar usuario:', error);
-      setError(error.message || 'No se pudo eliminar el usuario.');
-    }
-  };
-
-  // Cargar usuarios al montar el componente
-  useEffect(() => {
-    fetchUsers();
-  }, []); // Este efecto solo se ejecuta una vez al cargar el componente
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Gestión de Usuarios</h1>
-      {error && <p className="text-red-600 text-center mb-4">{error}</p>}
-      {loading ? (
-        <p className="text-center text-gray-500">Cargando...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
-                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Email</th>
-                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-800">{user.nombre}</td>
-                  <td className="px-6 py-4 text-sm text-gray-800">{user.email}</td>
-                  <td className="px-6 py-4 text-sm space-x-2">
-                    <button
-                      onClick={() => handleUpdateUser(user.id)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    >
-                      Actualizar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <div className="text-center mt-6">
+
+      {/* Mostrar formulario de agregar usuario */}
+      <div className="text-center mb-6">
         <button
-          onClick={handleAddUser}
+          onClick={() => setIsFormVisible(!isFormVisible)}
           className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-green-600 transition"
         >
-          Agregar Usuario
+          {isFormVisible ? 'Cancelar' : 'Agregar Usuario'}
         </button>
+      </div>
+
+      {isFormVisible && (
+        <div className="bg-white p-6 shadow-md rounded-lg mb-6">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">Nuevo Usuario</h2>
+          <div className="mb-4">
+            <label className="block text-gray-700">Nombre:</label>
+            <input
+              type="text"
+              name="nombre"
+              value={newUser.nombre}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+              placeholder="Nombre del usuario"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Email:</label>
+            <input
+              type="email"
+              name="email"
+              value={newUser.email}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+              placeholder="Email del usuario"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Rol:</label>
+            <select
+              name="rol"
+              value={newUser.rol}
+              onChange={handleInputChange}  // Ahora esta línea debería funcionar correctamente
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            >
+              {roles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700">Permisos:</label>
+            <div className="space-y-2">
+              {permisosOptions.map((permiso) => (
+                <div key={permiso} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    value={permiso}
+                    checked={newUser.permisos.includes(permiso)}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
+                  />
+                  <label>{permiso}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-center">
+            <button
+              onClick={handleAddUser}
+              className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-600 transition"
+            >
+              Agregar Usuario
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla de usuarios */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-auto border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
+              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Rol</th>
+              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Permisos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border-b hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm text-gray-800">{user.nombre}</td>
+                <td className="px-6 py-4 text-sm text-gray-800">{user.email}</td>
+                <td className="px-6 py-4 text-sm text-gray-800">{user.rol}</td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  <ul className="list-disc pl-5 space-y-1">
+                    {user.permisos.map((permiso, index) => (
+                      <li key={index}>{permiso}</li>
+                    ))}
+                  </ul>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
