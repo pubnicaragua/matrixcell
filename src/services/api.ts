@@ -1,8 +1,9 @@
 import axios from 'axios';
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
 const fetchDevices = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/devices');
+    const response = await axios.get(apiBaseUrl+'/devices');
     console.log('Response data:', response.data);
   } catch (error) {
     if (error instanceof Error) {
@@ -15,7 +16,7 @@ const fetchDevices = async () => {
 
 const fecthStores = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/stores');
+    const response = await axios.get(apiBaseUrl+'/stores');
     console.log('Response data:', response.data);
   } catch (error) {
     if (error instanceof Error) {

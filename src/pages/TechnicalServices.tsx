@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../axiosConfig"; // Importa la configuración de axios
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
 interface Service {
   id: number;
@@ -32,7 +33,7 @@ const TechnicalServices: React.FC = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await api.get("http://localhost:5000/technical_services");
+        const response = await api.get(apiBaseUrl+"/technical_services");
         setServices(response.data);
       } catch (err: any) {
         setError(err.message || "Error fetching services");
@@ -43,7 +44,7 @@ const TechnicalServices: React.FC = () => {
 
     const fetchStores = async () => {
       try {
-        const response = await api.get("http://localhost:5000/stores");
+        const response = await api.get(apiBaseUrl+"/stores");
         setStores(response.data);
       } catch (err: any) {
         alert("Error al cargar las tiendas: " + err.message);
@@ -78,7 +79,7 @@ const TechnicalServices: React.FC = () => {
   const handleAddService = async () => {
     if (validateService()) {
       try {
-        const response = await api.post("http://localhost:5000/technical_services", newService);
+        const response = await api.post(apiBaseUrl+"/technical_services", newService);
         setServices([...services, response.data]);
         setNewService({ client: "", service_type: "", description: "", status: "Pendiente", cost: 0, store_id: "" });
       } catch (err: any) {

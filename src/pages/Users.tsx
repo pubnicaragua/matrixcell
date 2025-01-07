@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
 interface User {
   id: string;
@@ -24,7 +25,7 @@ const Users = () => {
         throw new Error('Access token is missing');
       }
       // Asegúrate de pasar el token en el encabezado Authorization
-      const response = await axios.get('http://localhost:5000/usuarios', {
+      const response = await axios.get(apiBaseUrl+'/usuarios', {
         headers: {
           Authorization: `Bearer ${accessToken}`, // Agregar el token en la cabecera
         },
@@ -48,7 +49,7 @@ const Users = () => {
         return;
       }
       await axios.post(
-        'http://localhost:5000/usuarios', // Endpoint de la API para agregar usuarios
+        apiBaseUrl+'/usuarios', // Endpoint de la API para agregar usuarios
         newUser,
         {
           headers: {
