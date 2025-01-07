@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import * as XLSX from "xlsx";
-import api from '../axiosConfig'; // Asegúrate de que esta importación sea correcta
+import * as XLSX from "xlsx"; // Importación corregida
+import api from '../axiosConfig' // Asegúrate de que esta importación sea correcta
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
-  const [paymentData, setPaymentData] = useState<any[]>([]);
+  const [paymentData, setPaymentData] = useState<any[]>([]); // Datos de valores y pagos mensuales
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null); // Agregar estado para almacenar el archivo cargado
 
   const columns = [
     "COD_TIPO_ID",
@@ -129,7 +129,8 @@ const ExportEquifax: React.FC = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
+    
+    // Guardamos el archivo en el estado
     setFile(file);
 
     const reader = new FileReader();
@@ -137,22 +138,9 @@ const ExportEquifax: React.FC = () => {
       const binaryStr = e.target?.result as string;
       const workbook = XLSX.read(binaryStr, { type: "binary" });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      const formattedData = jsonData.map((row: any) => {
-        const newRow: any = {};
-        columns.forEach((col) => {
-          newRow[col] = row[col] !== undefined ? row[col] : "";
-        });
-
-        if (typeof newRow["FECHA_CONCESION"] === "number") {
-          newRow["FECHA_CONCESION"] = excelDateToJSDate(newRow["FECHA_CONCESION"]);
-        }
-
-        return calculateFields(newRow);
-      });
-
-      setData(formattedData);
+      setPaymentData(jsonData); // Guardar los datos cargados
     };
     reader.readAsBinaryString(file);
   };
@@ -174,8 +162,8 @@ const ExportEquifax: React.FC = () => {
   };
 
   const handleExport = () => {
-    if (!data.length) {
-      alert("No hay datos para exportar.");
+    if (!file) {
+      alert("No se ha cargado ningún archivo para exportar.");
       return;
     }
 
@@ -212,6 +200,7 @@ const ExportEquifax: React.FC = () => {
     <div style={{ padding: "20px" }}>
       <h2>Gestión de Macro Sicom</h2>
 
+      {/* Cargar archivo de valores y pagos mensuales */}
       <div style={{ marginBottom: "20px" }}>
         <label htmlFor="paymentFileUpload">Cargar archivo de valores y pagos mensuales:</label>
         <input id="paymentFileUpload" type="file" accept=".xlsm, .xlsx" onChange={handlePaymentFileUpload} />
@@ -222,6 +211,18 @@ const ExportEquifax: React.FC = () => {
         <input id="fileUpload" type="file" accept=".xlsm, .xlsx" onChange={handleFileUpload} />
       </div>
 
+      {/* Cargar archivo macro_sicom */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="fileUpload">Cargar archivo macro_sicom:</label>
+        <input
+          id="fileUpload"
+          type="file"
+          accept=".xlsm, .xlsx"
+          onChange={handleFileUpload}
+        />
+      </div>
+
+      {/* Exportar archivo */}
       <div>
         <label htmlFor="fileName">Nombre del archivo a exportar:</label>
         <input id="fileName" type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
@@ -229,7 +230,7 @@ const ExportEquifax: React.FC = () => {
           Enviar Archivo
         </button>
         <button onClick={handleExport} style={{ marginLeft: "10px" }}>
-          Exportar a Excel
+          Enviar Archivo
         </button>
       </div>
     </div>
