@@ -1,10 +1,10 @@
 import axios from "axios";
 import { error } from "console";
 import { config } from "process";
-
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 //Configuracion de la base de axios
 const api = axios.create({
-    baseURL: 'http://localhost:5000',
+    baseURL:apiBaseUrl,
 });
 
 // Interceptor para agregar el token a todas las peticiones
