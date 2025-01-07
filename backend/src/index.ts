@@ -36,6 +36,9 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Registrar rutas
+app.get('/', (req: Request, res: Response) => {
+  res.send('Bienvenido al API');
+});
 app.use('/auth/', authRoutes);
 app.use('/usuarios', usuarioRoutes);
 app.use('/roles', rolRoutes);
