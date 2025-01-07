@@ -25,7 +25,7 @@ const Sidebar = () => {
       localStorage.removeItem('token');
       
       // Redirige al login
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error("Error al cerrar sesión", error);
     }
