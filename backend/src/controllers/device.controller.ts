@@ -5,6 +5,7 @@ import { BaseService } from "../services/base.service";
 import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
+import { sendPushNotification } from "../services/notifications";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -106,5 +107,63 @@ export const DeviceController = {
             console.error('Error al procesar dispositivos:', error);
             res.status(500).json({ error: 'Error interno del servidor.' });
         }
+    },
+    async blockDevices(req: Request, res: Response) {
+        const { id } = req.params;
+
+        if (!id) {
+             res.status(400).json({ success: false, message: 'El ID del dispositivo es requerido.' });
+        }
+
+        try {
+            // Actualizar el estado del dispositivo a "blocked"
+            const { data: device, error } = await supabase
+                .from('devices')
+                .update({ status: 'Bloqueado' })
+                .eq('id', id)
+                .select('push_token')
+                .single();
+
+            if (error) {
+                console.error('Error al actualizar el estado del dispositivo:', error);
+                res.status(500).json({ success: false, message: 'Error al bloquear el dispositivo en la base de datos.' });
+            }
+
+            if (!device) {
+                res.status(404).json({ success: false, message: 'Dispositivo no encontrado.' });
+            }
+
+            // Obtener el push_token del dispositivo bloqueado
+            const pushToken = device?.push_token;
+
+            // Enviar notificación si el push_token existe
+            if (pushToken) {
+                const message = {
+                    body: 'Tu dispositivo ha sido bloqueado. Por favor, realiza el pago para desbloquearlo.',
+                    data: { deviceId: id },
+                };
+
+                try {
+
+                     await sendPushNotification([pushToken], message);
+                } catch (notificationError) {
+                    console.error('Error enviando notificación push:', notificationError);
+                     res.status(500).json({
+                        success: false,
+                        message: 'El dispositivo fue bloqueado, pero no se pudo enviar la notificación.'
+                    });
+                }
+            }
+
+             res.status(200).json({
+                success: true,
+                message: 'Dispositivo bloqueado y notificación enviada correctamente.'
+            });
+
+        } catch (error) {
+            console.error('Error bloqueando el dispositivo:', error);
+             res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
+        }
     }
+
 }

@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack'; // IMPORTAR AQUÍ
 import LoginScreen from '../screens/LoginScreen';
 import DevicesListScreen from '../screens/DevicesListScreen';
 import DeviceDetailScreen from '../screens/DeviceDetailScreen';
