@@ -12,35 +12,16 @@ export const DeviceController = {
 
     async getAllDevices(req: Request, res: Response) {
         try {
-            type DeviceFormat = {
-                id?: number | null;
-                store_id?: number | null;
-                imei: string | null;
-                status: string;
-                owner: number | null;
-                created_at: Date | null;
-                clients: {
-                    name: string;
-                };
-            };
-            const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const devices = await BaseService.getAll<DeviceFormat>(tableName, ['id', 'imei', 'status', 'owner', 'store_id', 'clients(name)'], where);
-            const resultados = devices!.map((device) => ({
-                id: device.id,
-                imei: device.imei,
-                status: device.status,
-                owner: device.owner,
-                store_id: device.store_id,
-                cliente: Array.isArray(device.clients)
-                    ? device.clients[0]?.name || "Sin Cliente"
-                    : device.clients?.name || "Sin Cliente",
-                created_at: device.created_at,
-            }));
-            res.json(DeviceResource.formatDevices(resultados));
+            const where = { ...req.query };
+            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status', 'clients(name)'], where);
+
+            // Asegurarse de que `formatDevice` pueda manejar un arreglo de dispositivos
+            res.json(devices.map(device => DeviceResource.formatDevice(device)));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
     },
+    
 
     async createDevice(req: Request, res: Response) {
         try {

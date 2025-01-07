@@ -1,10 +1,8 @@
 import { Bar, Pie } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import api from '../axiosConfig';  // Importamos la configuración de axios
-
+import api from '../axiosConfig';
 import React, { useState, useEffect } from 'react';
 import {
-  ChartOptions,
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
@@ -13,158 +11,131 @@ import {
   Title,
   Tooltip,
   Legend,
-  PointElement,
-  LineElement,
 } from 'chart.js';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 interface Invoice {
   status: string;
-  [key: string]: any; // Agrega las propiedades reales si las conoces
+  created_at: string;
+}
+
+interface Device {
+  id: number;
+  imei: string;
+  status: string;
 }
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [chartData, setChartData] = useState({
-    labels: ['Pagadas', 'Pendientes'],
-    datasets: [
-      {
-        data: [0, 0],
-        backgroundColor: ['#4caf50', '#f44336'],
-        hoverBackgroundColor: ['#45a049', '#e53935'],
-      },
-    ],
-  });
+  const [barChartData, setBarChartData] = useState<any>(null);
+  const [pieChartData, setPieChartData] = useState<any>(null);
+  const [morosityChartData, setMorosityChartData] = useState<any>(null);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [invoice, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      const token = localStorage.getItem('token');  // Obtener el token de localStorage
-      try {
-        const response = await api.get('/invoices', {  // Usar api configurado
-          headers: {
-            Authorization: `Bearer ${token}`  // Agregar token en los headers
-          }
+    const fetchInvoicesAndDevices = async () => {
+      try {        
+        const invoicesResponse = await api.get('/invoices');
+
+        const devicesResponse = await api.get('/devices');
+
+        const invoices: Invoice[] = invoicesResponse.data;
+        const devices: Device[] = devicesResponse.data;
+
+        setDevices(devicesResponse.data);
+        setInvoices(invoicesResponse.data);
+
+        // Filtrar facturas pendientes
+        const pendingInvoices = invoices.filter(invoice => invoice.status === 'Pendiente');
+
+        // Agrupar por mes
+        const invoicesByMonth = Array(12).fill(0);
+        pendingInvoices.forEach(invoice => {
+          const month = new Date(invoice.created_at).getMonth();
+          invoicesByMonth[month]++;
         });
-        const invoices = response.data;
 
-        // Contar facturas por estado
-        const paidCount = invoices.filter((invoice: { status: string }) => invoice.status === 'Pagada').length;
-        const pendingCount = invoices.filter((invoice: { status: string }) => invoice.status === 'Pendiente').length;
-
-        setChartData((prevData: typeof chartData) => ({
-          ...prevData,
+        // Datos para el gráfico de barras
+        setBarChartData({
+          labels: [
+            'Enero',
+            'Febrero',
+            'Marzo',
+            'Abril',
+            'Mayo',
+            'Junio',
+            'Julio',
+            'Agosto',
+            'Septiembre',
+            'Octubre',
+            'Noviembre',
+            'Diciembre',
+          ],
           datasets: [
             {
-              ...prevData.datasets[0],
-              data: [paidCount, pendingCount],
+              label: 'Facturas Pendientes',
+              data: invoicesByMonth,
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
             },
           ],
-        }));
-
-        setInvoices(invoices);
-      } catch (err: any) {
-        setError(err.message || 'Error fetching invoices');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInvoices();
-  }, []);
-
-  // Obtener los dispositivos bloqueados desde la API
-  useEffect(() => {
-    const fetchDevices = async () => {
-      const token = localStorage.getItem('token');  // Obtener el token de localStorage
-      try {
-        const response = await api.get('/devices', {  // Usar api configurado
-          headers: {
-            Authorization: `Bearer ${token}`  // Agregar token en los headers
-          }
         });
-        setDevices(response.data);
+
+        // Contar facturas por estado
+        const paidCount = invoices.filter(invoice => invoice.status === 'Pagada').length;
+        const pendingCount = invoices.filter(invoice => invoice.status === 'Pendiente').length;
+
+        // Datos para el gráfico de pastel
+        setPieChartData({
+          labels: ['Pagadas', 'Pendientes'],
+          datasets: [
+            {
+              data: [paidCount, pendingCount],
+              backgroundColor: ['#4caf50', '#f44336'],
+              hoverBackgroundColor: ['#45a049', '#e53935'],
+            },
+          ],
+        });
+
+        // Calcular morosidad
+        const currentDate = new Date();
+        const morosityBuckets = [0, 0, 0, 0]; // [0-30 días, 31-60 días, 61-90 días, >90 días]
+
+        pendingInvoices.forEach(invoice => {
+          const createdDate = new Date(invoice.created_at);
+          const diffInDays = Math.floor((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (diffInDays <= 30) morosityBuckets[0]++;
+          else if (diffInDays <= 60) morosityBuckets[1]++;
+          else if (diffInDays <= 90) morosityBuckets[2]++;
+          else morosityBuckets[3]++;
+        });
+
+        // Datos para el gráfico de morosidad
+        setMorosityChartData({
+          labels: ['0-30 días', '31-60 días', '61-90 días', '>90 días'],
+          datasets: [
+            {
+              label: 'Morosidad de Facturas',
+              data: morosityBuckets,
+              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+            },
+          ],
+        });
       } catch (err: any) {
-        setError(err.message || 'Error fetching devices');
+        setError(err.message || 'Error fetching data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDevices();
+    fetchInvoicesAndDevices();
   }, []);
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  // Filtrar dispositivos bloqueados
-  const blockedDevices = devices.filter(device => device.status === 'Bloqueado');
-
-  if (loading) return <div className="text-center text-blue-500">Loading...</div>;
-  if (error) return <div className="text-center text-red-500">Error: {error}</div>;
-
-  const monthlyRevenueData = {
-    labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
-    datasets: [
-      {
-        label: 'Ingresos ($)',
-        data: [5000, 7000, 8000, 6000, 9000, 10000],
-        fill: false,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        tension: 0.1,
-      },
-    ],
-  };
-
-  const barChartData = {
-    labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'],
-    datasets: [
-      {
-        label: 'Facturas Pendientes',
-        data: [50, 100, 200, 150, 350, 300, 400, 250],
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const pieChartData = {
-    labels: ['Pagadas', 'Pendientes'],
-    datasets: [
-      {
-        data: [70, 30],
-        backgroundColor: ['#4caf50', '#f44336'],
-        hoverBackgroundColor: ['#45a049', '#e53935'],
-      },
-    ],
-  };
-
-  const deviceData = {
-    labels: ['Bloqueados', 'Desbloqueados', 'Morosidad'],
-    datasets: [
-      {
-        label: 'Estadísticas',
-        data: [30, 70, 15],
-        backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384'],
-      },
-    ],
-  };
 
   const activities = [
     { id: 1, action: 'Bloqueo', device: 'Dispositivo 1', date: '2024-12-20' },
@@ -175,7 +146,7 @@ const Dashboard = () => {
   ];
 
   const renderTableRows = () =>
-    activities.map((activity) => (
+    activities.map(activity => (
       <tr key={activity.id}>
         <td>{activity.action}</td>
         <td>{activity.device}</td>
@@ -183,47 +154,37 @@ const Dashboard = () => {
       </tr>
     ));
 
-  const activityTable = (
-    <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-      <thead>
-        <tr className="bg-gray-100">
-          <th className="px-4 py-2 text-left font-bold">Acción</th>
-          <th className="px-4 py-2 text-left font-bold">Dispositivo/Cliente</th>
-          <th className="px-4 py-2 text-left font-bold">Fecha</th>
-        </tr>
-      </thead>
-      <tbody>{renderTableRows()}</tbody>
-    </table>
-  );
-
   const quickActions = (
     <div className="flex gap-4 mt-6">
       <button
         className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-        onClick={() => handleNavigation('/blockdevice')}
+        onClick={() => navigate('/blockdevice')}
       >
         Bloquear Dispositivo
       </button>
       <button
         className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-        onClick={() => handleNavigation('/addclient')}
+        onClick={() => navigate('/addclient')}
       >
         Agregar Cliente
       </button>
       <button
         className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
-        onClick={() => handleNavigation('/generate-invoice')}
+        onClick={() => navigate('/generate-invoice')}
       >
         Generar Factura
       </button>
       <button
         className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
-        onClick={() => handleNavigation('/technicalservices')}
+        onClick={() => navigate('/technicalservices')}
       >
         Registrar Servicio Técnico
       </button>
     </div>
   );
+
+  if (loading) return <div className="text-center text-blue-500">Loading...</div>;
+  if (error) return <div className="text-center text-red-500">Error: {error}</div>;
 
   return (
     <div className="flex min-h-screen">
@@ -232,49 +193,89 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-md">
-            <Bar data={barChartData} options={{ responsive: true, plugins: { title: { display: true, text: 'Facturas Pendientes por Mes' } } }} />
+            <h3 className="text-xl font-semibold mb-4">Facturas Pendientes por Mes</h3>
+            {barChartData ? (
+              <Bar
+                data={barChartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Facturas Pendientes por Mes' },
+                  },
+                }}
+              />
+            ) : (
+              <p>No hay datos para mostrar.</p>
+            )}
           </div>
+
           <div className="bg-white p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Estado de las Facturas</h3>
-            <Pie
-              data={chartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'top',
+            {pieChartData ? (
+              <Pie
+                data={pieChartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Facturas: Pagadas vs Pendientes' },
                   },
-                  title: {
-                    display: true,
-                    text: 'Facturas: Pagadas vs Pendientes',
-                  },
-                },
-              }}
-            />
+                }}
+              />
+            ) : (
+              <p>No hay datos para mostrar.</p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-md">
-            <Bar data={deviceData} options={{ responsive: true, plugins: { title: { display: true, text: 'Estado de los Dispositivos' } } }} />
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Dispositivos Bloqueados</h3>
-            {blockedDevices.length > 0 ? (
+            {devices.filter(device => device.status === 'Bloqueado').length > 0 ? (
               <ul className="list-disc pl-6">
-                {blockedDevices.map((device) => (
-                  <li key={device.id}>IMEI: {device.imei}</li>
-                ))}
+                {devices
+                  .filter(device => device.status === 'Bloqueado')
+                  .map(device => (
+                    <li key={device.id}>IMEI: {device.imei}</li>
+                  ))}
               </ul>
             ) : (
               <p>No hay dispositivos bloqueados.</p>
+            )}
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Morosidad de Facturas</h3>
+            {morosityChartData ? (
+              <Bar
+                data={morosityChartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Morosidad de Facturas' },
+                  },
+                }}
+              />
+            ) : (
+              <p>No hay datos para mostrar.</p>
             )}
           </div>
         </div>
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Últimas Actividades</h2>
-          {activityTable}
+          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 text-left font-bold">Acción</th>
+                <th className="px-4 py-2 text-left font-bold">Dispositivo/Cliente</th>
+                <th className="px-4 py-2 text-left font-bold">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>{renderTableRows()}</tbody>
+          </table>
         </div>
 
         <div className="mt-8">
