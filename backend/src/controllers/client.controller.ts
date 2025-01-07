@@ -15,7 +15,7 @@ export const ClientController = {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
             const clients = await BaseService.getAll<Client>(tableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'email', 'city', 'due_date', 'deubt_type', 'operation_number', 'status', 'category', 'created_at'], where);
-           
+
             res.json(ClientResource.formatClients(clients));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -120,7 +120,7 @@ export const ClientController = {
             if (!req.file) {
                 throw new Error('Archivo no encontrado.');
             }
-    
+
             type ExcelData = {
                 CODIGO_ID_SUJETO: string;
                 NOMBRE_SUJETO: string;
@@ -141,17 +141,36 @@ export const ClientController = {
                 DEUDA_REFINANCIADA: number;
                 FECHA_SIG_VENCIMIENTO: string | Date;
             };
-    
+
+            // Función para normalizar fechas
+            const normalizeDate = (date: string | number | undefined | Date): Date | null => {
+                if (!date) return null;
+                if (typeof date === 'number') {
+                    // Si la fecha es un número (Excel almacena fechas como días desde 1900)
+                    return new Date((date - 25569) * 86400 * 1000); // Convertir a timestamp
+                }
+                if (typeof date === 'string') {
+                    const parts = date.split('/');
+                    if (parts.length === 3) {
+                        const [day, month, year] = parts.map(Number);
+                        const fullYear = year < 100 ? 2000 + year : year; // Convertir año corto a año completo
+                        return new Date(fullYear, month - 1, day);
+                    }
+                }
+                return null; // Formato no reconocido
+            };
+
             const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
             const sheetName = workbook.SheetNames[0];
             const sheetData: ExcelData[] = XLSX.utils.sheet_to_json<ExcelData>(workbook.Sheets[sheetName]);
-    
+
             if (sheetData.length === 0) {
-                 res.status(400).json({ error: 'El archivo está vacío.' });
+                res.status(400).json({ error: 'El archivo está vacío.' });
             }
-    
+
             for (const row of sheetData) {
-                // Inserta cliente en la tabla `clients`
+                console.log(row);
+
                 const client = {
                     identity_number: row.CODIGO_ID_SUJETO,
                     name: row.NOMBRE_SUJETO,
@@ -161,57 +180,52 @@ export const ClientController = {
                     debt_type: row.TIPO_DEUDOR,
                     created_at: new Date(),
                 };
-    
+
                 const { data: clientData, error: clientError } = await supabase
                     .from('clients')
                     .insert(client)
                     .select()
                     .single();
-    
+
                 if (clientError) throw new Error(`Error al insertar cliente: ${clientError.message}`);
-    
-                // Relaciona la operación con el cliente
+
                 const operation = {
-                    operation_number: row.NUMERO_DE_OPERACION == '' ? null:row.NUMERO_DE_OPERACION,
-                    operation_date: row.FECHA_CONCESION == '' ? null:row.FECHA_CONCESION,
-                    operation_value: row.VAL_OPERACION == 0 ? null:row.VAL_OPERACION,
-                    amount_due: row.VAL_A_VENCER == 0 ? null:row.VAL_A_VENCER,
-                    amount_paid: row.VAL_VENCIDO == 0 ? null:row.VAL_VENCIDO,
+                    operation_number: row.NUMERO_DE_OPERACION || null,
+                    operation_date: normalizeDate(row.FECHA_CONCESION) || null,
+                    operation_value: row.VAL_OPERACION || null,
+                    amount_due: row.VAL_A_VENCER || null,
+                    amount_paid: row.VAL_VENCIDO || null,
                     judicial_action: row.VA_DEM_JUDICIAL > 0,
-                    cart_value: row.VAL_CART_CASTIGADA == 0 ? null:row.VAL_CART_CASTIGADA,
-                    days_overdue: row.NUM_DIAS_VENCIDOS == 0 ? null:row.NUM_DIAS_VENCIDOS,
-                    due_date: row.FECHA_DE_VENCIMIENTO == '' ? null:row.FECHA_DE_VENCIMIENTO,
-                    refinanced_date: row.DEUDA_REFINANCIADA == 0 ? null:row.DEUDA_REFINANCIADA,
-                    prox_due_date: row.FECHA_SIG_VENCIMIENTO == '' ? null:row.FECHA_DE_VENCIMIENTO,
-                    client_id: clientData.id, // Relación con el cliente insertado
+                    cart_value: row.VAL_CART_CASTIGADA || null,
+                    days_overdue: row.NUM_DIAS_VENCIDOS || null,
+                    due_date: normalizeDate(row.FECHA_DE_VENCIMIENTO) || null,
+                    //refinanced_date: row.DEUDA_REFINANCIADA || null,
+                    prox_due_date: normalizeDate(row.FECHA_SIG_VENCIMIENTO) || null,
+                    client_id: clientData.id,
                     created_at: new Date(),
                 };
-    
-                console.log(operation)
+
                 const { error: operationError } = await supabase.from('operations').insert(operation);
                 if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
-    
-                // Relaciona el estado con el cliente
+
                 const status = {
                     total_operations: 1,
                     total_due: row.VAL_A_VENCER,
                     total_overdue: row.NUM_DIAS_VENCIDOS > 0 ? row.VAL_VENCIDO : 0,
                     judicial_operations: row.VA_DEM_JUDICIAL > 0 ? 1 : 0,
-                    client_id: clientData.id, // Relación con el cliente insertado
+                    client_id: clientData.id,
                     created_at: new Date(),
                 };
-    
-                console.log(status)
+                console.log(status);
                 const { error: statusError } = await supabase.from('statuses').insert(status);
-                
                 if (statusError) throw new Error(`Error al insertar estado: ${statusError.message}`);
             }
-    
+
             res.status(200).json({ message: 'Datos procesados e insertados con éxito.' });
         } catch (error: any) {
             console.error('Error al procesar el archivo Excel:', error);
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     }
-    
+
 }
