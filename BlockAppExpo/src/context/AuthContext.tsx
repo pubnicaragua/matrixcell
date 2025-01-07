@@ -14,7 +14,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('https://tu-api.com/auth/login', {
+      const response = await axios.post('https://matrixcell.onrender.com/auth/login', {
         email,
         password,
       });
