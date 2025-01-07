@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';  // Usamos `useNavigate` para redirigir
+import api from '../axiosConfig';
 import {
   FaHome,
   FaFileInvoiceDollar,
@@ -13,6 +14,23 @@ import {
 } from 'react-icons/fa';
 
 const Sidebar = () => {
+  const navigate = useNavigate();  // Usamos el hook `useNavigate` para redirigir
+
+  const handleLogout = async () => {
+    try {
+      // Llamada a la ruta /logout en el backend para invalidar la sesión
+      await api.post('auth/logout');  // Aquí se hace la solicitud para cerrar la sesión en el backend
+
+      // Elimina el token del localStorage
+      localStorage.removeItem('token');
+      
+      // Redirige al login
+      navigate('/login');
+    } catch (error) {
+      console.error("Error al cerrar sesión", error);
+    }
+  };
+
   return (
     <nav style={styles.sidebar}>
       <h2 style={styles.title}>MatrixCell Admin</h2>
@@ -65,12 +83,12 @@ const Sidebar = () => {
           </Link>
         </li>
 
-                {/* Equifax */}
-                <li style={styles.sectionTitle}>Consolidado Equifax</li>
+        {/* Equifax */}
+        <li style={styles.sectionTitle}>Consolidado Equifax</li>
         <li style={styles.listItem}>
           <FaChartLine style={styles.icon} />
           <Link to="/exportsicom" style={styles.link}>
-          Consolidado Equifax
+            Consolidado Equifax
           </Link>
         </li>
 
@@ -93,9 +111,9 @@ const Sidebar = () => {
         <li style={styles.sectionTitle}>Cuenta</li>
         <li style={styles.listItem}>
           <FaSignOutAlt style={styles.icon} />
-          <Link to="/login" style={styles.link}>
+          <button onClick={handleLogout} style={styles.link}>
             Cerrar Sesión
-          </Link>
+          </button>
         </li>
       </ul>
     </nav>
@@ -130,6 +148,9 @@ const styles = {
     textDecoration: 'none',
     fontSize: '16px',
     marginLeft: '10px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
   } as React.CSSProperties,
   icon: {
     fontSize: '18px',

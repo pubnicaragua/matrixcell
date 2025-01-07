@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useStore } from "../context/StoreContext";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
+import React, { useEffect, useState } from 'react';
+import api from '../axiosConfig'; // Importa la configuración de Axios
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
 
 interface Store {
   id: number;
@@ -11,270 +11,247 @@ interface Store {
   active: boolean;
 }
 
-const Stores: React.FC = () => {
+const StoreList = () => {
   const [stores, setStores] = useState<Store[]>([]);
-  const [newStore, setNewStore] = useState<Omit<Store, "id" | "active">>({
-    name: "",
-    address: "",
-    phone: "",
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>('');
+  const [newStore, setNewStore] = useState<Omit<Store, 'id'>>({
+    name: '',
+    address: '',
+    phone: '',
+    active: true,
   });
-  const [editing, setEditing] = useState(false);
-  const [currentStore, setCurrentStore] = useState<Store | null>(null);
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const storesPerPage = 5;
+  const [editStore, setEditStore] = useState<Store | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewStore({ ...newStore, [name]: value });
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await api.get('/stores'); // Usar 'api' en lugar de 'axios'
+        setStores(response.data);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError('Error al obtener las tiendas: ' + err.message);
+        } else {
+          setError('Error desconocido');
+        }
+      }
+    };
+
+    fetchStores();
+  }, []);
+
+  // Filtrar tiendas por nombre
+  const filteredStores = stores.filter((store) =>
+    store.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Manejar cambio en el campo de búsqueda
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
   };
 
-  const validateStore = () => {
-    if (!newStore.name || !newStore.address || !newStore.phone) {
-      alert("Todos los campos son obligatorios.");
-      return false;
+  // Manejar cambio en el formulario de nueva tienda
+  const handleNewInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setNewStore((prevStore) => ({
+      ...prevStore,
+      [name]: value,
+    }));
+  };
+
+  // Manejar cambios en el formulario de edición
+  const handleEditInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (editStore) {
+      const { name, value } = event.target;
+      setEditStore({ ...editStore, [name]: value });
     }
-    return true;
   };
 
-  const handleAddStore = () => {
-    if (validateStore()) {
-      const newStoreId = stores.length + 1;
-      setStores([...stores, { id: newStoreId, ...newStore, active: true }]);
-      setNewStore({ name: "", address: "", phone: "" });
+  // Agregar una nueva tienda
+  const handleAddStore = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const response = await api.post('/stores', newStore); // Usar 'api' en lugar de 'axios'
+      setStores((prevStores) => [...prevStores, response.data]);
+      setNewStore({ name: '', address: '', phone: '', active: true });
+    } catch (err: unknown) {
+      setError('Error al agregar tienda: ' + (err instanceof Error ? err.message : 'Desconocido'));
     }
   };
 
+  // Editar tienda
   const handleEditStore = (store: Store) => {
-    setEditing(true);
-    setCurrentStore(store);
+    setEditStore(store);
   };
 
-  const handleUpdateStore = () => {
-    if (currentStore) {
-      setStores(
-        stores.map((store) =>
-          store.id === currentStore.id ? { ...currentStore } : store
-        )
-      );
-      setEditing(false);
-      setCurrentStore(null);
+  const handleUpdateStore = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (editStore) {
+      try {
+        await api.put(`/stores/${editStore.id}`, editStore); // Usar 'api' en lugar de 'axios'
+        setStores((prevStores) =>
+          prevStores.map((store) =>
+            store.id === editStore.id ? editStore : store
+          )
+        );
+        setEditStore(null);
+      } catch (err: unknown) {
+        setError('Error al actualizar la tienda: ' + (err instanceof Error ? err.message : 'Desconocido'));
+      }
     }
   };
 
-  const handleDeleteStore = (id: number) => {
-    if (window.confirm("¿Estás seguro de eliminar esta tienda?")) {
-      setStores(stores.filter((store) => store.id !== id));
+  // Actualizar estado activo/inactivo
+  const handleToggleActive = async (id: number) => {
+    const store = stores.find((s) => s.id === id);
+    if (store) {
+      try {
+        const updatedStore = { ...store, active: !store.active };
+        await api.put(`/stores/${id}`, updatedStore); // Usar 'api' en lugar de 'axios'
+        setStores((prevStores) =>
+          prevStores.map((s) => (s.id === id ? updatedStore : s))
+        );
+      } catch (err: unknown) {
+        setError('Error al actualizar estado: ' + (err instanceof Error ? err.message : 'Desconocido'));
+      }
     }
   };
 
-  const handleToggleStore = (id: number) => {
-    setStores(
-      stores.map((store) =>
-        store.id === id ? { ...store, active: !store.active } : store
-      )
-    );
+  // Eliminar tienda
+  const handleDeleteStore = async (id: number) => {
+    if (window.confirm('¿Estás seguro de eliminar esta tienda?')) {
+      try {
+        await api.delete(`/stores/${id}`); // Usar 'api' en lugar de 'axios'
+        setStores((prevStores) => prevStores.filter((store) => store.id !== id));
+      } catch (err: unknown) {
+        setError('Error al eliminar la tienda: ' + (err instanceof Error ? err.message : 'Desconocido'));
+      }
+    }
   };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleExportToXLSX = () => {
-    const ws = XLSX.utils.json_to_sheet(stores);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Stores");
-    XLSX.writeFile(wb, "stores.xlsx");
-  };
-
-  const handleExportToPDF = () => {
-    const doc = new jsPDF();
-    doc.text("Lista de Tiendas", 10, 10);
-    let y = 20;
-    stores.forEach((store) => {
-      doc.text(
-        `${store.id}. ${store.name} - ${store.address} - ${store.phone} - ${
-          store.active ? "Activo" : "Inactivo"
-        }`,
-        10,
-        y
-      );
-      y += 10;
-    });
-    doc.save("stores.pdf");
-  };
-
-  // Paginación y Filtro
-  const filteredStores = stores.filter(
-    (store) =>
-      store.name.toLowerCase().includes(search.toLowerCase()) ||
-      store.address.toLowerCase().includes(search.toLowerCase()) ||
-      store.phone.includes(search)
-  );
-  const indexOfLastStore = currentPage * storesPerPage;
-  const indexOfFirstStore = indexOfLastStore - storesPerPage;
-  const currentStores = filteredStores.slice(
-    indexOfFirstStore,
-    indexOfLastStore
-  );
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div style={styles.container}>
-<h1 style={{ ...styles.title, textAlign: "center" as const }}>Gestión de Tiendas</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-semibold mb-4">Lista de Tiendas</h1>
 
-      {/* Búsqueda */}
-      <div style={styles.searchContainer}>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
+      <div className="mb-4 flex space-x-4">
         <input
           type="text"
-          placeholder="Buscar por nombre, dirección o teléfono"
           value={search}
-          onChange={handleSearch}
-          style={styles.searchInput}
+          onChange={handleSearchChange}
+          className="border p-2 rounded w-full"
+          placeholder="Buscar tienda..."
         />
       </div>
 
-      {/* Exportar */}
-      <div style={styles.exportContainer}>
-        <button onClick={handleExportToXLSX} style={styles.exportButton}>
-          Exportar a XLSX
-        </button>
-        <button onClick={handleExportToPDF} style={styles.exportButton}>
-          Exportar a PDF
-        </button>
-      </div>
-
-      {/* Formulario */}
-      <div style={styles.formContainer}>
-        <h2 style={styles.subtitle}>
-          {editing ? "Editar Tienda" : "Agregar Tienda"}
-        </h2>
+      <form onSubmit={handleAddStore} className="mb-4 border p-4 rounded">
+        <h2 className="text-2xl mb-2">Agregar Nueva Tienda</h2>
         <input
           type="text"
           name="name"
           value={newStore.name}
-          onChange={handleInputChange}
+          onChange={handleNewInputChange}
+          className="border p-2 rounded w-full mb-2"
           placeholder="Nombre de la tienda"
-          style={styles.input}
         />
         <input
           type="text"
           name="address"
           value={newStore.address}
-          onChange={handleInputChange}
+          onChange={handleNewInputChange}
+          className="border p-2 rounded w-full mb-2"
           placeholder="Dirección"
-          style={styles.input}
         />
         <input
           type="text"
           name="phone"
           value={newStore.phone}
-          onChange={handleInputChange}
+          onChange={handleNewInputChange}
+          className="border p-2 rounded w-full mb-2"
           placeholder="Teléfono"
-          style={styles.input}
         />
-        <button
-          onClick={editing ? handleUpdateStore : handleAddStore}
-          style={styles.addButton}
-        >
-          {editing ? "Actualizar Tienda" : "Agregar Tienda"}
+        <button type="submit" className="bg-teal-500 text-white p-2 rounded">
+          Agregar Tienda
         </button>
-      </div>
+      </form>
 
-      {/* Lista */}
-      <div style={styles.listContainer}>
-        <h2 style={styles.subtitle}>Lista de Tiendas</h2>
-        {currentStores.length === 0 ? (
-          <p>No hay tiendas registradas.</p>
-        ) : (
-        <table style={{ ...styles.table, borderCollapse: "collapse" as const }}>
-            <thead>
-              <tr>
-                <th style={styles.tableHeader}>Nombre</th>
-                <th style={styles.tableHeader}>Dirección</th>
-                <th style={styles.tableHeader}>Teléfono</th>
-                <th style={styles.tableHeader}>Estado</th>
-                <th style={styles.tableHeader}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentStores.map((store) => (
-                <tr key={store.id} style={styles.tableRow}>
-                  <td style={styles.tableCell}>{store.name}</td>
-                  <td style={styles.tableCell}>{store.address}</td>
-                  <td style={styles.tableCell}>{store.phone}</td>
-                  <td style={styles.tableCell}>
-                    {store.active ? "Activo" : "Inactivo"}
-                  </td>
-                  <td style={styles.tableCell}>
-                    <button
-                      onClick={() => handleToggleStore(store.id)}
-                      style={styles.toggleButton}
-                    >
-                      {store.active ? "Desactivar" : "Activar"}
-                    </button>
-                    <button
-                      onClick={() => handleEditStore(store)}
-                      style={styles.editButton}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteStore(store.id)}
-                      style={styles.deleteButton}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* Paginación */}
-      <div style={styles.pagination}>
-        {Array.from({ length: Math.ceil(filteredStores.length / storesPerPage) }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => paginate(i + 1)}
-            style={{
-              ...styles.paginationButton,
-              backgroundColor: currentPage === i + 1 ? "#007BFF" : "#f1f1f1",
-            }}
-          >
-            {i + 1}
+      {editStore && (
+        <form onSubmit={handleUpdateStore} className="mb-4 border p-4 rounded">
+          <h2 className="text-2xl mb-2">Editar Tienda</h2>
+          <input
+            type="text"
+            name="name"
+            value={editStore.name}
+            onChange={handleEditInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Nombre de la tienda"
+          />
+          <input
+            type="text"
+            name="address"
+            value={editStore.address}
+            onChange={handleEditInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Dirección"
+          />
+          <input
+            type="text"
+            name="phone"
+            value={editStore.phone}
+            onChange={handleEditInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Teléfono"
+          />
+          <button type="submit" className="bg-teal-500 text-white p-2 rounded">
+            Guardar Cambios
           </button>
-        ))}
-      </div>
+          <button
+            type="button"
+            onClick={() => setEditStore(null)}
+            className="bg-red-500 text-white p-2 rounded ml-4"
+          >
+            Cancelar
+          </button>
+        </form>
+      )}
+
+      {filteredStores.length === 0 ? (
+        <p>No se encontraron tiendas.</p>
+      ) : (
+        <ul className="space-y-4">
+          {filteredStores.map((store) => (
+            <li key={store.id} className="border p-4 rounded shadow-md">
+              <strong className="text-xl">{store.name}</strong><br />
+              Dirección: {store.address}<br />
+              Teléfono: {store.phone}<br />
+              Estado: {store.active ? 'Activo' : 'Inactivo'}
+              <div className="mt-2 flex space-x-2">
+                <button
+                  onClick={() => handleEditStore(store)}
+                  className="bg-blue-500 text-white p-2 rounded"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleToggleActive(store.id)}
+                  className="bg-yellow-500 text-white p-2 rounded"
+                >
+                  {store.active ? 'Desactivar' : 'Activar'}
+                </button>
+                <button
+                  onClick={() => handleDeleteStore(store.id)}
+                  className="bg-red-500 text-white p-2 rounded"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
 
-const styles = {
-  container: { padding: "20px", maxWidth: "800px", margin: "auto" },
-  title: { textAlign: "center", marginBottom: "20px", color: "#007BFF" },
-  searchContainer: { marginBottom: "20px" },
-  searchInput: { padding: "10px", width: "100%", borderRadius: "4px", border: "1px solid #ccc" },
-  exportContainer: { marginBottom: "20px", display: "flex", gap: "10px" },
-  exportButton: { padding: "10px", backgroundColor: "#007BFF", color: "white", borderRadius: "4px", border: "none", cursor: "pointer" },
-  formContainer: { marginBottom: "30px", padding: "20px", borderRadius: "8px", backgroundColor: "#f9f9f9" },
-  subtitle: { marginBottom: "10px", fontSize: "18px", fontWeight: "bold", color: "#333" },
-  input: { display: "block", marginBottom: "10px", padding: "10px", width: "100%", borderRadius: "4px", border: "1px solid #ccc" },
-  addButton: { padding: "10px", backgroundColor: "#28a745", color: "white", borderRadius: "4px", border: "none", cursor: "pointer" },
-  listContainer: { marginBottom: "30px" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  tableHeader: { padding: "10px", backgroundColor: "#007BFF", color: "white", textAlign: "left" as const },
-  tableRow: { borderBottom: "1px solid #ddd" },
-  tableCell: { padding: "10px" },
-  toggleButton: { marginRight: "5px", padding: "5px 10px", borderRadius: "4px", backgroundColor: "#ffc107", border: "none", cursor: "pointer" },
-  editButton: { marginRight: "5px", padding: "5px 10px", borderRadius: "4px", backgroundColor: "#007BFF", border: "none", cursor: "pointer" },
-  deleteButton: { padding: "5px 10px", borderRadius: "4px", backgroundColor: "red", color: "white", border: "none", cursor: "pointer" },
-  pagination: { display: "flex", justifyContent: "center", marginTop: "20px" },
-  paginationButton: { margin: "0 5px", padding: "5px 10px", borderRadius: "4px", border: "1px solid #ccc", cursor: "pointer" },
-};
-
-export default Stores;
+export default StoreList;

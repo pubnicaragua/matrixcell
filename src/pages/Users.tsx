@@ -1,143 +1,166 @@
-import React, { useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa"; // Iconos para acciones
-import "../styles/Users.css"; // Archivo CSS para manejar estilos avanzados como hover
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+
+interface User {
+  id: string;
+  nombre: string;
+  email: string;
+}
 
 const Users = () => {
-  const [users, setUsers] = useState<{ id: number; name: string; email: string; role: string }[]>([
-    { id: 1, name: "Juan Pérez", email: "juan@example.com", role: "Admin" },
-    { id: 2, name: "Ana Gómez", email: "ana@example.com", role: "User" },
-  ]);
-  const [currentUser, setCurrentUser] = useState<{ id: number; name: string; email: string; role: string }>({
-    id: 0,
-    name: "",
-    email: "",
-    role: "",
-  });
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<"create" | "edit">("create");
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const openModal = (type: "create" | "edit", user?: typeof currentUser) => {
-    setModalType(type);
-    setCurrentUser(user || { id: 0, name: "", email: "", role: "" }); // id predeterminado en 0
-    setShowModal(true);
-  };
+  // Obtener el token de acceso del almacenamiento (localStorage o donde lo tengas)
+  const accessToken = localStorage.getItem('access_token') || '';
 
-  const handleSave = () => {
-    if (modalType === "create") {
-      const newUser = {
-        id: users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1, // Generar un ID único
-        name: currentUser.name,
-        email: currentUser.email,
-        role: currentUser.role,
-      };
-      setUsers([...users, newUser]);
-    } else if (modalType === "edit") {
-      setUsers(
-        users.map((user) => (user.id === currentUser.id ? { ...currentUser, id: user.id } : user))
-      );
+  // Función para obtener usuarios
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null); // Limpiar errores anteriores
+    try {
+      if (!accessToken) {
+        throw new Error('Access token is missing');
+      }
+      // Asegúrate de pasar el token en el encabezado Authorization
+      const response = await axios.get(apiBaseUrl+'/usuarios', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Agregar el token en la cabecera
+        },
+      });
+      setUsers(response.data);
+    } catch (error: any) {
+      console.error('Error al cargar usuarios:', error);
+      setError(error.message || 'No se pudieron cargar los usuarios.');
+    } finally {
+      setLoading(false);
     }
-    setShowModal(false);
-    setCurrentUser({ id: 0, name: "", email: "", role: "" }); // Reiniciar el estado
   };
 
-  const handleDelete = (id: number) => {
-    setUsers(users.filter((user) => user.id !== id));
+  // Función para agregar un nuevo usuario
+  const handleAddUser = async () => {
+    const newUser = { nombre: 'Nuevo Usuario', email: 'nuevo@correo.com' };
+    try {
+      if (!accessToken) {
+        setError('No tienes acceso. Por favor, inicia sesión.');
+        setLoading(false);
+        return;
+      }
+      await axios.post(
+        apiBaseUrl+'/usuarios', // Endpoint de la API para agregar usuarios
+        newUser,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // También pasas el token
+          },
+        }
+      );
+      fetchUsers(); // Refrescar la lista de usuarios
+    } catch (error: any) {
+      console.error('Error al agregar usuario:', error);
+      setError(error.message || 'No se pudo agregar el usuario.');
+    }
   };
+
+  // Función para actualizar un usuario
+  const handleUpdateUser = async (id: string) => {
+    const updatedData = { nombre: 'Usuario Actualizado' };
+    try {
+      if (!accessToken) {
+        setError('No tienes acceso. Por favor, inicia sesión.');
+        return;
+      }
+      await axios.put(
+        `http://localhost:5000/usuarios/${id}`, // Endpoint de la API para actualizar usuarios
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Pasar el token también
+          },
+        }
+      );
+      fetchUsers(); // Refrescar la lista de usuarios
+    } catch (error: any) {
+      console.error('Error al actualizar usuario:', error);
+      setError(error.message || 'No se pudo actualizar el usuario.');
+    }
+  };
+
+  // Función para eliminar un usuario
+  const handleDeleteUser = async (id: string) => {
+    try {
+      if (!accessToken) {
+        setError('No tienes acceso. Por favor, inicia sesión.');
+        return;
+      }
+      await axios.delete(`http://localhost:5000/usuarios/${id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Pasar el token para autenticación
+        },
+      });
+      fetchUsers(); // Refrescar la lista de usuarios
+    } catch (error: any) {
+      console.error('Error al eliminar usuario:', error);
+      setError(error.message || 'No se pudo eliminar el usuario.');
+    }
+  };
+
+  // Cargar usuarios al montar el componente
+  useEffect(() => {
+    fetchUsers();
+  }, []); // Este efecto solo se ejecuta una vez al cargar el componente
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1 style={{ fontFamily: "var(--font-primary)", color: "var(--color-primary)" }}>Gestión de Usuarios</h1>
-      <button
-        onClick={() => openModal("create")}
-        style={{
-          marginBottom: "20px",
-          background: "var(--color-primary)",
-          color: "var(--color-white)",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
-        Agregar Usuario
-      </button>
-      <table className="users-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
-              <td>
-                <button
-                  onClick={() => openModal("edit", user)}
-                  className="action-button edit-button"
-                >
-                  <FaEdit /> Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(user.id)}
-                  className="action-button delete-button"
-                >
-                  <FaTrash /> Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h2>{modalType === "create" ? "Agregar Usuario" : "Editar Usuario"}</h2>
-            <form>
-              <div className="form-group">
-                <label htmlFor="name">Nombre</label>
-                <input
-                  type="text"
-                  id="name"
-                  value={currentUser.name}
-                  onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  type="email"
-                  id="email"
-                  value={currentUser.email}
-                  onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="role">Rol</label>
-                <input
-                  type="text"
-                  id="role"
-                  value={currentUser.role}
-                  onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
-                />
-              </div>
-              <button type="button" onClick={handleSave} className="save-button">
-                Guardar
-              </button>
-              <button type="button" onClick={() => setShowModal(false)} className="cancel-button">
-                Cancelar
-              </button>
-            </form>
-          </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Gestión de Usuarios</h1>
+      {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+      {loading ? (
+        <p className="text-center text-gray-500">Cargando...</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
+                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-800">{user.nombre}</td>
+                  <td className="px-6 py-4 text-sm text-gray-800">{user.email}</td>
+                  <td className="px-6 py-4 text-sm space-x-2">
+                    <button
+                      onClick={() => handleUpdateUser(user.id)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                    >
+                      Actualizar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+      <div className="text-center mt-6">
+        <button
+          onClick={handleAddUser}
+          className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-green-600 transition"
+        >
+          Agregar Usuario
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,18 +1,30 @@
-import supabase from '../api/supabase';
-import api from '../api/endpoints';
+import axios from 'axios';
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
-// Ejemplo de función para obtener datos desde Supabase
-export const fetchUsers = async () => {
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) throw new Error(error.message);
-  return data;
+const fetchDevices = async () => {
+  try {
+    const response = await axios.get(apiBaseUrl+'/devices');
+    console.log('Response data:', response.data);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error fetching devices:', error.message);
+    } else {
+      console.error('Error fetching devices:', error);
+    }
+  }
 };
 
-// Ejemplo de función para enviar datos a una API externa
-export const sendNotification = async (token: string, message: string) => {
-  return await api.post('/notifications', {
-    to: token,
-    body: message,
-    title: 'Nueva Notificación',
-  });
+const fecthStores = async () => {
+  try {
+    const response = await axios.get(apiBaseUrl+'/stores');
+    console.log('Response data:', response.data);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error fetching devices:', error.message);
+    } else {
+      console.error('Error fetching devices:', error);
+    }
+  }
 };
+
+fecthStores();

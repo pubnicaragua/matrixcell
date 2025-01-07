@@ -18,30 +18,31 @@ import ExportSicom from "./components/ExportSicom";
 import Profile from "./pages/Profile";
 import Security from "./pages/Security";
 import { AuthProvider } from './context/AuthContext';
-
+import Layout from '../src/layouts/Layout'; // Importar el Layout
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/notifications" element={<Notifications />} />
-      <Route path="/invoices" element={<Invoices />} />
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/users" element={<Users />} />
-      <Route path="/blockdevice" element={<BlockDevice />} />
-      <Route path="/addclient" element={<AddClient />} />
-      <Route path="/invoicedetail" element={<InvoiceDetail />} />
-      <Route path="/usersettings" element={<UserSettings />} />
-      <Route path="/stores" element={<Stores />} />
-      <Route path="/technicalservices" element={<TechnicalServices />} />
-      <Route path="/auditlogs" element={<AuditLogs />} />
-      <Route path="/exportsicom" element={<ExportSicom />} />
-      <Route path="/profile" element={<Profile />} />
-        <Route path="/security" element={<Security />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/notifications" element={<Layout><Notifications /></Layout>} />
+        <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
+        <Route path="/reports" element={<Layout><Reports /></Layout>} />
+        <Route path="/settings" element={<Layout><Settings /></Layout>} />
+        <Route path="/users" element={<Layout><Users /></Layout>} />
+        <Route path="/blockdevice" element={<Layout><BlockDevice /></Layout>} />
+        <Route path="/addclient" element={<Layout><AddClient /></Layout>} />
+        <Route path="/invoicedetail" element={<Layout><InvoiceDetail /></Layout>} />
+        <Route path="/usersettings" element={<Layout><UserSettings /></Layout>} />
+        <Route path="/stores" element={<Layout><Stores /></Layout>} />
+        <Route path="/technicalservices" element={<Layout><TechnicalServices /></Layout>} />
+        <Route path="/auditlogs" element={<Layout><AuditLogs /></Layout>} />
+        <Route path="/exportsicom" element={<Layout><ExportSicom /></Layout>} />
+        <Route path="/profile" element={<Layout><Profile /></Layout>} />
+        <Route path="/security" element={<Layout><Security /></Layout>} />
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+      </Routes>
+    </AuthProvider>
   );
 };
 
