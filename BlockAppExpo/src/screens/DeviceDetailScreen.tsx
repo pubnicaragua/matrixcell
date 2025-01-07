@@ -7,7 +7,7 @@ const DeviceDetailScreen = ({ route }: any) => {
 
   const handleUnlockDevice = async () => {
     try {
-      const response = await axios.patch(`https://tu-api.com/devices/${device.id}/unlock`);
+      const response = await axios.patch(`https://matrixcell.onrender.com/devices/${device.id}/unlock`);
 
       if (response.data.success) {
         Alert.alert('Desbloqueado', 'El dispositivo ha sido desbloqueado correctamente.');
