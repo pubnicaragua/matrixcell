@@ -23,11 +23,10 @@ import { ClientController } from './controllers/client.controller'; // Importar 
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
 import { sessionAuth } from './middlewares/supabaseMidleware';
-
-dotenv.config(); // Cargar las variables de entorno
+// Cargar las variables de entorno
+dotenv.config();
 const app = express();
-const { allowedOrigin } = config;
-
+const { port, allowedOrigin } = config;
 // Middleware global
 app.use(cors({
   origin: allowedOrigin,
@@ -37,9 +36,6 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Registrar rutas
-app.get('/', (req: Request, res: Response) => {
-  res.send('Bienvenido al API');
-});
 app.use('/auth/', authRoutes);
 app.use('/usuarios', usuarioRoutes);
 app.use('/roles', rolRoutes);
@@ -55,9 +51,9 @@ app.use('/operations', operationRoutes)
 app.use('/paiments', paymentRoutes)
 app.use('/status', statusRoutes)
 app.use('/clients', clientRoutes); // Registrar rutas de clientes
-
 // Ruta independiente para generar el informe
-app.post('/generate-report', sessionAuth, ClientController.generateEquifaxReport);
-
-// Exportar la aplicación para Vercel
-export default app;
+app.post('/generate-report',sessionAuth, ClientController.generateEquifaxReport);
+// Iniciar el servidor
+app.listen(port, () => {
+  console.log(`Servidor escuchando en http://localhost:${port}`);
+});

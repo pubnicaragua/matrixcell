@@ -23,7 +23,7 @@ export const DeviceController = {
                 };
             };
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const devices = await BaseService.getAll<DeviceFormat>(tableName, ['id', 'imei', 'status', 'owner', 'store_id','devices(name)'], where);
+            const devices = await BaseService.getAll<DeviceFormat>(tableName, ['id', 'imei', 'status', 'owner', 'store_id','clients(name)'], where);
             const resultados = devices!.map((device) => ({
                 id: device.id,
             imei: device.imei,
