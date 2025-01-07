@@ -119,7 +119,7 @@ export const DeviceController = {
             // Actualizar el estado del dispositivo a "blocked"
             const { data: device, error } = await supabase
                 .from('devices')
-                .update({ status: 'blocked' })
+                .update({ status: 'Bloqueado' })
                 .eq('id', id)
                 .select('push_token')
                 .single();
