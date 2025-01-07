@@ -5,6 +5,7 @@ import { BaseService } from "../services/base.service";
 import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
+import { sendPushNotification } from "../services/notifications";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -130,7 +131,7 @@ export const DeviceController = {
         const { id } = req.params;
 
         if (!id) {
-            return res.status(400).json({ success: false, message: 'El ID del dispositivo es requerido.' });
+             res.status(400).json({ success: false, message: 'El ID del dispositivo es requerido.' });
         }
 
         try {
@@ -162,24 +163,25 @@ export const DeviceController = {
                 };
 
                 try {
-                    // await sendPushNotification([pushToken], message);
+
+                     await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
                     console.error('Error enviando notificación push:', notificationError);
-                    return res.status(500).json({
+                     res.status(500).json({
                         success: false,
                         message: 'El dispositivo fue bloqueado, pero no se pudo enviar la notificación.'
                     });
                 }
             }
 
-            return res.status(200).json({
+             res.status(200).json({
                 success: true,
                 message: 'Dispositivo bloqueado y notificación enviada correctamente.'
             });
 
         } catch (error) {
             console.error('Error bloqueando el dispositivo:', error);
-            return res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
+             res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
         }
     }
 
