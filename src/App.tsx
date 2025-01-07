@@ -17,6 +17,7 @@ import AuditLogs from './pages/AuditLogs';
 import ExportSicom from "./components/ExportSicom";
 import Profile from "./pages/Profile";
 import Security from "./pages/Security";
+import Inventory from './components/Inventory'
 import { AuthProvider } from './context/AuthContext';
 import Layout from '../src/layouts/Layout'; // Importar el Layout
 
@@ -37,6 +38,7 @@ const App = () => {
         <Route path="/stores" element={<Layout><Stores /></Layout>} />
         <Route path="/technicalservices" element={<Layout><TechnicalServices /></Layout>} />
         <Route path="/auditlogs" element={<Layout><AuditLogs /></Layout>} />
+        <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
         <Route path="/exportsicom" element={<Layout><ExportSicom /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/security" element={<Layout><Security /></Layout>} />

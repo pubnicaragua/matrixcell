@@ -92,6 +92,15 @@ const Sidebar = () => {
           </Link>
         </li>
 
+        {/* Equifax */}
+        <li style={styles.sectionTitle}>Inventario</li>
+        <li style={styles.listItem}>
+          <FaChartLine style={styles.icon} />
+          <Link to="/inventory" style={styles.link}>
+            Inventario
+          </Link>
+        </li>
+
         {/* Configuración */}
         <li style={styles.sectionTitle}>Configuración</li>
         <li style={styles.listItem}>
