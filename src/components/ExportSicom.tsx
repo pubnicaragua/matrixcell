@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
-import api from '../axiosConfig'; // Asegúrate de que esta importación sea correcta
+import api from "../axiosConfig"; // Asegúrate de que esta importación sea correcta
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
@@ -21,7 +21,7 @@ const ExportEquifax: React.FC = () => {
     "FECHA_CONCESION",
     "VAL_OPERACION",
     "VAL_A_VENCER",
-    "VAL_VENCIDO", // Aquí agregamos la columna VAL_VENCIDO
+    "VAL_VENCIDO",
     "VA_DEM_JUDICIAL",
     "VAL_CART_CASTIGADA",
     "NUM_DIAS_VENCIDOS",
@@ -30,17 +30,17 @@ const ExportEquifax: React.FC = () => {
     "FECHA_SIG_VENCIMIENTO",
   ];
 
-  // Función para generar un código único basado en la cédula
   const generateUniqueCode = (cedula: string): string => {
     const lastFiveDigits = cedula.slice(-5);
     const randomLetters = Array(3)
       .fill(null)
       .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Letras aleatorias
       .join("");
-    return `${lastFiveDigits} ${randomLetters}`;
+    return `${lastFiveDigits}${randomLetters}`;
   };
 
   const excelDateToJSDate = (serial: number): string => {
+    if (!serial || isNaN(serial)) return ""; // Validación de serial
     const utcDays = Math.floor(serial - 25569);
     const date = new Date(utcDays * 86400 * 1000);
     return date.toISOString().split("T")[0];
@@ -53,16 +53,14 @@ const ExportEquifax: React.FC = () => {
         String(client["CODIGO_ID_SUJETO"]).trim()
     );
 
-    if (!paymentInfo || !client["FECHA_CONCESION"]) return client;
+    const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
+    let valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
 
     let creditTerm = 0;
-    const creditTermStr = paymentInfo["PLAZO DEL CREDITO"]?.trim();
+    const creditTermStr = paymentInfo?.["PLAZO DEL CREDITO"]?.trim() || "";
 
-    if (creditTermStr?.includes("MESES")) {
+    if (creditTermStr.includes("MESES")) {
       creditTerm = parseInt(creditTermStr.split(" ")[0]) || 0;
-    } else if (creditTermStr?.includes("SEMANAL")) {
-      const weeks = parseInt(creditTermStr.split(" ")[0]) || 0;
-      creditTerm = Math.ceil(weeks / 4);
     }
 
     const startDate = new Date(client["FECHA_CONCESION"]);
@@ -77,33 +75,20 @@ const ExportEquifax: React.FC = () => {
         ? Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
-    const nextPaymentDate = new Date(startDate);
-    nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+    const nextPaymentDate = new Date(endDate);
+    nextPaymentDate.setMonth(nextPaymentDate.getMonth() + creditTerm);
 
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
-
-    // Validar y calcular valores
-    const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
-    let valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || 0;
     const valVencido = valOperacion - valAVencer;
-
-    if (isNaN(valOperacion) || isNaN(valAVencer)) {
-      console.error("Datos inválidos en el cliente:", client);
-      return client;
-    }
-
-    if (!valAVencer && valOperacion > 0) {
-      valAVencer = valOperacion;
-    }
 
     return {
       ...client,
       "NUMERO DE OPERACION": operationNumber,
-      NUM_DIAS_VENCIDOS: daysOverdue,
-      FECHA_DE_VENCIMIENTO: endDate.toISOString().split("T")[0],
-      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toISOString().split("T")[0],
-      VAL_VENCIDO: valVencido.toFixed(2),
       VAL_A_VENCER: valAVencer.toFixed(2),
+      VAL_VENCIDO: valVencido.toFixed(2),
+      NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
+      FECHA_DE_VENCIMIENTO: endDate.toLocaleDateString("es-ES"),
+      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toLocaleDateString("es-ES"),
     };
   };
 
@@ -160,33 +145,11 @@ const ExportEquifax: React.FC = () => {
       return;
     }
 
-    // Crear un nuevo libro de trabajo y agregarle la hoja de datos
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Datos Exportados");
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
 
-    // Descargar el archivo con el nombre configurado
-    XLSX.writeFile(wb, fileName);
-  };
-
-  const handleSendFile = () => {
-    if (!file) {
-      alert("No se ha cargado ningún archivo para exportar.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    api.post("/clients/insercion-consolidado", formData)
-      .then((response) => {
-        console.log("Respuesta del servidor:", response.data);
-        alert("Archivo enviado exitosamente!");
-      })
-      .catch((error) => {
-        console.error("Error al enviar el archivo:", error);
-        alert("Hubo un error al enviar el archivo.");
-      });
+    XLSX.writeFile(workbook, fileName);
   };
 
   return (
@@ -206,9 +169,6 @@ const ExportEquifax: React.FC = () => {
       <div>
         <label htmlFor="fileName">Nombre del archivo a exportar:</label>
         <input id="fileName" type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
-        <button onClick={handleSendFile} style={{ marginLeft: "10px" }}>
-          Enviar Archivo
-        </button>
         <button onClick={handleExport} style={{ marginLeft: "10px" }}>
           Exportar a Excel
         </button>

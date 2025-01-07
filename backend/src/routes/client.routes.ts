@@ -7,10 +7,10 @@ const router = express.Router();
 // Configuración de multer para almacenar en memoria
 const storage = multer.memoryStorage(); // Usar almacenamiento en memoria
 const upload = multer({ storage });
-// Ruta para obtener todas las clientes
+// Ruta para obtener todos los clientes
 router.get('/',sessionAuth, ClientController.getAllClients);
 
-// Ruta para crear una nueva tienda
+// Ruta para crear un nuevo cliente
 router.post('/',sessionAuth, ClientController.createClient);
 router.post('/insercion-consolidado',upload.single('file'),sessionAuth, ClientController.consolidadoEquifax);
 
