@@ -18,8 +18,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         email,
         password,
       });
-
-      if (response.data.success) {
+      if (response.status === 200) {
         setIsAuthenticated(true);
         return true;
       } else {
