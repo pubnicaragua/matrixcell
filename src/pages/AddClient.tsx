@@ -1,253 +1,224 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../axiosConfig"; // Configuración de Axios
 
 interface Client {
   id: number;
   name: string;
-  phone: string;
+  identity_number: string;
+  identity_type: string;
   address: string;
-  category: string;
-  status: string;
-  operations: Operation[];
+  phone: string;
+  city: string;
+  due_date: string;
+  debt_type: string;
+  deadline: string; // Nuevo campo
 }
 
-interface Operation {
-  id: number;
-  operationNumber: string;
-  operationDate: string;
-  amountDue: number;
-  amountPaid: number;
-  daysOverdue: number;
-  judicialAction: boolean;
-  operationValue: number;
-  cartValue: number;
-  dueDate: string;
-  refinancedDebt: string;
-  proxDueDate: string;
-  client_id: number; // Relación con cliente
-}
-
-const ClientOperationsView: React.FC = () => {
+export default function ClientManagement() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [newClient, setNewClient] = useState<Client>({
-    id: 0,
-    name: "",
-    phone: "",
-    address: "",
-    category: "",
-    status: "Activo",
-    operations: [],
-  });
-
-  const [newOperation, setNewOperation] = useState<Operation>({
-    id: 0,
-    operationNumber: "",
-    operationDate: "",
-    amountDue: 0,
-    amountPaid: 0,
-    daysOverdue: 0,
-    judicialAction: false,
-    operationValue: 0,
-    cartValue: 0,
-    dueDate: "",
-    refinancedDebt: "",
-    proxDueDate: "",
-    client_id: 0,
-  });
-
-  const [showOperations, setShowOperations] = useState<number | null>(null);
-  const [showClientForm, setShowClientForm] = useState(false);
-  const [showOperationForm, setShowOperationForm] = useState(false);
+  const [newClient, setNewClient] = useState<Partial<Client>>({});
+  const [editingClient, setEditingClient] = useState<Partial<Client> | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchClientsAndOperations = async () => {
+    const fetchClients = async () => {
       try {
-        // Fetch clients
-        const clientsResponse = await api.get("/clients");
-        const clientsData = clientsResponse.data;
-
-        // Fetch operations
-        const operationsResponse = await api.get("/operations");
-        const operationsData = operationsResponse.data;
-
-        // Map operations to their respective clients
-        const clientsWithOperations = clientsData.map((client: Client) => ({
-          ...client,
-          operations: operationsData.filter(
-            (operation: Operation) => operation.client_id === client.id
-          ),
-        }));
-
-        setClients(clientsWithOperations);
-      } catch (error) {
-        console.error("Error fetching clients and operations:", error);
+        const response = await api.get("/clients");
+        setClients(response.data);
+      } catch (err: any) {
+        setError(err.message || "Error fetching clients");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchClientsAndOperations();
+    fetchClients();
   }, []);
 
-  const handleAddClient = async () => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (editingClient) {
+      setEditingClient({ ...editingClient, [name]: value });
+    } else {
+      setNewClient({ ...newClient, [name]: value });
+    }
+  };
+
+  const createClient = async () => {
     try {
       const response = await api.post("/clients", newClient);
-      setClients([...clients, { ...response.data, operations: [] }]);
-      setNewClient({
-        id: 0,
-        name: "",
-        phone: "",
-        address: "",
-        category: "",
-        status: "Activo",
-        operations: [],
-      });
-      setShowClientForm(false);
-    } catch (error) {
-      console.error("Error adding client:", error);
+      setClients([...clients, response.data]);
+      setNewClient({});
+    } catch (err: any) {
+      setError(err.message || "Error creating client");
     }
   };
 
-  const handleAddOperation = async (clientId: number) => {
+  const updateClient = async (id: number) => {
     try {
-      const newOperationWithClientId = { ...newOperation, client_id: clientId };
-      const response = await api.post("/operations", newOperationWithClientId);
-
-      setClients((prevClients) =>
-        prevClients.map((client) =>
-          client.id === clientId
-            ? { ...client, operations: [...client.operations, response.data] }
-            : client
-        )
-      );
-
-      setNewOperation({
-        id: 0,
-        operationNumber: "",
-        operationDate: "",
-        amountDue: 0,
-        amountPaid: 0,
-        daysOverdue: 0,
-        judicialAction: false,
-        operationValue: 0,
-        cartValue: 0,
-        dueDate: "",
-        refinancedDebt: "",
-        proxDueDate: "",
-        client_id: 0,
-      });
-      setShowOperationForm(false);
-    } catch (error) {
-      console.error("Error adding operation:", error);
+      const response = await api.put(`/clients/${id}`, editingClient);
+      setClients(clients.map(client => (client.id === id ? response.data : client)));
+      setEditingClient(null);
+    } catch (err: any) {
+      setError(err.message || "Error updating client");
     }
   };
 
-  const handleDeleteClient = async (id: number) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este cliente?")) return;
-
+  const deleteClient = async (id: number) => {
     try {
       await api.delete(`/clients/${id}`);
-      setClients(clients.filter((client) => client.id !== id));
-    } catch (error) {
-      console.error("Error deleting client:", error);
+      setClients(clients.filter(client => client.id !== id));
+    } catch (err: any) {
+      setError(err.message || "Error deleting client");
     }
-  };
-
-  const toggleOperations = (clientId: number) => {
-    setShowOperations(showOperations === clientId ? null : clientId);
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Vista de Clientes y Operaciones</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Gestión de Clientes</h1>
+      {error && <p className="text-red-500">{error}</p>}
 
-      <button
-        onClick={() => setShowClientForm(!showClientForm)}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-      >
-        {showClientForm ? "Ocultar Formulario Cliente" : "Agregar Cliente"}
-      </button>
+      {loading ? (
+        <p>Cargando...</p>
+      ) : (
+        <>
+          {/* Formulario para agregar un nuevo cliente */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2">Agregar Cliente</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                name="name"
+                placeholder="Nombre"
+                value={newClient.name || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="identity_number"
+                placeholder="Número de Identidad"
+                value={newClient.identity_number || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <select
+                name="identity_type"
+                value={newClient.identity_type || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              >
+                <option value="">Tipo de Identidad</option>
+                <option value="DNI">DNI</option>
+                <option value="Pasaporte">Pasaporte</option>
+              </select>
+              <input
+                name="address"
+                placeholder="Dirección"
+                value={newClient.address || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="phone"
+                placeholder="Teléfono"
+                value={newClient.phone || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="city"
+                placeholder="Ciudad"
+                value={newClient.city || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="due_date"
+                placeholder="Fecha de Vencimiento"
+                value={newClient.due_date || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="debt_type"
+                placeholder="Tipo de Deuda"
+                value={newClient.debt_type || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+              <input
+                name="deadline"
+                placeholder="Plazo"
+                value={newClient.deadline || ""}
+                onChange={handleInputChange}
+                className="border p-2"
+              />
+            </div>
+            <button
+              onClick={createClient}
+              className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
+            >
+              Agregar Cliente
+            </button>
+          </div>
 
-      {showClientForm && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAddClient();
-          }}
-          className="grid grid-cols-2 gap-4"
-        >
-          <input
-            type="text"
-            placeholder="Nombre"
-            value={newClient.name}
-            onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-            className="border px-4 py-2"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Teléfono"
-            value={newClient.phone}
-            onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-            className="border px-4 py-2"
-            required
-          />
-          {/* Más campos para agregar cliente */}
-          <button
-            type="submit"
-            className="bg-green-500 text-white px-4 py-2 rounded"
-          >
-            Agregar Cliente
-          </button>
-        </form>
+          {/* Lista de clientes */}
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Clientes</h2>
+            {clients.map(client => (
+              <div key={client.id} className="border rounded-lg p-4 mb-4">
+                {editingClient && editingClient.id === client.id ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      name="name"
+                      value={editingClient.name || ""}
+                      onChange={handleInputChange}
+                      className="border p-2"
+                    />
+                    <input
+                      name="identity_number"
+                      value={editingClient.identity_number || ""}
+                      onChange={handleInputChange}
+                      className="border p-2"
+                    />
+                    {/* Agregar más campos aquí */}
+                    <button
+                      onClick={() => updateClient(client.id)}
+                      className="bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-semibold">Nombre: {client.name}</p>
+                    <p>Número de Identidad: {client.identity_number}</p>
+                    <p>Tipo de Identidad: {client.identity_type}</p>
+                    <p>Dirección: {client.address}</p>
+                    <p>Teléfono: {client.phone}</p>
+                    <p>Ciudad: {client.city}</p>
+                    <p>Fecha de Vencimiento: {client.due_date}</p>
+                    <p>Tipo de Deuda: {client.debt_type}</p>
+                    <p>Plazo: {client.deadline}</p>
+                    <button
+                      onClick={() => setEditingClient(client)}
+                      className="bg-yellow-500 text-white px-4 py-2 mr-2 rounded"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => deleteClient(client.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
-
-      <table className="w-full table-auto border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th>ID Cliente</th>
-            <th>Nombre</th>
-            <th>Teléfono</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((client) => (
-            <React.Fragment key={client.id}>
-              <tr className="hover:bg-gray-100">
-                <td className="border border-gray-300 px-4 py-2">{client.id}</td>
-                <td className="border border-gray-300 px-4 py-2">{client.name}</td>
-                <td className="border border-gray-300 px-4 py-2">{client.phone}</td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <button
-                    onClick={() => toggleOperations(client.id)}
-                    className="bg-yellow-500 px-2 py-1 rounded"
-                  >
-                    Operaciones
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClient(client.id)}
-                    className="bg-red-500 px-2 py-1 rounded"
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-              {showOperations === client.id && (
-                <tr>
-                  <td colSpan={4} className="p-4">
-                    {client.operations.map((op) => (
-                      <div key={op.id}>
-                        {op.operationNumber} - ${op.amountDue}
-                      </div>
-                    ))}
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
-};
-
-export default ClientOperationsView;
+}
