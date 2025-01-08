@@ -9,7 +9,10 @@ export class Operation {
     amount_paid: number;
     days_overdue: number;
     status: string | null;
+    cart_value: number;
     judicial_action: boolean ;
+    refinanced_debt: Date | string | null;
+    prox_due_date: Date | string | null;
     client_id: number | null;
     updated_at: Date |string | null;
 
@@ -23,7 +26,10 @@ export class Operation {
         this.amount_paid = 0;
         this.days_overdue = 0;
         this.status = null;
+        this.cart_value = 0;
         this.judicial_action = false;
+        this.refinanced_debt = null;
+        this.prox_due_date = null;
         this.updated_at = null;
         this.client_id = null;
     }

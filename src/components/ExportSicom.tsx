@@ -37,7 +37,7 @@ const ExportEquifax: React.FC = () => {
       .fill(null)
       .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Letras aleatorias
       .join("");
-    return `${lastFiveDigits}${randomLetters}`;
+    return ${lastFiveDigits}${randomLetters};
   };
 
   const calculateFields = (client: any) => {
@@ -112,7 +112,7 @@ const ExportEquifax: React.FC = () => {
       "NUMERO DE OPERACION": operationNumber,
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
-      NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
+      NUM_DIAS_VENCIDOS: ${daysOverdue} días,
       FEC_CORTE_SALDO: lastPaymentDate.toLocaleDateString("es-ES"),
       FRECUENCIA_PAGO: paymentFrequency,
       FECHA_DE_VENCIMIENTO: lastPaymentDate.toLocaleDateString("es-ES"),
@@ -202,4 +202,4 @@ const ExportEquifax: React.FC = () => {
   );
 };
 
-export default ExportEquifax;
+export default ExportEquifax;
