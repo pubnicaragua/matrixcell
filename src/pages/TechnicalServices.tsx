@@ -195,6 +195,8 @@ const TechnicalServices: React.FC = () => {
           <option value="En Proceso">En Proceso</option>
           <option value="Completado">Completado</option>
         </select>
+        <div className="relative w-full">
+        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
         <input
           type="number"
           name="cost"
@@ -202,11 +204,12 @@ const TechnicalServices: React.FC = () => {
           value={editingService ? editingService.cost : newService.cost}
           onChange={(e) =>
             editingService
-              ? setEditingService({ ...editingService, cost: parseFloat(e.target.value) })
+              ? setEditingService({ ...editingService, cost: parseFloat(e.target.value) || 0 })
               : handleInputChange(e)
           }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
+          className="block w-full pl-8 p-3 rounded-lg border border-gray-300 mb-4"
         />
+      </div>
         <select
           name="store_id"
           value={editingService ? editingService.store_id : newService.store_id}
