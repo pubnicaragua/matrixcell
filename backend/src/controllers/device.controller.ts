@@ -13,7 +13,7 @@ export const DeviceController = {
     async getAllDevices(req: Request, res: Response) {
         try {
             const where = { ...req.query };
-            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status', 'clients(name)'], where);
+            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status'], where);
 
             // Asegurarse de que `formatDevice` pueda manejar un arreglo de dispositivos
             res.json(devices.map(device => DeviceResource.formatDevice(device)));
