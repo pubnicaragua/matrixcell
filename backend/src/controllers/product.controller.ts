@@ -1,0 +1,227 @@
+import { Request, Response } from "express";
+import supabase from "../config/supabaseClient";
+import * as xlsx from 'xlsx';
+import { BaseService } from "../services/base.service";
+interface ProductoExcel {
+    store: string;           // Código de la tienda
+    modelo_producto: string; // Nombre del modelo del producto
+    nombre_producto: string; // Nombre del producto
+    codigo_item: string;     // Código único del producto
+    cantidad: number;        // Cantidad de products
+}
+const tableName = 'products'; // Nombre de la tabla en la base de datos
+
+export const ProductController = {
+async getAllProducts(req: Request, res: Response) {
+        try {
+            const where = { ...req.query };
+            const products = await BaseService.getAll<Product>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status'], where);
+            res.json(products);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    async masiveProductInventory(req: Request, res: Response) {
+        try {
+            // Define las interfaces para estructurar los datos del Excel e inventarios
+            interface ProductoExcel {
+                store: string; // Código de la tienda
+                modelo_producto: string; // Modelo del producto
+                nombre_producto: string;
+                codigo_item: string;
+                cantidad: number; // Cantidad de products
+            }
+
+            interface InventarioData {
+                id?: string;
+                producto_id: string;
+                store_id: string;
+                modelo_producto: string; // ID del modelo de producto
+                stock: number;
+                cantidad_fisica: number;
+            }
+
+            // Verifica si el archivo está presente
+            if (!req.file) {
+                throw new Error('Archivo no encontrado.');
+            }
+
+            // Leer el archivo Excel y convertirlo en un array de objetos
+            const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const data = xlsx.utils.sheet_to_json<ProductoExcel>(sheet);
+
+            // Obtener los códigos únicos de tienda
+            const storeCodes = [...new Set(data.map((item) => item.store))];
+
+            // Consultar las tiendas en la base de datos
+            const { data: stores, error: storeError } = await supabase
+                .from('stores')
+                .select('id, codigo')
+                .in('codigo', storeCodes);
+
+            if (storeError) {
+                throw new Error(`Error al obtener tiendas: ${storeError.message}`);
+            }
+
+            if (!stores || stores.length === 0) {
+                throw new Error('No se encontraron tiendas para los códigos proporcionados.');
+            }
+
+            const inventarios: InventarioData[] = [];
+
+            for (const item of data) {
+                // Buscar o crear el modelo del producto
+                const { data: model, error: modelError } = await supabase
+                    .from('product_models')
+                    .select('id')
+                    .eq('nombre', item.modelo_producto)
+                    .single();
+
+                const modeloId = model?.id || (await this.createProductModel(item.modelo_producto));
+
+                // Buscar o crear el producto
+                const { data: producto, error: productoError } = await supabase
+                    .from('products')
+                    .select('id')
+                    .eq('codigo', item.codigo_item)
+                    .single();
+
+                const productoId = producto?.id || (await this.createProduct(item, modeloId));
+
+                // Buscar la tienda correspondiente
+                const store = stores.find((s) => s.codigo === item.store);
+                if (!store) {
+                    throw new Error(`No se encontró la tienda con el código: ${item.store}`);
+                }
+
+                // Consultar o preparar inventario
+                const { data: inventario, error: inventarioError } = await supabase
+                    .from('inventario')
+                    .select('id, stock, cantidad_fisica')
+                    .eq('producto_id', productoId)
+                    .eq('store_id', store.id)
+                    .single();
+
+                const stockActualizado = (inventario?.stock ?? 0) + item.cantidad;
+                const cantidadFisicaActualizada = (inventario?.cantidad_fisica ?? 0) + item.cantidad;
+
+                if (inventario) {
+                    inventarios.push({
+                        id: inventario.id,
+                        producto_id: productoId,
+                        store_id: store.id,
+                        modelo_producto: modeloId,
+                        stock: stockActualizado,
+                        cantidad_fisica: cantidadFisicaActualizada,
+                    });
+                } else {
+                    inventarios.push({
+                        producto_id: productoId,
+                        store_id: store.id,
+                        modelo_producto: modeloId,
+                        stock: stockActualizado,
+                        cantidad_fisica: cantidadFisicaActualizada,
+                    });
+                }
+            }
+
+            // Actualizar o insertar inventarios
+            await Promise.all(
+                inventarios.map(async (inventario) => {
+                    if (inventario.id) {
+                        // Actualizar inventario existente
+                        const { error: updateError } = await supabase
+                            .from('inventario')
+                            .update({
+                                stock: inventario.stock,
+                                cantidad_fisica: inventario.cantidad_fisica,
+                            })
+                            .eq('id', inventario.id);
+
+                        if (updateError) {
+                            throw new Error(`Error al actualizar inventario: ${updateError.message}`);
+                        }
+                    } else {
+                        // Insertar nuevo inventario
+                        const { error: insertError } = await supabase
+                            .from('inventario')
+                            .insert({
+                                producto_id: inventario.producto_id,
+                                store_id: inventario.store_id,
+                                modelo_producto: inventario.modelo_producto,
+                                stock: inventario.stock,
+                                cantidad_fisica: inventario.cantidad_fisica,
+                            });
+
+                        if (insertError) {
+                            throw new Error(`Error al insertar inventario: ${insertError.message}`);
+                        }
+                    }
+                })
+            );
+
+            res.status(200).json({
+                message: 'Products, modelos e inventarios actualizados correctamente.',
+                data: inventarios,
+            });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Función auxiliar para crear un modelo de producto
+    async createProductModel(nombre: string): Promise<string> {
+        try {
+            const { data: newModel, error: newModelError } = await supabase
+                .from('product_models')
+                .insert({ nombre })
+                .select('id')
+                .single();
+
+            if (newModelError) {
+                throw new Error(`Error al crear modelo de producto: ${newModelError.message}`);
+            }
+
+            if (!newModel || !newModel.id) {
+                throw new Error('Error inesperado: No se recibió el ID del modelo creado.');
+            }
+
+            return newModel.id;
+        } catch (error) {
+            throw new Error(`Error en createProductModel: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    },
+
+    // Función auxiliar para crear un producto
+    async createProduct(item: ProductoExcel, modeloId: string): Promise<string> {
+        try {
+            const { data: newProducto, error: newProductoError } = await supabase
+                .from('products')
+                .insert({
+                    nombre_producto: item.nombre_producto,
+                    codigo: item.codigo_item,
+                    modelo_producto: modeloId,
+                })
+                .select('id')
+                .single();
+
+            if (newProductoError) {
+                throw new Error(`Error al crear producto: ${newProductoError.message}`);
+            }
+
+            if (!newProducto || !newProducto.id) {
+                throw new Error('Error inesperado: No se recibió el ID del producto creado.');
+            }
+
+            return newProducto.id;
+        } catch (error) {
+            throw new Error(`Error en createProduct: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+
+
+}
