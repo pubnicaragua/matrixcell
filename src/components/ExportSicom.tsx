@@ -28,6 +28,7 @@ const ExportEquifax: React.FC = () => {
     "FECHA_DE_VENCIMIENTO",
     "DEUDA_REFINANCIADA",
     "FECHA_SIG_VENCIMIENTO",
+    "FRECUENCIA_PAGO", // Nueva columna para la frecuencia de pago
   ];
 
   const generateUniqueCode = (cedula: string): string => {
@@ -39,58 +40,86 @@ const ExportEquifax: React.FC = () => {
     return `${lastFiveDigits}${randomLetters}`;
   };
 
-  const excelDateToJSDate = (serial: number): string => {
-    if (!serial || isNaN(serial)) return ""; // Validación de serial
-    const utcDays = Math.floor(serial - 25569);
-    const date = new Date(utcDays * 86400 * 1000);
-    return date.toISOString().split("T")[0];
-  };
-
   const calculateFields = (client: any) => {
     const paymentInfo = paymentData.find(
       (item: any) =>
         String(item["CODIGO_ID_SUJETO"]).trim() ===
         String(client["CODIGO_ID_SUJETO"]).trim()
     );
-
+  
     const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
     let valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
-
+  
     let creditTerm = 0;
-    const creditTermStr = paymentInfo?.["PLAZO DEL CREDITO"]?.trim() || "";
-
-    if (creditTermStr.includes("MESES")) {
-      creditTerm = parseInt(creditTermStr.split(" ")[0]) || 0;
+    const creditTermStr = paymentInfo?.["PLAZO EN MESES"]?.toString().trim() || "";
+    const paymentValue = paymentInfo?.["VALOR MENSUAL"]
+      ? paymentInfo["VALOR MENSUAL"].toString().toUpperCase()
+      : "";
+  
+    // Determinar frecuencia de pago
+    const paymentFrequency =
+      paymentValue.includes("SEMANAL") || paymentValue.includes("SEMANALES")
+        ? "SEMANAL"
+        : paymentValue
+        ? "MENSUAL"
+        : "N/A";
+  
+    // Validar y calcular el plazo en meses o semanas
+    if (creditTermStr && !isNaN(parseInt(creditTermStr))) {
+      creditTerm = parseInt(creditTermStr);
+    } else {
+      creditTerm = paymentFrequency === "SEMANAL" ? 12 : 1; // Predeterminado: 12 semanas o 1 mes
     }
-
+  
     const startDate = new Date(client["FECHA_CONCESION"]);
-    if (isNaN(startDate.getTime())) return client;
-
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + creditTerm);
-
+    if (isNaN(startDate.getTime())) {
+      return {
+        ...client,
+        FEC_CORTE_SALDO: "N/A",
+        FRECUENCIA_PAGO: "N/A",
+      };
+    }
+  
+    // Calcular FEC_CORTE_SALDO
+    let lastPaymentDate = new Date(startDate);
+    if (paymentFrequency === "SEMANAL") {
+      lastPaymentDate.setDate(lastPaymentDate.getDate() + creditTerm * 7);
+    } else if (paymentFrequency === "MENSUAL") {
+      lastPaymentDate.setMonth(lastPaymentDate.getMonth() + creditTerm);
+    } else {
+      lastPaymentDate = new Date(startDate);
+      lastPaymentDate.setDate(lastPaymentDate.getDate() + 30); // Asumir un mes por defecto
+    }
+  
     const today = new Date();
     const daysOverdue =
-      today > endDate
-        ? Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))
+      today > lastPaymentDate
+        ? Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
-
-    const nextPaymentDate = new Date(endDate);
-    nextPaymentDate.setMonth(nextPaymentDate.getMonth() + creditTerm);
-
+  
+    const nextPaymentDate = new Date(lastPaymentDate);
+    if (paymentFrequency === "SEMANAL") {
+      nextPaymentDate.setDate(nextPaymentDate.getDate() + 7); // Siguiente pago semanal
+    } else if (paymentFrequency === "MENSUAL") {
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1); // Siguiente pago mensual
+    }
+  
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
     const valVencido = valOperacion - valAVencer;
-
+  
     return {
       ...client,
       "NUMERO DE OPERACION": operationNumber,
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
-      FECHA_DE_VENCIMIENTO: endDate.toLocaleDateString("es-ES"),
+      FEC_CORTE_SALDO: lastPaymentDate.toLocaleDateString("es-ES"),
+      FRECUENCIA_PAGO: paymentFrequency,
+      FECHA_DE_VENCIMIENTO: lastPaymentDate.toLocaleDateString("es-ES"),
       FECHA_SIG_VENCIMIENTO: nextPaymentDate.toLocaleDateString("es-ES"),
     };
   };
+  
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -110,10 +139,6 @@ const ExportEquifax: React.FC = () => {
         columns.forEach((col) => {
           newRow[col] = row[col] !== undefined ? row[col] : "";
         });
-
-        if (typeof newRow["FECHA_CONCESION"] === "number") {
-          newRow["FECHA_CONCESION"] = excelDateToJSDate(newRow["FECHA_CONCESION"]);
-        }
 
         return calculateFields(newRow);
       });
