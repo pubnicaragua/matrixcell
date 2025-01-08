@@ -92,6 +92,15 @@ const Sidebar = () => {
           </Link>
         </li>
 
+        {/* Inventario */}
+        <li style={styles.sectionTitle}>Agregar Inventario</li>
+        <li style={styles.listItem}>
+          <FaChartLine style={styles.icon} />
+          <Link to="/inventory" style={styles.link}>
+            Agregar Inventario
+          </Link>
+        </li>
+
         {/* Configuración */}
         <li style={styles.sectionTitle}>Configuración</li>
         <li style={styles.listItem}>
