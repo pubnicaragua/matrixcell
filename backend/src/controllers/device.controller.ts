@@ -40,29 +40,41 @@ export const DeviceController = {
             validateDevice(req.body); // Validar los datos
             const { userId } = req;
             const device = await BaseService.update<Device>(tableName, parseInt(id), req.body, userId);
+    
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const length = 10; // Define la longitud de la cadena aleatoria
+            let result = '';
+    
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                result += characters[randomIndex];
+            }
+    
             if (device.status === 'Desbloqueado') {
                 const message = {
-                    body: this.generateCode(),
+                    body: result+' ',
                     data: { deviceId: id },
                 };
-
+    
                 try {
-                    const pushToken = device.imei !== null ? device.imei : ''
+                    const pushToken = device.imei !== null ? device.imei : '';
                     await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
                     console.error('Error enviando notificación push:', notificationError);
                     res.status(500).json({
                         success: false,
-                        message: 'El dispositivo fue bloqueado, pero no se pudo enviar la notificación.'
+                        message: 'El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.',
                     });
+                    return;
                 }
             }
+    
             res.json(DeviceResource.formatDevice(device));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
     },
-
+    
     async deleteDevice(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -131,68 +143,68 @@ export const DeviceController = {
             if (!req.file) {
                 throw new Error('Archivo no encontrado.');
             }
-    
+
             // Tipo de datos esperados en el archivo Excel
             type DeviceRow = {
-                'NombreCliente': string; // Nombre del cliente
+                'Nombre': string; // Nombre del cliente
                 'Tienda': string;   // Nombre de la tienda
                 'Modelo': string;        // Modelo del dispositivo
                 'IMEI': string;          // IMEI del dispositivo
                 'Marca': string;         // Marca del dispositivo
             };
-    
+
             // Lee el archivo Excel
             const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
             const sheetName = workbook.SheetNames[0]; // Usamos la primera hoja del archivo
             const sheetData: DeviceRow[] = XLSX.utils.sheet_to_json<DeviceRow>(workbook.Sheets[sheetName]);
-    
+
             // Valida que el archivo tenga datos
             if (sheetData.length === 0) {
-                return res.status(400).json({ error: 'El archivo está vacío.' });
+                res.status(400).json({ error: 'El archivo está vacío.' });
             }
-    
+
             // Obtén nombres únicos de clientes y stores
-            const nombresClientes = Array.from(new Set(sheetData.map(row => row.NombreCliente)));
+            const nombresClientes = Array.from(new Set(sheetData.map(row => row['Nombre'])));
             const nombresStores = Array.from(new Set(sheetData.map(row => row['Tienda'])));
-    
+
             // Busca IDs de clientes
             const { data: clientes, error: errorClientes } = await supabase
                 .from('clients')
                 .select('id, name')
                 .in('name', nombresClientes);
-    
+
             if (errorClientes) {
-                return res.status(500).json({ error: `Error al obtener IDs de clientes: ${errorClientes.message}` });
+                res.status(500).json({ error: `Error al obtener IDs de clientes: ${errorClientes.message}` });
             }
-    
+
             // Crea un mapa de nombres de clientes a IDs
             const clienteIdMap = new Map(clientes?.map(client => [client.name, client.id]));
-    
+
             // Busca IDs de stores
             const { data: stores, error: errorStores } = await supabase
                 .from('store')
                 .select('id, name')
                 .in('name', nombresStores);
-    
+
             if (errorStores) {
-                return res.status(500).json({ error: `Error al obtener IDs de stores: ${errorStores.message}` });
+                res.status(500).json({ error: `Error al obtener IDs de stores: ${errorStores.message}` });
             }
-    
+
             // Crea un mapa de nombres de stores a IDs
             const storeIdMap = new Map(stores?.map(store => [store.name, store.id]));
-    
+
             // Construye los datos para la inserción
             const devicesToInsert = sheetData.map(row => {
-                const clienteId = clienteIdMap.get(row.NombreCliente);
+                const clienteId = clienteIdMap.get(row['Nombre']);
                 const storeId = storeIdMap.get(row['Tienda']);
-    
+
                 if (!clienteId) {
-                    throw new Error(`No se encontró un cliente con el nombre: ${row.NombreCliente}`);
+                    throw new Error(`No se encontró un cliente con el nombre: ${row['Nombre']}`);
                 }
-                if (!storeId) {
-                    throw new Error(`No se encontró una tienda con el nombre: ${row['Tienda']}`);
-                }
-    
+                 if (!storeId) {
+                     throw new Error(`No se encontró una tienda con el nombre: ${row['Tienda']}`);
+                 }
+
                 return {
                     owner: clienteId,
                     store_id: storeId|| null, // Agrega el ID del store
@@ -202,20 +214,20 @@ export const DeviceController = {
                     status: 'Desbloqueado',
                 };
             });
-    
+
             // Inserción masiva de dispositivos
             const { error: errorInsert } = await supabase.from('devices').insert(devicesToInsert);
             if (errorInsert) {
-                return res.status(500).json({ error: `Error al insertar dispositivos: ${errorInsert.message}` });
+                res.status(500).json({ error: `Error al insertar dispositivos: ${errorInsert.message}` });
             }
-    
+
             res.status(200).json({ message: 'Dispositivos insertados exitosamente.' });
         } catch (error: any) {
             console.error('Error al insertar dispositivos:', error);
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     },
-    
+
     async blockDevices(req: Request, res: Response) {
         const { id } = req.params;
 
@@ -273,7 +285,7 @@ export const DeviceController = {
             res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
         }
     },
-     generateCode(length: number = 10): string {
+    generateCode(length: number = 10): string {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
         for (let i = 0; i < length; i++) {

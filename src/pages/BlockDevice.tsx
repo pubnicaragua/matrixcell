@@ -22,39 +22,39 @@ const DevicesView: React.FC = () => {
   const [clients, setClients] = useState<any[]>([]);
   const [file, setFile] = useState<File | null>(null);  // Estado para el archivo
 
+  const fetchDevices = async () => {
+    try {
+      const response = await api.get('/devices');
+      setDevices(response.data);
+    } catch (err: any) {
+      setError(err.message || 'Error fetching devices');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const response = await api.get("/clients");
+      setClients(response.data);
+    } catch (err: any) {
+      alert("Error al cargar los clientes: " + err.message);
+    }
+  };
+
+  const fetchStores = async () => {
+    try {
+      const response = await api.get('/stores');
+      setStores(response.data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError('Error al obtener las tiendas: ' + err.message);
+      } else {
+        setError('Error desconocido');
+      }
+    }
+  };
   useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await api.get('/devices');
-        setDevices(response.data);
-      } catch (err: any) {
-        setError(err.message || 'Error fetching devices');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchClients = async () => {
-      try {
-        const response = await api.get("/clients");
-        setClients(response.data);
-      } catch (err: any) {
-        alert("Error al cargar los clientes: " + err.message);
-      }
-    };
-
-    const fetchStores = async () => {
-      try {
-        const response = await api.get('/stores');
-        setStores(response.data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError('Error al obtener las tiendas: ' + err.message);
-        } else {
-          setError('Error desconocido');
-        }
-      }
-    };
 
     fetchDevices();
     fetchClients();
@@ -114,6 +114,7 @@ const DevicesView: React.FC = () => {
         },
       });
       alert('Archivo subido con éxito');
+      fetchDevices();
       console.log('Respuesta del servidor:', response.data);
     } catch (err: any) {
       alert('Error al subir el archivo: ' + err.message);
