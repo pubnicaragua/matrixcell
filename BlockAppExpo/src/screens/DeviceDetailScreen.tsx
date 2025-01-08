@@ -22,7 +22,7 @@ const DeviceDetailScreen = ({ route }: any) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{device.name}</Text>
+      <Text style={styles.title}>{device.imei}</Text>
       <Text style={styles.status}>Estado: {device.status}</Text>
       <Button title="Desbloquear Dispositivo" onPress={handleUnlockDevice} />
     </View>

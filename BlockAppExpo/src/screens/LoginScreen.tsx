@@ -3,16 +3,16 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }: any) => {
-  // Llama todos los hooks al inicio del componente
   const authContext = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Si el contexto no está disponible, maneja esto más abajo
   if (!authContext) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: El contexto de autenticación no está disponible.</Text>
+        <Text style={styles.errorText}>
+          Error: El contexto de autenticación no está disponible.
+        </Text>
       </View>
     );
   }
@@ -27,7 +27,7 @@ const LoginScreen = ({ navigation }: any) => {
 
     const success = await login(email, password);
     if (success) {
-      navigation.replace('DevicesList');
+      navigation.replace('DevicesList'); // Asegúrate de que el nombre coincida
     } else {
       Alert.alert('Error', 'Credenciales incorrectas.');
     }

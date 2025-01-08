@@ -4,6 +4,7 @@ import axios from 'axios';
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  token: string | null; 
   logout: () => void;
 }
 
@@ -11,6 +12,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState('');
 
   const login = async (email: string, password: string) => {
     try {
@@ -18,8 +20,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         email,
         password,
       });
-
-      if (response.data.success) {
+      if (response.status === 200) {
+        setToken(response.data.token)
         setIsAuthenticated(true);
         return true;
       } else {
@@ -36,7 +38,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated,token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
