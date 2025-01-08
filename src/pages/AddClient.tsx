@@ -133,6 +133,7 @@ export default function ClientManagement() {
                 className="border p-2"
               />
               <input
+                type="date"
                 name="due_date"
                 placeholder="Fecha de Vencimiento"
                 value={newClient.due_date || ""}

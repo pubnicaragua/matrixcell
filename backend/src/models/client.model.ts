@@ -8,6 +8,7 @@ export class Client {
     phone: string | null;
     city: string | null;
     due_date: string | Date | null;
+    deadline: string | Date | null;
     deubt_type: string | null;
     operation_number: number | null;
     status : string | null;
@@ -22,6 +23,7 @@ export class Client {
         this.email = null;
         this.city = null;
         this.due_date = null;
+        this.deadline = null;
         this.deubt_type = null;
         this.operation_number = null;
         this.status = null;
