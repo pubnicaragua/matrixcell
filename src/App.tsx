@@ -15,6 +15,7 @@ import Stores from './pages/Stores';
 import TechnicalServices from './pages/TechnicalServices';
 import AuditLogs from './pages/AuditLogs';
 import ExportSicom from "./components/ExportSicom";
+import Inventory from "./components/Inventory";
 import Profile from "./pages/Profile";
 import Security from "./pages/Security";
 import { AuthProvider } from './context/AuthContext';
@@ -38,6 +39,7 @@ const App = () => {
         <Route path="/technicalservices" element={<Layout><TechnicalServices /></Layout>} />
         <Route path="/auditlogs" element={<Layout><AuditLogs /></Layout>} />
         <Route path="/exportsicom" element={<Layout><ExportSicom /></Layout>} />
+        <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/security" element={<Layout><Security /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
