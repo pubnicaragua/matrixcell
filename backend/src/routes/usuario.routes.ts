@@ -5,7 +5,7 @@ import { sessionAuth } from '../middlewares/supabaseMidleware';
 const router = express.Router();
 
 // // Ruta para obtener todas las categorías
-// router.get('/', sessionAuth, UsuarioController.getAllUsuarios);
+router.get('/', sessionAuth, UsuarioController.getAllUsuarios);
 
 
 export default router;
