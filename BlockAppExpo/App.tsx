@@ -1,12 +1,12 @@
 import React from 'react';
 import 'react-native-gesture-handler';
-import LoginScreen from './src/screens/LoginScreen';
 import { AuthProvider } from './src/context/AuthContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
     <AuthProvider>
-      <LoginScreen />
+      <AppNavigator />
     </AuthProvider>
   );
 }
