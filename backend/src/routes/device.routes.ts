@@ -21,6 +21,7 @@ router.delete('/:id',sessionAuth, DeviceController.deleteDevice);
 
 //Ruta para bloqueo y desbloqueo masivo
 router.post('/process-masive',upload.single('file'),sessionAuth, DeviceController.processMasiveDevices);
+router.post('/insert-masive',upload.single('file'),sessionAuth, DeviceController.insertMasiveDevices);
 router.patch('/:id/block', DeviceController.blockDevices);
 
 
