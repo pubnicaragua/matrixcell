@@ -14,10 +14,10 @@ router.get('/',sessionAuth, ClientController.getAllClients);
 router.post('/',sessionAuth, ClientController.createClient);
 
 
-// Ruta para actualizar una tienda existente
+// Ruta para actualizar una cliente
 router.put('/:id',sessionAuth, ClientController.updateClient);
 
-// Ruta para eliminar una tienda
+// Ruta para eliminar un cliente
 router.delete('/:id',sessionAuth, ClientController.deleteClient);
 
 router.post('/insercion-consolidado',upload.single('file'),sessionAuth, ClientController.consolidadoEquifax);
