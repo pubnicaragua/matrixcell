@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
-import api from "../axiosConfig"; // Asegúrate de que esta importación sea correcta
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
@@ -33,44 +32,33 @@ const ExportEquifax: React.FC = () => {
 
   const generateUniqueCode = (cedula: string): string => {
     const lastFiveDigits = cedula.slice(-5);
-    const randomLetters = Array(3)
-      .fill(null)
-      .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // Letras aleatorias
-      .join("");
-    return ${lastFiveDigits}${randomLetters};
+    const randomLetters = Array.from({ length: 3 }, () =>
+      String.fromCharCode(65 + Math.floor(Math.random() * 26))
+    ).join("");
+    return `${lastFiveDigits}${randomLetters}`;
   };
 
-  const calculateFields = (client: any) => {
+  const calculateFields = (client: Record<string, any>) => {
     const paymentInfo = paymentData.find(
-      (item: any) =>
+      (item: Record<string, any>) =>
         String(item["CODIGO_ID_SUJETO"]).trim() ===
         String(client["CODIGO_ID_SUJETO"]).trim()
     );
-  
+
     const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
-    let valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
-  
-    let creditTerm = 0;
+    const valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
+
     const creditTermStr = paymentInfo?.["PLAZO EN MESES"]?.toString().trim() || "";
-    const paymentValue = paymentInfo?.["VALOR MENSUAL"]
-      ? paymentInfo["VALOR MENSUAL"].toString().toUpperCase()
-      : "";
-  
-    // Determinar frecuencia de pago
+    const paymentValue = paymentInfo?.["VALOR MENSUAL"]?.toString().toUpperCase() || "";
     const paymentFrequency =
-      paymentValue.includes("SEMANAL") || paymentValue.includes("SEMANALES")
-        ? "SEMANAL"
-        : paymentValue
-        ? "MENSUAL"
-        : "N/A";
-  
-    // Validar y calcular el plazo en meses o semanas
-    if (creditTermStr && !isNaN(parseInt(creditTermStr))) {
-      creditTerm = parseInt(creditTermStr);
-    } else {
-      creditTerm = paymentFrequency === "SEMANAL" ? 12 : 1; // Predeterminado: 12 semanas o 1 mes
-    }
-  
+      paymentValue.includes("SEMANAL") ? "SEMANAL" : paymentValue ? "MENSUAL" : "N/A";
+
+    const creditTerm = !isNaN(parseInt(creditTermStr))
+      ? parseInt(creditTermStr)
+      : paymentFrequency === "SEMANAL"
+      ? 12
+      : 1;
+
     const startDate = new Date(client["FECHA_CONCESION"]);
     if (isNaN(startDate.getTime())) {
       return {
@@ -79,47 +67,42 @@ const ExportEquifax: React.FC = () => {
         FRECUENCIA_PAGO: "N/A",
       };
     }
-  
-    // Calcular FEC_CORTE_SALDO
+
     let lastPaymentDate = new Date(startDate);
     if (paymentFrequency === "SEMANAL") {
       lastPaymentDate.setDate(lastPaymentDate.getDate() + creditTerm * 7);
-    } else if (paymentFrequency === "MENSUAL") {
-      lastPaymentDate.setMonth(lastPaymentDate.getMonth() + creditTerm);
     } else {
-      lastPaymentDate = new Date(startDate);
-      lastPaymentDate.setDate(lastPaymentDate.getDate() + 30); // Asumir un mes por defecto
+      lastPaymentDate.setMonth(lastPaymentDate.getMonth() + creditTerm);
     }
-  
+
     const today = new Date();
     const daysOverdue =
       today > lastPaymentDate
         ? Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
-  
+
     const nextPaymentDate = new Date(lastPaymentDate);
     if (paymentFrequency === "SEMANAL") {
-      nextPaymentDate.setDate(nextPaymentDate.getDate() + 7); // Siguiente pago semanal
-    } else if (paymentFrequency === "MENSUAL") {
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1); // Siguiente pago mensual
+      nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
+    } else {
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
     }
-  
+
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
     const valVencido = valOperacion - valAVencer;
-  
+
     return {
       ...client,
       "NUMERO DE OPERACION": operationNumber,
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
-      NUM_DIAS_VENCIDOS: ${daysOverdue} días,
+      NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
       FEC_CORTE_SALDO: lastPaymentDate.toLocaleDateString("es-ES"),
       FRECUENCIA_PAGO: paymentFrequency,
       FECHA_DE_VENCIMIENTO: lastPaymentDate.toLocaleDateString("es-ES"),
       FECHA_SIG_VENCIMIENTO: nextPaymentDate.toLocaleDateString("es-ES"),
     };
   };
-  
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -135,9 +118,9 @@ const ExportEquifax: React.FC = () => {
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
       const formattedData = jsonData.map((row: any) => {
-        const newRow: any = {};
+        const newRow: Record<string, any> = {};
         columns.forEach((col) => {
-          newRow[col] = row[col] !== undefined ? row[col] : "";
+          newRow[col] = row[col] || "";
         });
 
         return calculateFields(newRow);
@@ -202,4 +185,4 @@ const ExportEquifax: React.FC = () => {
   );
 };
 
-export default ExportEquifax;
+export default ExportEquifax;
