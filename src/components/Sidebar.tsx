@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';  // Usamos `useNavigate` para redirigir
-import api from '../axiosConfig';
+'use client'
+
+import { Link, useNavigate } from 'react-router-dom'
 import {
   FaHome,
   FaFileInvoiceDollar,
@@ -11,167 +11,113 @@ import {
   FaCogs,
   FaLock,
   FaSignOutAlt,
-} from 'react-icons/fa';
+} from 'react-icons/fa'
+import api from '../axiosConfig'
 
-const Sidebar = () => {
-  const navigate = useNavigate();  // Usamos el hook `useNavigate` para redirigir
+export default function Sidebar() {
+  const navigate = useNavigate()
 
   const handleLogout = async () => {
     try {
-      // Llamada a la ruta /logout en el backend para invalidar la sesión
-      await api.post('auth/logout');  // Aquí se hace la solicitud para cerrar la sesión en el backend
-
-      // Elimina el token del localStorage
-      localStorage.removeItem('token');
-      
-      // Redirige al login
-      navigate('/');
+      await api.post('auth/logout')
+      localStorage.removeItem('token')
+      navigate('/login')
     } catch (error) {
-      console.error("Error al cerrar sesión", error);
+      console.error("Error al cerrar sesión", error)
     }
-  };
+  }
 
   return (
-    <nav style={styles.sidebar}>
-      <h2 style={styles.title}>MatrixCell Admin</h2>
-      <ul style={styles.list}>
-        {/* Inicio */}
-        <li style={styles.listItem}>
-          <FaHome style={styles.icon} />
-          <Link to="/dashboard" style={styles.link}>
-            Dashboard
-          </Link>
-        </li>
+    <aside className="flex h-screen w-64 flex-col overflow-y-auto bg-green-600 text-white">
+      <div className="p-4">
+        <h2 className="text-xl font-bold">MatrixCell Admin</h2>
+      </div>
+      
+      <nav className="flex-1 space-y-1 px-2">
+        <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+          <FaHome className="h-5 w-5" />
+          <span>Dashboard</span>
+        </Link>
 
-        {/* Gestión de Facturas */}
-        <li style={styles.listItem}>
-          <FaFileInvoiceDollar style={styles.icon} />
-          <Link to="/invoices" style={styles.link}>
-            Facturas
-          </Link>
-        </li>
+        <Link to="/invoices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+          <FaFileInvoiceDollar className="h-5 w-5" />
+          <span>Facturas</span>
+        </Link>
 
-        {/* Notificaciones */}
-        <li style={styles.listItem}>
-          <FaBell style={styles.icon} />
-          <Link to="/notifications" style={styles.link}>
-            Notificaciones
-          </Link>
-        </li>
+        <Link to="/notifications" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+          <FaBell className="h-5 w-5" />
+          <span>Notificaciones</span>
+        </Link>
 
-        {/* Gestión */}
-        <li style={styles.sectionTitle}>Gestión</li>
-        <li style={styles.listItem}>
-          <FaUser style={styles.icon} />
-          <Link to="/profile" style={styles.link}>
-            Mi Perfil
+        <div className="pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
+            Gestión
+          </p>
+          <Link to="/profile" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaUser className="h-5 w-5" />
+            <span>Mi Perfil</span>
           </Link>
-        </li>
-        <li style={styles.listItem}>
-          <FaUsers style={styles.icon} />
-          <Link to="/users" style={styles.link}>
-            Usuarios
+          <Link to="/users" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaUsers className="h-5 w-5" />
+            <span>Usuarios</span>
           </Link>
-        </li>
+        </div>
 
-        {/* Reportes */}
-        <li style={styles.sectionTitle}>Reportes</li>
-        <li style={styles.listItem}>
-          <FaChartLine style={styles.icon} />
-          <Link to="/reports" style={styles.link}>
-            Reportes Financieros
+        <div className="pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
+            Reportes
+          </p>
+          <Link to="/reports" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaChartLine className="h-5 w-5" />
+            <span>Reportes Financieros</span>
           </Link>
-        </li>
+        </div>
 
-        {/* Equifax */}
-        <li style={styles.sectionTitle}>Consolidado Equifax</li>
-        <li style={styles.listItem}>
-          <FaChartLine style={styles.icon} />
-          <Link to="/exportsicom" style={styles.link}>
+        <div className="pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
             Consolidado Equifax
+          </p>
+          <Link to="/exportsicom" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaChartLine className="h-5 w-5" />
+            <span>Consolidado Equifax</span>
           </Link>
-        </li>
+        </div>
 
-        {/* Inventario */}
-        <li style={styles.sectionTitle}>Agregar Inventario</li>
-        <li style={styles.listItem}>
-          <FaChartLine style={styles.icon} />
-          <Link to="/inventory" style={styles.link}>
-            Agregar Inventario
+        <div className="pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
+            Inventario
+          </p>
+          <Link to="/inventory" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaChartLine className="h-5 w-5" />
+            <span>Añadir Inventario</span>
           </Link>
-        </li>
+        </div>
 
-        {/* Configuración */}
-        <li style={styles.sectionTitle}>Configuración</li>
-        <li style={styles.listItem}>
-          <FaCogs style={styles.icon} />
-          <Link to="/settings" style={styles.link}>
+        <div className="pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
             Configuración
+          </p>
+          <Link to="/settings" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaCogs className="h-5 w-5" />
+            <span>Configuración</span>
           </Link>
-        </li>
-        <li style={styles.listItem}>
-          <FaLock style={styles.icon} />
-          <Link to="/security" style={styles.link}>
-            Seguridad
+          <Link to="/security" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaLock className="h-5 w-5" />
+            <span>Seguridad</span>
           </Link>
-        </li>
+        </div>
+      </nav>
 
-        {/* Salir */}
-        <li style={styles.sectionTitle}>Cuenta</li>
-        <li style={styles.listItem}>
-          <FaSignOutAlt style={styles.icon} />
-          <button onClick={handleLogout} style={styles.link}>
-            Cerrar Sesión
-          </button>
-        </li>
-      </ul>
-    </nav>
-  );
-};
+      <div className="border-t border-green-700 p-4">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700"
+        >
+          <FaSignOutAlt className="h-5 w-5" />
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </aside>
+  )
+}
 
-const styles = {
-  sidebar: {
-    width: '250px',
-    background: 'var(--color-primary)',
-    height: '100vh',
-    color: 'var(--color-white)',
-    padding: '20px',
-  } as React.CSSProperties,
-  title: {
-    fontFamily: 'var(--font-primary)',
-    marginBottom: '20px',
-    fontSize: '20px',
-    fontWeight: 'bold',
-  },
-  list: {
-    listStyle: 'none',
-    padding: 0,
-  } as React.CSSProperties,
-  listItem: {
-    margin: '10px 0',
-    display: 'flex',
-    alignItems: 'center',
-  } as React.CSSProperties,
-  link: {
-    color: 'var(--color-white)',
-    textDecoration: 'none',
-    fontSize: '16px',
-    marginLeft: '10px',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  icon: {
-    fontSize: '18px',
-  } as React.CSSProperties,
-  sectionTitle: {
-    marginTop: '20px',
-    marginBottom: '10px',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    color: 'rgba(255, 255, 255, 0.7)',
-  } as React.CSSProperties,
-};
-
-export default Sidebar;
