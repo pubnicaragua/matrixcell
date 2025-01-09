@@ -40,22 +40,22 @@ export const DeviceController = {
             validateDevice(req.body); // Validar los datos
             const { userId } = req;
             const device = await BaseService.update<Device>(tableName, parseInt(id), req.body, userId);
-    
+
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             const length = 10; // Define la longitud de la cadena aleatoria
             let result = '';
-    
+
             for (let i = 0; i < length; i++) {
                 const randomIndex = Math.floor(Math.random() * characters.length);
                 result += characters[randomIndex];
             }
-    
+
             if (device.status === 'Desbloqueado') {
                 const message = {
-                    body: result+' ',
+                    body: result + ' ',
                     data: { deviceId: id },
                 };
-    
+
                 try {
                     const pushToken = device.imei !== null ? device.imei : '';
                     await sendPushNotification([pushToken], message);
@@ -68,13 +68,13 @@ export const DeviceController = {
                     return;
                 }
             }
-    
+
             res.json(DeviceResource.formatDevice(device));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
     },
-    
+
     async deleteDevice(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -201,13 +201,13 @@ export const DeviceController = {
                 if (!clienteId) {
                     throw new Error(`No se encontró un cliente con el nombre: ${row['Nombre']}`);
                 }
-                 if (!storeId) {
-                     throw new Error(`No se encontró una tienda con el nombre: ${row['Tienda']}`);
-                 }
+                if (!storeId) {
+                    throw new Error(`No se encontró una tienda con el nombre: ${row['Tienda']}`);
+                }
 
                 return {
                     owner: clienteId,
-                    store_id: storeId|| null, // Agrega el ID del store
+                    store_id: storeId || null, // Agrega el ID del store
                     imei: row.IMEI,
                     modelo: row['Modelo'] || '',
                     marca: row['Marca'] || '',
@@ -227,7 +227,6 @@ export const DeviceController = {
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     },
-
     async blockDevices(req: Request, res: Response) {
         const { id } = req.params;
 
@@ -285,13 +284,5 @@ export const DeviceController = {
             res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
         }
     },
-    generateCode(length: number = 10): string {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            result += characters[randomIndex];
-        }
-        return result;
-    }
+
 }
