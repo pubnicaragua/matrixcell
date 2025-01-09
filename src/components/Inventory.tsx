@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import supabase from '../api/supabase'; // Assuming this is the file where you've set up your Supabase client
+import supabase from '../api/supabase';
 
 interface FileInfo {
   name: string;
   url: string;
+}
+
+interface AuthForm {
+  email: string;
+  password: string;
 }
 
 const FileUploader: React.FC = () => {
@@ -11,10 +16,18 @@ const FileUploader: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authForm, setAuthForm] = useState<AuthForm>({ email: '', password: '' });
 
   useEffect(() => {
+    checkAuth();
     fetchFiles();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsAuthenticated(!!user);
+  };
 
   const fetchFiles = async () => {
     try {
@@ -53,6 +66,11 @@ const FileUploader: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    if (!isAuthenticated) {
+      setError('Por seguridad, debes añadir tus credenciales para subir el archivo');
+      return;
+    }
+
     if (!file) {
       setError('Please select a file to upload');
       return;
@@ -97,10 +115,59 @@ const FileUploader: React.FC = () => {
     }
   };
 
+  const handleAuthInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setAuthForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: authForm.email,
+        password: authForm.password,
+      });
+
+      if (error) throw error;
+
+      setIsAuthenticated(true);
+      setError(null);
+    } catch (error) {
+      console.error('Error during login:', error);
+      setError('Failed to login');
+    }
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">File Uploader</h1>
       
+      {!isAuthenticated && (
+        <form onSubmit={handleLogin} className="mb-4">
+          <input
+            type="email"
+            name="email"
+            value={authForm.email}
+            onChange={handleAuthInputChange}
+            placeholder="Email"
+            className="mb-2 p-2 border rounded"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            value={authForm.password}
+            onChange={handleAuthInputChange}
+            placeholder="Password"
+            className="mb-2 p-2 border rounded"
+            required
+          />
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+            Login
+          </button>
+        </form>
+      )}
+
       <div className="mb-4">
         <input
           type="file"
@@ -109,7 +176,7 @@ const FileUploader: React.FC = () => {
         />
         <button
           onClick={handleUpload}
-          disabled={uploading || !file}
+          disabled={uploading || !file || !isAuthenticated}
           className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
         >
           {uploading ? 'Uploading...' : 'Upload'}

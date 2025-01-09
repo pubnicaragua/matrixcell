@@ -24,6 +24,11 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!grantDate || isNaN(new Date(grantDate).getTime())) {
+        alert("Por favor, ingresa una fecha de concesión válida.");
+        return;
+    }
+
     // Creamos el objeto con los datos del formulario
     const clientData: Client = {
       name,
@@ -39,20 +44,17 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
     };
 
     try {
-      if (selectedClient) {
-        // Si estamos editando un cliente, hacemos PUT para actualizar
-        await axios.put(`/clients/${selectedClient.id}`, clientData);
-      } else {
-        // Si estamos agregando un cliente, hacemos POST
-        await axios.post('/clients', clientData);
-      }
-
-      // Una vez que se guarde, actualizamos la lista de clientes
-      fetchClientsAndOperations();
+        if (selectedClient) {
+            await axios.put(`/clients/${selectedClient.id}`, clientData);
+        } else {
+            await axios.post('/clients', clientData);
+        }
+        fetchClientsAndOperations();
     } catch (error) {
-      console.error('Error al guardar el cliente', error);
+        console.error('Error al guardar el cliente', error);
     }
-  };
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
@@ -101,10 +103,18 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
           <input id="grant_date" type="date" value={grantDate} onChange={(e) => setGrantDate(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
-        <div>
-          <label htmlFor="debt_type" className="block text-sm font-medium text-gray-700">Tipo de Deuda</label>
-          <input id="debt_type" value={debtType} onChange={(e) => setDebtType(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+        <div className="flex flex-col">
+          <label htmlFor="grant_date" className="text-sm font-medium text-gray-700">Fecha de Concesión</label>
+          <input
+            id="grant_date"
+            type="date"
+            value={grantDate}
+            onChange={(e) => setGrantDate(e.target.value)}
+            required
+            className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
+
 
         <div>
           <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">Plazo (Meses)</label>

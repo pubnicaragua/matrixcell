@@ -92,7 +92,15 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
       />
 
       }
-      {activeTab === 'operation-list' && <OperationsList operations={operations} clients={clients} setSelectedOperation={setSelectedOperation} deleteOperation={deleteOperation} />}
+      {activeTab === 'operation-list' && (
+        <OperationsList
+          operations={operations}
+          clients={clients}
+          setSelectedOperation={setSelectedOperation}
+          deleteOperation={deleteOperation}
+        />
+      )}
+
     </div>
   );
 };

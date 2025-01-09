@@ -170,7 +170,7 @@ const Dashboard = () => {
       </button>
       <button
         className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
-        onClick={() => navigate('/generate-invoice')}
+        onClick={() => navigate('/invoices')}
       >
         Generar Factura
       </button>

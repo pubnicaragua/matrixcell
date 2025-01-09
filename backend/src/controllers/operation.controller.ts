@@ -8,7 +8,21 @@ export const OperationController = {
     async getAllOperations(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const operations = await BaseService.getAll<Operation>(tableName, ['id', 'operation_number', 'operation_date', 'due_date', 'amount_due', 'amount_paid', 'days_overdue', 'cart_value', 'refinanced_debt', 'judicial_action', 'created_at', 'updated_at', 'client_id', 'clients(id, name, phone, address, city, identity_number, identity_type, due_date, debt_type)'], where);
+            const operations = await BaseService.getAll<Operation>(tableName, [
+                'id',
+                'operation_number', 
+                'operation_value', 
+                'due_date', 
+                'amount_due', 
+                'amount_paid', 
+                'days_overdue', 
+                'cart_value', 
+                'refinanced_debt', 
+                'judicial_action', 
+                'created_at', 
+                'updated_at', 
+                'client_id', 
+                'clients(id, name, deadline, grant_date)'], where);
             console.log(operations);
             res.json(operations);
         } catch (error: any) {
