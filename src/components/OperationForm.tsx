@@ -93,7 +93,7 @@ const OperationForm: React.FC<OperationFormProps> = ({
             const dueDateObj = new Date(dueDate);
             const currentDate = new Date();
             const daysDiff = differenceInDays(currentDate, dueDateObj);
-
+    
             // Si la fecha de vencimiento es mayor o igual a la fecha actual, los días vencidos serán 0
             const calculatedDaysOverdue = daysDiff > 0 ? daysDiff : 0;
             setDaysOverdue(calculatedDaysOverdue);
