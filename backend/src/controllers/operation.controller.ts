@@ -22,7 +22,7 @@ export const OperationController = {
                 'created_at', 
                 'updated_at', 
                 'client_id', 
-                'clients(id, name, deadline, grant_date)'], where);
+                'clients(id, name, phone, deadline, grant_date)'], where);
             
             res.json(operations);
         } catch (error: any) {

@@ -33,5 +33,9 @@ export interface Client {
     refinanced_debt: number;
     judicial_action: string;
     client_id: number;
-  }
-  
+    client?: { // Agrega esta propiedad opcional
+        id: number;
+        name: string;
+        phone: string;
+    };
+}
