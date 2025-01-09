@@ -7,11 +7,11 @@ interface ClientFormProps {
   clients: Client[];
   selectedClient: Client | null;
   fetchClientsAndOperations: () => Promise<void>;
-  setSelectedClient: (client: Client | null) => void; // Agrega esta línea
+  setSelectedClient: (client: Client | null) => void;
 }
 
 
-const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchClientsAndOperations }) => {
+const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchClientsAndOperations, setSelectedClient }) => {
   const [name, setName] = useState(selectedClient?.name || '');
   const [phone, setPhone] = useState(selectedClient?.phone || '');
   const [address, setAddress] = useState(selectedClient?.address || '');
@@ -52,11 +52,11 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
             await axios.post('/clients', clientData);
         }
         fetchClientsAndOperations();
+        setSelectedClient(null);
     } catch (error) {
         console.error('Error al guardar el cliente', error);
     }
 };
-
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
