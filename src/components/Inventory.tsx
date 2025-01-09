@@ -43,10 +43,16 @@ const FileUploader: React.FC = () => {
   const [selectedStore, setSelectedStore] = useState<number | string>(''); // Changed to number for store id
 
   useEffect(() => {
+    checkAuth();
     fetchFiles();
     fetchInventory();
     fetchStores();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsAuthenticated(!!user);
+  };
 
   const fetchFiles = async () => {
     try {
@@ -106,6 +112,11 @@ const FileUploader: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    if (!isAuthenticated) {
+      setError('Por seguridad, debes añadir tus credenciales para subir el archivo');
+      return;
+    }
+
     if (!file) {
       setError('Please select a file to upload');
       return;

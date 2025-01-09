@@ -14,7 +14,7 @@ export const ClientController = {
     async getAllClients(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const clients = await BaseService.getAll<Client>(tableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'debt_type', 'deadline', 'created_at'], where);
+            const clients = await BaseService.getAll<Client>(tableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'debt_type', 'grant_date', 'deadline', 'created_at'], where);
 
             res.json(ClientResource.formatClients(clients));
         } catch (error: any) {
@@ -60,7 +60,7 @@ export const ClientController = {
         // Define el nombre de las tablas (asegúrate de que sean válidas)
         const clientsTableName = 'clients';
         const operationsTableName = 'operations';
-        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'debt_type', 'created_at']);
+        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'deubt_type', 'created_at']);
         const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'operation_number', 'operation_date', 'due_date', 'amount_due', 'amount_paid', 'days_overdue', 'status', 'judicial_action', 'created_at', 'updated_at']);
         // Procesar datos y generar archivo
         // Procesar datos y preparar información para el reporte
@@ -70,7 +70,7 @@ export const ClientController = {
                 id: client.id,
                 name: client.name,
                 operations: clientOperations.length,
-                total_due: clientOperations.reduce((sum, op) => sum + op.amount_due, 0),
+                total_due: clientOperations.reduce((sum, op) => sum + (op.amount_due ?? 0), 0),
             };
         });
         const columns = ['id', 'name', 'operations', 'total_due']

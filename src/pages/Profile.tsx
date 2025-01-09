@@ -1,44 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axiosConfig from '../axiosConfig'
 
-const Profile: React.FC = () => {
-  // Datos de ejemplo (puedes modificar estos valores con los datos reales cuando los tengas disponibles)
-  const user = {
-    name: 'Juan Pérez',
-    email: 'juan.perez@example.com',
-    role: 'Administrador',
-    permissions: ['Acceso completo', 'Gestión de usuarios', 'Gestión de facturas'],
-  };
+interface Perfil {
+  nombre: string;
+  email: string;
+  rol: string;
+  permisos: string[];
+}
+
+const Profile = () => {
+  // Estado para almacenar los datos del perfil
+  const [perfilData, setPerfilData] = useState<Perfil | null>(null);
+
+  useEffect(() => {
+    // Recuperamos los datos del localStorage
+    const perfil = localStorage.getItem('perfil');
+    const usuario = localStorage.getItem('usuario');
+    const permisos = localStorage.getItem('permisos');
+
+    // Si los datos existen, los parseamos y actualizamos el estado
+    if (perfil && usuario && permisos) {
+      const parsedPerfil = JSON.parse(perfil);
+      const parsedUsuario = JSON.parse(usuario);
+      const parsedPermisos = JSON.parse(permisos);
+
+      setPerfilData({
+        nombre: parsedPerfil.name,
+        email: parsedUsuario.email,
+        rol: parsedPerfil.roles.name,
+        permisos: parsedPermisos,  // Asegúrate de que 'permisos' es un array de strings
+      });
+    }
+  }, []);
 
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-white rounded-lg shadow-lg">
-      <h2 className="text-3xl font-semibold text-center text-blue-600 mb-6">Perfil del Usuario</h2>
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <span className="font-semibold text-lg text-gray-700">Nombre:</span>
-          <p className="text-gray-600">{user.name}</p>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Mi Perfil</h1>
+
+      {/* Mostrar la información del perfil */}
+      {perfilData ? (
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Perfil de {perfilData.nombre}</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Email:</span>
+              <span className="text-gray-600">{perfilData.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Rol:</span>
+              <span className="text-gray-600">{perfilData.rol}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Permisos:</span>
+              <span className="text-gray-600">{perfilData.permisos.join(', ')}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <span className="font-semibold text-lg text-gray-700">Correo Electrónico:</span>
-          <p className="text-gray-600">{user.email}</p>
+      ) : (
+        <div className="text-center text-gray-600">
+          <p>Cargando información del perfil...</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <span className="font-semibold text-lg text-gray-700">Rol:</span>
-          <p className="text-gray-600">{user.role}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-lg text-gray-700">Permisos:</p>
-          <ul className="list-disc pl-5 space-y-2 text-gray-600">
-            {user.permissions.map((permission, index) => (
-              <li key={index}>{permission}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <div className="mt-8">
-        <button className="w-full py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-200">
-          Editar Perfil
-        </button>
-      </div>
+      )}
     </div>
   );
 };

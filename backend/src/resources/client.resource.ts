@@ -9,13 +9,11 @@ export const ClientResource = {
             name: client.name,
             address: client.address,
             phone: client.phone,
-            email: client.email,
             city: client.city,
             due_date: client.due_date,
-            deubt_type: client.deubt_type,
-            operation_number: client.operation_number,
-            status: client.status,
-            category: client.category,
+            grant_date: client.grant_date,
+            deadline: client.deadline,
+            deubt_type: client.debt_type,
             created_at: client.created_at
         };
     },
