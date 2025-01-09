@@ -51,7 +51,6 @@ const FileUploader: React.FC = () => {
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    setIsAuthenticated(!!user);
   };
 
   const fetchFiles = async () => {
@@ -112,10 +111,10 @@ const FileUploader: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!isAuthenticated) {
+  /*  if (!isAuthenticated) {
       setError('Por seguridad, debes añadir tus credenciales para subir el archivo');
       return;
-    }
+    }*/
 
     if (!file) {
       setError('Please select a file to upload');
