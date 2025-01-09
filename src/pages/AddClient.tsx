@@ -5,6 +5,7 @@ import ClientForm from '../components/ClientForm';
 import OperationForm from '../components/OperationForm';
 import ClientsList from '../components/ClientList';
 import OperationsList from '../components/OperationList';
+import SendInvoiceForm from '../components/SendInvoiceForm';
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -114,23 +115,16 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         >
           Lista de Operaciones
         </button>
-      </div>
-
-      <div className="mb-4 flex items-center">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Ingrese el correo"
-          className="border border-gray-300 p-2 rounded-lg mr-2"
-        />
         <button
-          onClick={handleSendEmail}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          onClick={() => setActiveTab('send-invoice')}
+          className={`ml-2 px-4 py-2 ${activeTab === 'send-invoice' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
-          Enviar Correo
+          Enviar por E-mail
         </button>
       </div>
+
+      {activeTab === 'send-invoice' && <SendInvoiceForm />}
+
 
       {activeTab === 'add-client' && (
         <ClientForm
