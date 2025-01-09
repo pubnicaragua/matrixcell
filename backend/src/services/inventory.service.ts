@@ -12,7 +12,7 @@ interface ProductoExcel {
     try {
         const { data: newModel, error: newModelError } = await supabase
             .from('models')
-            .insert({ nombre })
+            .insert({name: nombre })
             .select('id')
             .single();
 

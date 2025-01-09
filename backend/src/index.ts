@@ -21,6 +21,8 @@ import statusRoutes from './routes/status.routes'; // Importar rutas de clientes
 import inventoryRoutes from './routes/inventory.routes'; // Importar rutas de clientes
 import productRoutes from './routes/product.routes'; // Importar rutas de clientes
 import { ClientController } from './controllers/client.controller'; // Importar controlador de clientes
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
@@ -60,6 +62,38 @@ app.use('/inventories', inventoryRoutes);
 app.use('/products', productRoutes); 
 // Ruta independiente para generar el informe
 app.post('/generate-report',sessionAuth, ClientController.generateEquifaxReport);
+const options = {
+  definition: {
+    openapi: "3.1.0",
+    info: {
+      title: "LogRocket Express API with Swagger",
+      version: "0.1.0",
+      description:
+        "This is a simple CRUD API application made with Express and documented with Swagger",
+      license: {
+        name: "MIT",
+        url: "https://spdx.org/licenses/MIT.html",
+      },
+      contact: {
+        name: "LogRocket",
+        url: "https://logrocket.com",
+        email: "info@email.com",
+      },
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+      },
+    ],
+  },
+  apis: ["./routes/*.ts"],
+};
+const specs = swaggerJsdoc(options);
+app.use(
+  "/documentacion",
+  swaggerUi.serve,
+  swaggerUi.setup(specs)
+);
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
