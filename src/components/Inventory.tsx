@@ -203,7 +203,7 @@ const FileUploader: React.FC = () => {
       setInventory(prev => prev.map(item =>
         item.id === itemId ? { ...item, store: updatedStore } : item
       ));
-
+      await fetchInventory();
       setSelectedStore('');
       setError(null);
     } catch (error) {

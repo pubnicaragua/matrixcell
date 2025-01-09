@@ -187,7 +187,7 @@ export const InventoryController = {
 
             // Registrar el movimiento
             const { error: movementError } = await supabase
-                .from('tranasfer')
+                .from('transfer')
                 .insert({
                     product_id,
                     origin_store: origen_store,
