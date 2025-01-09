@@ -21,7 +21,7 @@ export default function Sidebar() {
     try {
       await api.post('auth/logout')
       localStorage.removeItem('token')
-      navigate('/login')
+      navigate('/')
     } catch (error) {
       console.error("Error al cerrar sesión", error)
     }
