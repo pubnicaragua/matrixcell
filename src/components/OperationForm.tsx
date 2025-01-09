@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Operation, Client } from '../types';
 import { addMonths, format, differenceInDays } from 'date-fns';
-import axios from 'axios';  // Importa Axios
+import axios from '../axiosConfig';  // Importa Axios
 
 interface OperationFormProps {
     clients: Client[];
@@ -40,66 +40,46 @@ const OperationForm: React.FC<OperationFormProps> = ({
     const [calculatedAmountPaid, setCalculatedAmountPaid] = useState<number>(0);
 
     useEffect(() => {
-        if (selectedOperation) {
-          setOperationNumber(selectedOperation.operation_number || '');
-          setOperationValue(selectedOperation.operation_value || 0);
-          setDueDate(selectedOperation.due_date || '');
-          setProxDueDate(selectedOperation.prox_due_date || '');
-          setAmountDue(selectedOperation.amount_due || 0);
-          setAmountPaid(selectedOperation.amount_paid || 0);
-          setDaysOverdue(selectedOperation.days_overdue || 0);
-          setCartValue(selectedOperation.cart_value || 0);
-          setRefinancedDebt(selectedOperation.refinanced_debt || 0);
-          setJudicialAction(selectedOperation.judicial_action || '');
-          setClientId(selectedOperation.client_id || '');
-        } else {
-          resetForm(); // Restablece los valores en caso de nueva operación
-        }
-      }, [selectedOperation]);
-      
-      const resetForm = () => {
-        setOperationNumber('');
-        setOperationValue(0);
-        setDueDate('');
-        setProxDueDate('');
-        setAmountDue(0);
-        setAmountPaid(0);
-        setDaysOverdue(0);
-        setCartValue(0);
-        setRefinancedDebt(0);
-        setJudicialAction('');
-        setClientId('');
-      };
-      
-
-      useEffect(() => {
         if (clientId) {
-          const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
-          const selectedClient = clients.find(client => client.id === numericClientId);
-          if (selectedClient) {
-            setDeadline(selectedClient.deadline);
-            setGrantDate(selectedClient.grant_date);
-      
-            // Calcular fechas
-            try {
-              const grantDateObj = new Date(selectedClient.grant_date);
-              const dueDateCalculated = addMonths(grantDateObj, selectedClient.deadline);
-              const proxDueDateCalculated = addMonths(dueDateCalculated, selectedClient.deadline);
-              
-              const formattedDueDate = format(dueDateCalculated, 'yyyy-MM-dd');
-              const formattedProxDueDate = format(proxDueDateCalculated, 'yyyy-MM-dd');
-              
-              setCalculatedDueDate(formattedDueDate);
-              setCalculatedProxDueDate(formattedProxDueDate);
-              setDueDate(formattedDueDate);
-              setProxDueDate(formattedProxDueDate);
-            } catch (error) {
-              console.error("Error formatting dates:", error);
+            const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+            const selectedClient = clients.find(client => client.id === numericClientId);
+            if (selectedClient) {
+                setDeadline(selectedClient.deadline);
+                setGrantDate(selectedClient.grant_date);
+
+                // Obtener últimos 5 dígitos de la identificación
+                const identityNumber = selectedClient.identity_number || '';
+                const lastFiveDigits = identityNumber.slice(-5);
+
+                // Generar 3 caracteres alfabéticos aleatorios
+                const randomChars = Array(3)
+                    .fill(null)
+                    .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // A-Z
+                    .join('');
+
+                // Concatenar últimos 5 dígitos y caracteres aleatorios
+                setOperationNumber(`${lastFiveDigits}${randomChars}`);
+
+                // Calcular fechas de vencimiento y próximo vencimiento
+                const grantDateObj = new Date(selectedClient.grant_date);
+
+                // Calcular la fecha de vencimiento sumando el plazo
+                const dueDateCalculated = addMonths(grantDateObj, selectedClient.deadline);
+                const proxDueDateCalculated = addMonths(dueDateCalculated, selectedClient.deadline);
+
+                // Actualizar los estados
+                const formattedDueDate = format(dueDateCalculated, 'yyyy-MM-dd');
+                const formattedProxDueDate = format(proxDueDateCalculated, 'yyyy-MM-dd');
+
+                setCalculatedDueDate(formattedDueDate);
+                setCalculatedProxDueDate(formattedProxDueDate);
+
+                // Actualizar directamente los valores del formulario
+                setDueDate(formattedDueDate);
+                setProxDueDate(formattedProxDueDate);
             }
-          }
         }
-      }, [clientId, clients]);
-      
+    }, [clientId, clients]);
 
 
     // Calcular el valor vencido
@@ -115,9 +95,11 @@ const OperationForm: React.FC<OperationFormProps> = ({
             const daysDiff = differenceInDays(currentDate, dueDateObj);
 
             // Si la fecha de vencimiento es mayor o igual a la fecha actual, los días vencidos serán 0
-            setDaysOverdue(daysDiff > 0 ? daysDiff : 0);
+            const calculatedDaysOverdue = daysDiff > 0 ? daysDiff : 0;
+            setDaysOverdue(calculatedDaysOverdue);
         }
-    }, [dueDate]);  // Se ejecuta cada vez que cambie la fecha de vencimiento
+    }, [dueDate]); // Se ejecuta cada vez que cambie la fecha de vencimiento
+
 
     useEffect(() => {
         if (calculatedDueDate) {
@@ -148,6 +130,7 @@ const OperationForm: React.FC<OperationFormProps> = ({
             judicial_action: judicialAction,
             client_id: clientId
         };
+
 
         try {
             // Hacer la solicitud POST a la ruta '/operations'

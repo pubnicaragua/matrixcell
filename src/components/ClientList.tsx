@@ -25,53 +25,37 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Lista de Clientes</h2>
-      <table className="w-full table-auto border-collapse border border-gray-200">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Nombre</th>
-            <th className="border border-gray-300 px-4 py-2">Teléfono</th>
-            <th className="border border-gray-300 px-4 py-2">Dirección</th>
-            <th className="border border-gray-300 px-4 py-2">Ciudad</th>
-            <th className="border border-gray-300 px-4 py-2">Tipo de Identificación</th>
-            <th className="border border-gray-300 px-4 py-2">Número de Identificación</th>
-            <th className="border border-gray-300 px-4 py-2">Fecha de Corte</th>
-            <th className="border border-gray-300 px-4 py-2">Fecha de Concesión</th>
-            <th className="border border-gray-300 px-4 py-2">Tipo de Deudor</th>
-            <th className="border border-gray-300 px-4 py-2">Plazo</th>
-            <th className="border border-gray-300 px-4 py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((client) => (
-            <tr key={client.id} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">{client.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.phone}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.address}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.city}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.identity_type}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.identity_number}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.due_date}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.grant_date}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.debt_type}</td>
-              <td className="border border-gray-300 px-4 py-2">{client.deadline}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button
-                  onClick={() => setSelectedClient(client)}
-                  className="text-blue-500 hover:underline mr-2"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => client.id && deleteClient(client.id)}
-                  className="text-red-500 hover:underline"
-                >
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {clients.map((client) => (
+          <div key={client.id} className="p-4 border rounded-lg shadow-md bg-white">
+            <h3 className="text-lg font-semibold mb-2">{client.name}</h3>
+            <p className="text-sm text-gray-600"><strong>Teléfono:</strong> {client.phone}</p>
+            <p className="text-sm text-gray-600"><strong>Dirección:</strong> {client.address}</p>
+            <p className="text-sm text-gray-600"><strong>Ciudad:</strong> {client.city}</p>
+            <p className="text-sm text-gray-600"><strong>Tipo de Identificación:</strong> {client.identity_type}</p>
+            <p className="text-sm text-gray-600"><strong>Número de Identificación:</strong> {client.identity_number}</p>
+            <p className="text-sm text-gray-600"><strong>Fecha de Corte:</strong> {client.due_date}</p>
+            <p className="text-sm text-gray-600"><strong>Fecha de Concesión:</strong> {client.grant_date}</p>
+            <p className="text-sm text-gray-600"><strong>Tipo de Deudor:</strong> {client.debt_type}</p>
+            <p className="text-sm text-gray-600"><strong>Plazo:</strong> {client.deadline} meses</p>
+
+            <div className="mt-4 flex justify-between">
+              <button
+                onClick={() => setSelectedClient(client)}
+                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => client.id && deleteClient(client.id)}
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

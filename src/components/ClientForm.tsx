@@ -7,7 +7,9 @@ interface ClientFormProps {
   clients: Client[];
   selectedClient: Client | null;
   fetchClientsAndOperations: () => Promise<void>;
+  setSelectedClient: (client: Client | null) => void; // Agrega esta línea
 }
+
 
 const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchClientsAndOperations }) => {
   const [name, setName] = useState(selectedClient?.name || '');
@@ -99,8 +101,8 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
         </div>
 
         <div>
-          <label htmlFor="grant_date" className="block text-sm font-medium text-gray-700">Fecha de Concesión</label>
-          <input id="grant_date" type="date" value={grantDate} onChange={(e) => setGrantDate(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <label htmlFor="grant_date" className="block text-sm font-medium text-gray-700">Tipo de Deudor</label>
+          <input id="debt_type" type="text" value={debtType} onChange={(e) => setDebtType(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div className="flex flex-col">

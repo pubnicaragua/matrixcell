@@ -13,7 +13,7 @@ export const ClientResource = {
             due_date: client.due_date,
             grant_date: client.grant_date,
             deadline: client.deadline,
-            deubt_type: client.debt_type,
+            debt_type: client.debt_type,
             created_at: client.created_at
         };
     },
