@@ -9,7 +9,7 @@ const router = express.Router();
 
 
 
-
+router.get('/',sessionAuth, InventoryController.getAllInventory);
 router.post('/moved',sessionAuth, InventoryController.inventoryMoved);
 router.post('/store-moved',sessionAuth, InventoryController.storeMoved);
 router.put('/:id',sessionAuth, InventoryController.updateInventory);

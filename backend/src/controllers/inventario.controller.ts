@@ -4,7 +4,18 @@ import { BaseService } from "../services/base.service";
 import { MovimientoInventario } from "../models/movimientoInventario.model";
 import { Inventory } from "../models/inventory.model";
 
+const tableName= 'inventory'
 export const InventoryController = {
+    async getAllInventory(req: Request, res: Response) {
+        try {
+            const where = {...req.query }; // Convertir los parámetros de consulta en filtros
+           const inventarios = await BaseService.getAll<Inventory>(tableName,['id', 'store_id', 'product_id', 'stock', 'created_at'], where);
+           res.json(inventarios);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send('Error al obtener inventarios');
+        }
+    },
     async inventoryMoved(req: Request, res: Response) {
         try {
             // Datos recibidos desde el frontend
