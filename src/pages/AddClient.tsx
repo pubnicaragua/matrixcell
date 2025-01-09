@@ -76,6 +76,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           fetchClientsAndOperations={fetchClientsAndOperations}
         />
       )}
+       {/* 
       {activeTab === 'add-operation' && (
         <OperationForm
           clients={clients}
@@ -84,7 +85,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           setSelectedOperation={setSelectedOperation} // Aquí es donde pasas este prop
         />
       )}
-
+*/}
       {activeTab === 'client-list' && <ClientsList
         clients={clients}
         setSelectedClient={setSelectedClient}

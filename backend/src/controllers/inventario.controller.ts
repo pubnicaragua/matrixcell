@@ -3,6 +3,7 @@ import supabase from "../config/supabaseClient";
 import { BaseService } from "../services/base.service";
 import { MovimientoInventario } from "../models/movimientoInventario.model";
 import { Inventory } from "../models/inventory.model";
+import { error } from "console";
 
 const tableName= 'inventory'
 export const InventoryController = {
@@ -135,7 +136,6 @@ export const InventoryController = {
             if (stockError || !sourceStock || sourceStock.stock < cantidad) {
                 res.status(400).json({ error: 'Stock insuficiente' });
             }
-
             // Reducir stock en la store de origen
             const { error: updateSourceError } = await supabase
                 .from('inventory')
@@ -149,7 +149,6 @@ export const InventoryController = {
             if (updateSourceError) {
                 res.status(500).json({ error: 'Error al actualizar stock de origen' });
             }
-
             // Verificar y actualizar o insertar stock en la store destino
             const { data: destStock } = await supabase
                 .from('inventory')
@@ -188,7 +187,7 @@ export const InventoryController = {
 
             // Registrar el movimiento
             const { error: movementError } = await supabase
-                .from('tranasfer')
+                .from('transfer')
                 .insert({
                     product_id,
                     origin_store: origen_store,
@@ -197,7 +196,7 @@ export const InventoryController = {
                 });
 
             if (movementError) {
-                res.status(500).json({ error: 'Error al registrar movimiento' });
+                res.status(500).json({ error: movementError.message });
             }
 
             // Responder con éxito
