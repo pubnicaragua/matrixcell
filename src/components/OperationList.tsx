@@ -18,57 +18,41 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Lista de Operaciones</h2>
-      <table className="table-auto w-full border-collapse border border-gray-200">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">#</th>
-            <th className="border border-gray-300 px-4 py-2">Número de Operación</th>
-            <th className="border border-gray-300 px-4 py-2">Valor</th>
-            <th className="border border-gray-300 px-4 py-2">Fecha de Vencimiento</th>
-            <th className="border border-gray-300 px-4 py-2">Próximo Vencimiento</th>
-            <th className="border border-gray-300 px-4 py-2">Monto por Vencer</th>
-            <th className="border border-gray-300 px-4 py-2">Monto Pagado</th>
-            <th className="border border-gray-300 px-4 py-2">Días Vencidos</th>
-            <th className="border border-gray-300 px-4 py-2">Valor Castigado</th>
-            <th className="border border-gray-300 px-4 py-2">Deuda Refinanciada</th>
-            <th className="border border-gray-300 px-4 py-2">Acción Judicial</th>
-            <th className="border border-gray-300 px-4 py-2">Cliente</th>
-            <th className="border border-gray-300 px-4 py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {operations.map((operation, index) => (
-            <tr key={operation.id} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.operation_number}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.operation_value}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.due_date}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.prox_due_date}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.amount_due}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.amount_paid}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.days_overdue}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.cart_value}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.refinanced_debt}</td>
-              <td className="border border-gray-300 px-4 py-2">{operation.judicial_action}</td>
-              <td className="border border-gray-300 px-4 py-2">{getClientName(operation.client_id)}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button
-                  onClick={() => setSelectedOperation(operation)}
-                  className="mr-2 px-3 py-1 bg-yellow-500 text-white rounded"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => operation.id && deleteOperation(operation.id)}
-                  className="px-3 py-1 bg-red-500 text-white rounded"
-                >
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {operations.map((operation, index) => (
+          <div
+            key={operation.id}
+            className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50 hover:shadow-lg transition-shadow"
+          >
+            <h3 className="text-lg font-bold text-gray-700 mb-2">Operación #{operation.operation_number}</h3>
+            <p className="text-sm text-gray-600">Valor: {operation.operation_value}</p>
+            <p className="text-sm text-gray-600">Fecha de Vencimiento: {operation.due_date}</p>
+            <p className="text-sm text-gray-600">Próximo Vencimiento: {operation.prox_due_date}</p>
+            <p className="text-sm text-gray-600">Monto por Vencer: {operation.amount_due}</p>
+            <p className="text-sm text-gray-600">Monto Pagado: {operation.amount_paid}</p>
+            <p className="text-sm text-gray-600">Días Vencidos: {operation.days_overdue}</p>
+            <p className="text-sm text-gray-600">Valor Castigado: {operation.cart_value}</p>
+            <p className="text-sm text-gray-600">Deuda Refinanciada: {operation.refinanced_debt}</p>
+            <p className="text-sm text-gray-600">Acción Judicial: {operation.judicial_action}</p>
+            <p className="text-sm text-gray-600">Cliente: {getClientName(operation.client_id)}</p>
+
+            <div className="mt-4 flex justify-between">
+              <button
+                onClick={() => setSelectedOperation(operation)}
+                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => operation.id && deleteOperation(operation.id)}
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
