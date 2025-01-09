@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import api from "../axiosConfig";
 import * as XLSX from "xlsx";
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [paymentData, setPaymentData] = useState<any[]>([]);
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
-
+  const [isLoading, setIsLoading] = useState(false);
   const columns = [
     "COD_TIPO_ID",
     "CODIGO_ID_SUJETO",
@@ -50,16 +51,15 @@ const ExportEquifax: React.FC = () => {
     const valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
 
     let creditTerm = 0; // Plazo en meses
-    let paymentFrequency = "MENSUAL"; // Default a "MENSUAL"
+    let paymentFrequency = "MENSUAL";
 
     if (paymentInfo) {
       const creditTermStr = paymentInfo["PLAZO DEL CREDITO"]?.toString().toUpperCase() || "";
       if (creditTermStr.includes("MESES")) {
         creditTerm = parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0;
       } else if (creditTermStr.includes("SEMANAS")) {
-        creditTerm = Math.ceil((parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0) / 4); // Semanas a meses
+        creditTerm = Math.ceil((parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0) / 4);
       }
-      paymentFrequency = "MENSUAL";
     }
 
     const startDate = new Date(client["FECHA_CONCESION"]);
@@ -73,14 +73,12 @@ const ExportEquifax: React.FC = () => {
       };
     }
 
-    // Calcular fechas de vencimiento
     const firstDueDate = new Date(startDate);
     firstDueDate.setMonth(firstDueDate.getMonth() + 1);
 
     const finalDueDate = new Date(startDate);
     finalDueDate.setMonth(finalDueDate.getMonth() + creditTerm);
 
-    // Calcular días vencidos
     const today = new Date();
     const daysOverdue =
       today > finalDueDate
@@ -125,7 +123,7 @@ const ExportEquifax: React.FC = () => {
         });
 
         setData(formattedData);
-      } catch (error: unknown) {
+      } catch (error) {
         alert(`Error al procesar el archivo: ${(error as Error).message}`);
       }
     };
@@ -145,7 +143,7 @@ const ExportEquifax: React.FC = () => {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         setPaymentData(jsonData);
-      } catch (error: unknown) {
+      } catch (error) {
         alert(`Error al procesar el archivo de pagos: ${(error as Error).message}`);
       }
     };
@@ -164,7 +162,35 @@ const ExportEquifax: React.FC = () => {
 
     XLSX.writeFile(workbook, fileName);
   };
+  const handleSend = async () => {
+    if (!data.length) {
+      alert("No hay datos para enviar.");
+      return;
+    }
 
+    setIsLoading(true);
+
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
+
+      const excelFile = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+
+      const formData = new FormData();
+      formData.append("file", new Blob([excelFile], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), fileName);
+
+      await api.post("/clients/insercion-consolidado", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert("Archivo enviado exitosamente.");
+    } catch (error) {
+      alert(`Error al enviar el archivo: ${error}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div style={{ padding: "20px" }}>
       <h2>Gestión de Macro Sicom</h2>
@@ -184,6 +210,9 @@ const ExportEquifax: React.FC = () => {
         <input id="fileName" type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
         <button onClick={handleExport} style={{ marginLeft: "10px" }}>
           Exportar a Excel
+        </button>
+        <button onClick={handleSend} style={{ marginLeft: "10px" }} disabled={isLoading}>
+          {isLoading ? "Enviando..." : "Enviar Consolidado"}
         </button>
       </div>
     </div>

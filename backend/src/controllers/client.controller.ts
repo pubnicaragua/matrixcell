@@ -9,6 +9,7 @@ import { Buffer } from 'buffer';
 import supabase from "../config/supabaseClient";
 const tableName = 'clients'; // Nombre de la tabla en la base de datos
 import * as XLSX from 'xlsx';
+import { extractFirstNumber } from "../services/client.service";
 
 export const ClientController = {
     async getAllClients(req: Request, res: Response) {
@@ -136,7 +137,7 @@ export const ClientController = {
                 VAL_VENCIDO: number;
                 VA_DEM_JUDICIAL: number;
                 VAL_CART_CASTIGADA: number;
-                NUM_DIAS_VENCIDOS: number;
+                NUM_DIAS_VENCIDOS: string;
                 FECHA_DE_VENCIMIENTO: string | Date;
                 DEUDA_REFINANCIADA: number;
                 FECHA_SIG_VENCIMIENTO: string | Date;
@@ -176,9 +177,9 @@ export const ClientController = {
                     city: row.CIUDAD,
                     phone: row.TELEFONO,
                     debt_type: row.TIPO_DEUDOR,
+                    due_date : normalizeDate(row.FECHA_CONCESION) || null,
                     created_at: new Date(),
                 };
-
                 const { data: clientData, error: clientError } = await supabase
                     .from('clients')
                     .insert(client)
@@ -189,20 +190,18 @@ export const ClientController = {
 
                 const operation = {
                     operation_number: row.NUMERO_DE_OPERACION || null,
-                    operation_date: normalizeDate(row.FECHA_CONCESION) || null,
                     operation_value: row.VAL_OPERACION || null,
                     amount_due: row.VAL_A_VENCER || null,
                     amount_paid: row.VAL_VENCIDO || null,
                     judicial_action: row.VA_DEM_JUDICIAL > 0,
                     cart_value: row.VAL_CART_CASTIGADA || null,
-                    days_overdue: row.NUM_DIAS_VENCIDOS || null,
+                    days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS || null),
                     due_date: normalizeDate(row.FECHA_DE_VENCIMIENTO) || null,
-                    //refinanced_date: row.DEUDA_REFINANCIADA || null,
+                    refinanced_debt: row.DEUDA_REFINANCIADA || null,
                     prox_due_date: normalizeDate(row.FECHA_SIG_VENCIMIENTO) || null,
                     client_id: clientData.id,
                     created_at: new Date(),
                 };
-
                 const { error: operationError } = await supabase.from('operations').insert(operation);
                 if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
 
