@@ -244,24 +244,7 @@ export const InventoryController = {
             if (updateError) {
                  res.status(500).json({ error: 'Error al actualizar el stock' });
             }
-
-            // Registrar el movimiento de la edición
-            const { error: movementError } = await supabase
-                .from('movimientos')
-                .insert({
-                    product_id,
-                    store_origen: store_id, // En este caso, solo se usa la tienda de origen
-                    store_destino: store_id, // No hay destino, es la misma tienda
-                    cantidad,
-                    fecha: new Date().toISOString(),
-                    tipo: 'edicion' // Tipo de movimiento 'edicion'
-                });
-
-            if (movementError) {
-                 res.status(500).json({ error: 'Error al registrar el movimiento de edición' });
-            }
-
-            // Responder con éxito
+                     // Responder con éxito
             res.status(200).json({ message: 'Stock editado correctamente' });
 
         } catch (error: any) {
