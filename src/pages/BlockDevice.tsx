@@ -16,44 +16,45 @@ interface Store {
 
 const DevicesView: React.FC = () => {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [stores, setStores] = useState<Store[]>([]); // Estado para las tiendas
+  const [stores, setStores] = useState<Store[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [clients, setClients] = useState<any[]>([]);
+  const [file, setFile] = useState<File | null>(null);  // Estado para el archivo
 
+  const fetchDevices = async () => {
+    try {
+      const response = await api.get('/devices');
+      setDevices(response.data);
+    } catch (err: any) {
+      setError(err.message || 'Error fetching devices');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const response = await api.get("/clients");
+      setClients(response.data);
+    } catch (err: any) {
+      alert("Error al cargar los clientes: " + err.message);
+    }
+  };
+
+  const fetchStores = async () => {
+    try {
+      const response = await api.get('/stores');
+      setStores(response.data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError('Error al obtener las tiendas: ' + err.message);
+      } else {
+        setError('Error desconocido');
+      }
+    }
+  };
   useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await api.get('/devices'); // Usamos 'api' en lugar de 'axios'
-        setDevices(response.data);
-      } catch (err: any) {
-        setError(err.message || 'Error fetching devices');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchClients = async () => {
-      try {
-        const response = await api.get("/clients");
-        setClients(response.data);
-      } catch (err: any) {
-        alert("Error al cargar los clientes: " + err.message);
-      }
-    };
-
-    const fetchStores = async () => {
-      try {
-        const response = await api.get('/stores'); // Usar 'api' en lugar de 'axios'
-        setStores(response.data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError('Error al obtener las tiendas: ' + err.message);
-        } else {
-          setError('Error desconocido');
-        }
-      }
-    };
 
     fetchDevices();
     fetchClients();
@@ -90,10 +91,38 @@ const DevicesView: React.FC = () => {
   const unblockedCount = devices.filter(device => device.status === 'Desbloqueado').length;
   const totalCount = devices.length;
 
-  const handleBulkUpload = () => {
-    // Lógica para manejar la carga de registros masivos
-    alert("Subiendo registros masivos...");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files ? e.target.files[0] : null;
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
   };
+
+  const handleFileUpload = async () => {
+    if (!file) {
+      alert("Por favor selecciona un archivo.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await api.post('/devices/insert-masive', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert('Archivo subido con éxito');
+      fetchDevices();
+      console.log('Respuesta del servidor:', response.data);
+    } catch (err: any) {
+      alert('Error al subir el archivo: ' + err.message);
+      console.error('Error al subir el archivo:', err);
+    }
+  };
+
+
 
   if (loading) return <div className="text-center text-blue-500">Loading...</div>;
   if (error) return <div className="text-center text-red-500">Error: {error}</div>;
@@ -102,15 +131,22 @@ const DevicesView: React.FC = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold text-center mb-4">Devices List</h1>
 
-      {/* Botón para subir registros masivos */}
+      {/* Campo para seleccionar archivo */}
       <div className="mb-4 text-center">
+        <input
+          type="file"
+          onChange={handleFileChange}
+          className="mb-2 border border-gray-300 p-2"
+        />
         <button
-          onClick={handleBulkUpload}
+          onClick={handleFileUpload}
           className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600"
         >
-          Subir registros masivos
+        Subir registros masivos
         </button>
       </div>
+
+    
 
       <div className="mb-4">
         <p className="text-lg font-semibold">Dispositivos:</p>
@@ -128,7 +164,7 @@ const DevicesView: React.FC = () => {
             <th className="border border-gray-300 px-4 py-2">IMEI</th>
             <th className="border border-gray-300 px-4 py-2">Status</th>
             <th className="border border-gray-300 px-4 py-2">Owner</th>
-            <th className="border border-gray-300 px-4 py-2">Store</th> {/* Columna para la tienda */}
+            <th className="border border-gray-300 px-4 py-2">Store</th>
             <th className="border border-gray-300 px-4 py-2">Actions</th>
           </tr>
         </thead>
@@ -139,7 +175,7 @@ const DevicesView: React.FC = () => {
               <td className="border border-gray-300 px-4 py-2 text-center">{device.imei}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">{device.status}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">{getClientName(device.owner)}</td>
-              <td className="border border-gray-300 px-4 py-2 text-center">{getStoreName(device.store_id)}</td> {/* Mostrar el nombre de la tienda */}
+              <td className="border border-gray-300 px-4 py-2 text-center">{getStoreName(device.store_id)}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">
                 <button
                   onClick={() => toggleDeviceStatus(device)}

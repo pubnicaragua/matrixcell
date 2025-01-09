@@ -5,7 +5,6 @@ const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
   const [paymentData, setPaymentData] = useState<any[]>([]);
   const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
-  const [file, setFile] = useState<File | null>(null);
 
   const columns = [
     "COD_TIPO_ID",
@@ -27,7 +26,9 @@ const ExportEquifax: React.FC = () => {
     "FECHA_DE_VENCIMIENTO",
     "DEUDA_REFINANCIADA",
     "FECHA_SIG_VENCIMIENTO",
-    "FRECUENCIA_PAGO", // Nueva columna para la frecuencia de pago
+    "PLAZO EN MESES",
+    "VALOR MENSUAL",
+    "FRECUENCIA_PAGO",
   ];
 
   const generateUniqueCode = (cedula: string): string => {
@@ -38,9 +39,9 @@ const ExportEquifax: React.FC = () => {
     return `${lastFiveDigits}${randomLetters}`;
   };
 
-  const calculateFields = (client: Record<string, any>) => {
+  const calculateFields = (client: any) => {
     const paymentInfo = paymentData.find(
-      (item: Record<string, any>) =>
+      (item: any) =>
         String(item["CODIGO_ID_SUJETO"]).trim() ===
         String(client["CODIGO_ID_SUJETO"]).trim()
     );
@@ -48,45 +49,43 @@ const ExportEquifax: React.FC = () => {
     const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
     const valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
 
-    const creditTermStr = paymentInfo?.["PLAZO EN MESES"]?.toString().trim() || "";
-    const paymentValue = paymentInfo?.["VALOR MENSUAL"]?.toString().toUpperCase() || "";
-    const paymentFrequency =
-      paymentValue.includes("SEMANAL") ? "SEMANAL" : paymentValue ? "MENSUAL" : "N/A";
+    let creditTerm = 0; // Plazo en meses
+    let paymentFrequency = "MENSUAL"; // Default a "MENSUAL"
 
-    const creditTerm = !isNaN(parseInt(creditTermStr))
-      ? parseInt(creditTermStr)
-      : paymentFrequency === "SEMANAL"
-      ? 12
-      : 1;
+    if (paymentInfo) {
+      const creditTermStr = paymentInfo["PLAZO DEL CREDITO"]?.toString().toUpperCase() || "";
+      if (creditTermStr.includes("MESES")) {
+        creditTerm = parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0;
+      } else if (creditTermStr.includes("SEMANAS")) {
+        creditTerm = Math.ceil((parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0) / 4); // Semanas a meses
+      }
+      paymentFrequency = "MENSUAL";
+    }
 
     const startDate = new Date(client["FECHA_CONCESION"]);
     if (isNaN(startDate.getTime())) {
       return {
         ...client,
         FEC_CORTE_SALDO: "N/A",
-        FRECUENCIA_PAGO: "N/A",
+        FRECUENCIA_PAGO: "MENSUAL",
+        FECHA_DE_VENCIMIENTO: "N/A",
+        FECHA_SIG_VENCIMIENTO: "N/A",
       };
     }
 
-    let lastPaymentDate = new Date(startDate);
-    if (paymentFrequency === "SEMANAL") {
-      lastPaymentDate.setDate(lastPaymentDate.getDate() + creditTerm * 7);
-    } else {
-      lastPaymentDate.setMonth(lastPaymentDate.getMonth() + creditTerm);
-    }
+    // Calcular fechas de vencimiento
+    const firstDueDate = new Date(startDate);
+    firstDueDate.setMonth(firstDueDate.getMonth() + 1);
 
+    const finalDueDate = new Date(startDate);
+    finalDueDate.setMonth(finalDueDate.getMonth() + creditTerm);
+
+    // Calcular días vencidos
     const today = new Date();
     const daysOverdue =
-      today > lastPaymentDate
-        ? Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24))
+      today > finalDueDate
+        ? Math.floor((today.getTime() - finalDueDate.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
-
-    const nextPaymentDate = new Date(lastPaymentDate);
-    if (paymentFrequency === "SEMANAL") {
-      nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
-    } else {
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
-    }
 
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
     const valVencido = valOperacion - valAVencer;
@@ -97,10 +96,11 @@ const ExportEquifax: React.FC = () => {
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
-      FEC_CORTE_SALDO: lastPaymentDate.toLocaleDateString("es-ES"),
+      FEC_CORTE_SALDO: finalDueDate.toISOString().split("T")[0],
       FRECUENCIA_PAGO: paymentFrequency,
-      FECHA_DE_VENCIMIENTO: lastPaymentDate.toLocaleDateString("es-ES"),
-      FECHA_SIG_VENCIMIENTO: nextPaymentDate.toLocaleDateString("es-ES"),
+      PLAZO: `${creditTerm} meses`,
+      FECHA_DE_VENCIMIENTO: firstDueDate.toISOString().split("T")[0],
+      FECHA_SIG_VENCIMIENTO: finalDueDate.toISOString().split("T")[0],
     };
   };
 
@@ -108,25 +108,26 @@ const ExportEquifax: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setFile(file);
-
     const reader = new FileReader();
     reader.onload = (e) => {
-      const binaryStr = e.target?.result as string;
-      const workbook = XLSX.read(binaryStr, { type: "binary" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+      try {
+        const binaryStr = e.target?.result as string;
+        const workbook = XLSX.read(binaryStr, { type: "binary" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
-      const formattedData = jsonData.map((row: any) => {
-        const newRow: Record<string, any> = {};
-        columns.forEach((col) => {
-          newRow[col] = row[col] || "";
+        const formattedData = jsonData.map((row: any) => {
+          const newRow: Record<string, any> = {};
+          columns.forEach((col) => {
+            newRow[col] = row[col] || "";
+          });
+          return calculateFields(newRow);
         });
 
-        return calculateFields(newRow);
-      });
-
-      setData(formattedData);
+        setData(formattedData);
+      } catch (error: unknown) {
+        alert(`Error al procesar el archivo: ${(error as Error).message}`);
+      }
     };
     reader.readAsBinaryString(file);
   };
@@ -137,12 +138,16 @@ const ExportEquifax: React.FC = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const binaryStr = e.target?.result as string;
-      const workbook = XLSX.read(binaryStr, { type: "binary" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      try {
+        const binaryStr = e.target?.result as string;
+        const workbook = XLSX.read(binaryStr, { type: "binary" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      setPaymentData(jsonData);
+        setPaymentData(jsonData);
+      } catch (error: unknown) {
+        alert(`Error al procesar el archivo de pagos: ${(error as Error).message}`);
+      }
     };
     reader.readAsBinaryString(file);
   };

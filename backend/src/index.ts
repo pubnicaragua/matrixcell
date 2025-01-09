@@ -18,6 +18,8 @@ import clientRoutes from './routes/client.routes'; // Importar rutas de clientes
 import operationRoutes from './routes/operation.routes'; // Importar rutas de clientes
 import paymentRoutes from './routes/payment.routes'; // Importar rutas de clientes
 import statusRoutes from './routes/status.routes'; // Importar rutas de clientes
+import inventoryRoutes from './routes/inventory.routes'; // Importar rutas de clientes
+import productRoutes from './routes/product.routes'; // Importar rutas de clientes
 import { ClientController } from './controllers/client.controller'; // Importar controlador de clientes
 
 // Importar configuraciones y servicios
@@ -54,6 +56,8 @@ app.use('/operations', operationRoutes)
 app.use('/paiments', paymentRoutes)
 app.use('/status', statusRoutes)
 app.use('/clients', clientRoutes); // Registrar rutas de clientes
+app.use('/inventories', inventoryRoutes);
+app.use('/products', productRoutes); 
 // Ruta independiente para generar el informe
 app.post('/generate-report',sessionAuth, ClientController.generateEquifaxReport);
 // Iniciar el servidor
