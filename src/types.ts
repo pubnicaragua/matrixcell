@@ -3,6 +3,7 @@ interface ClientListProps {
   clients: Client[]; // Lista de clientes
   setSelectedClient: (client: Client | null) => void; // Función para seleccionar un cliente
   fetchClientsAndOperations: () => Promise<void>; // Para actualizar la lista después de una operación
+  
 }
 
 export interface Client {
