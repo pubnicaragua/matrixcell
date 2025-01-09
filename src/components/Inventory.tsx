@@ -41,6 +41,10 @@ const FileUploader: React.FC = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedStore, setSelectedStore] = useState<number | string>(''); // Changed to number for store id
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editingStock, setEditingStock] = useState<number>(0);
+  const [editingProduct, setEditingProduct] = useState<number>(0);
+  const [editingStore, setEditingStore] = useState<number>(0);
 
   useEffect(() => {
     checkAuth();
@@ -103,7 +107,39 @@ const FileUploader: React.FC = () => {
       console.error(error);
     }
   };
+  const handleEditClick = (item: InventoryItem) => {
+    setEditingItem(item);
+    setEditingStock(item.stock);
+    setEditingProduct(item.product_id);
+    setEditingStore(item.store_id);
+  };
+  const handleEditSubmit = async () => {
+    if (!editingItem) return;
 
+    try {
+      const response = await api.put(`/inventories/${editingItem.id}`, {
+        cantidad: editingStock,
+        product_id:editingProduct,
+        store_id:editingStore
+      });
+      setInventory(prev =>
+        prev.map(item =>
+          item.id === editingItem.id ? { ...item, stock: editingStock,product_id:editingProduct,store_id:editingStore } : item
+        )
+      );
+      await fetchInventory();
+      setEditingItem(null);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      setError('Failed to update item');
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingItem(null);
+    setEditingStock(0);
+  };
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setFile(event.target.files[0]);
@@ -284,7 +320,18 @@ className = "bg-green-500 text-white px-2 py-1 rounded text-sm"
       <tr key= { item.id } >
       <td className="px-4 py-2" > { item.id } </td>
     < td className = "px-4 py-2" > { item.products.article } </td>
-    < td className = "px-4 py-2" > { item.stock } </td>
+    <td className="px-4 py-2">
+                  {editingItem?.id === item.id ? (
+                    <input
+                      type="number"
+                      value={editingStock}
+                      onChange={e => setEditingStock(Number(e.target.value))}
+                      className="border px-2 py-1 w-full"
+                    />
+                  ) : (
+                    item.stock
+                  )}
+                </td>
     < td className = "px-4 py-2" >
     { item.store.name }
     < select
@@ -307,12 +354,37 @@ className = "bg-yellow-500 text-white px-2 py-1 rounded ml-2"
   </button>
   </td>
   < td className = "px-4 py-2" >
-    <button
-                    onClick={ () => handleDelete(item.id) }
-className = "bg-red-500 text-white px-2 py-1 rounded"
-  >
-  Delete
-  </button>
+  {editingItem?.id === item.id ? (
+    <>
+      <button
+        onClick={handleEditSubmit}
+        className="bg-green-500 text-white px-2 py-1 rounded mr-2"
+      >
+        Save
+      </button>
+      <button
+        onClick={handleEditCancel}
+        className="bg-gray-500 text-white px-2 py-1 rounded"
+      >
+        Cancel
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        onClick={() => handleEditClick(item)}
+        className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+      >
+        Edit
+      </button>
+      <button
+        onClick={() => handleDelete(item.id)}
+        className="bg-red-500 text-white px-2 py-1 rounded"
+      >
+        Delete
+      </button>
+    </>
+  )}
   </td>
   </tr>
             ))
