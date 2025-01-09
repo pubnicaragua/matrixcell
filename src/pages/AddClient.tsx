@@ -102,17 +102,18 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           onClick={() => setActiveTab('operation-list')}
           className={`px-4 py-2 ${activeTab === 'operation-list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
-          Lista de Operaciones
+          Lista de Operaciones por cliente
         </button>
       </div>
 
       {activeTab === 'add-client' && (
         <ClientForm
-          clients={clients}
-          selectedClient={selectedClient}
-          fetchClientsAndOperations={fetchClientsAndOperations}
-          setSelectedClient={handleSetSelectedClient}
-        />
+        clients={clients}
+        selectedClient={selectedClient}
+        fetchClientsAndOperations={fetchClientsAndOperations}
+        setSelectedClient={handleSetSelectedClient} // Asegúrate de usar este manejador correctamente
+      />
+      
       )}
       {activeTab === 'add-operation' && (
         <OperationForm
