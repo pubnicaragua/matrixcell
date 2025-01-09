@@ -3,12 +3,12 @@ class Product {
     codigo: string |null;
     articulo: string|null;
     precio?: number|null;
-    modelo_id: number|null;
+    model_id: number|null;
     constructor(
   
     ) {
       this.codigo = null;
       this.articulo = null;
-      this.modelo_id = null;
+      this.model_id = null;
       this.precio = null;
     }}

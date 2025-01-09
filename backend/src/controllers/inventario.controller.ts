@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import supabase from "../config/supabaseClient";
 import { BaseService } from "../services/base.service";
 import { MovimientoInventario } from "../models/movimientoInventario.model";
+import { Inventory } from "../models/inventory.model";
 
 export const InventoryController = {
     async inventoryMoved(req: Request, res: Response) {
@@ -16,7 +17,7 @@ export const InventoryController = {
             if (inventario_id) {
                 // Paso 1: Buscar el inventario utilizando el inventario_id
                 const { data: inventarioData, error: inventarioError } = await supabase
-                    .from('inventario')
+                    .from('inventory')
                     .select('*')
                     .eq('id', inventario_id)  // Filtrar por inventario_id
                     .eq('store_id', store_id)  // Filtrar por store_id
@@ -44,7 +45,7 @@ export const InventoryController = {
 
                 // Paso 3: Buscar el inventario utilizando el product_id y store_id
                 const { data: inventarioData, error: inventarioError } = await supabase
-                    .from('inventario')
+                    .from('inventory')
                     .select('*')
                     .eq('product_id', product_id)  // Filtrar por product_id
                     .eq('store_id', store_id)     // Filtrar por store_id
@@ -79,7 +80,7 @@ export const InventoryController = {
 
             // Paso 4: Actualizar el inventario según el tipo de movimiento
             const { data: updatedInventario, error: updateError } = await supabase
-                .from('inventario')
+                .from('inventory')
                 .update({
                     cantidad_fisica: inventario.stock + cambioStock,
                     stock: inventario.stock + cambioStock,
@@ -114,19 +115,19 @@ export const InventoryController = {
         try {
             // Verificar stock en la store de origen
             const { data: sourceStock, error: stockError } = await supabase
-                .from('inventario')
+                .from('inventory')
                 .select('stock')
                 .eq('product_id', product_id)
                 .eq('store_id', origen_store)
                 .single();
 
             if (stockError || !sourceStock || sourceStock.stock < cantidad) {
-                 res.status(400).json({ error: 'Stock insuficiente' });
+                res.status(400).json({ error: 'Stock insuficiente' });
             }
 
             // Reducir stock en la store de origen
             const { error: updateSourceError } = await supabase
-                .from('inventario')
+                .from('inventory')
                 .update({
                     stock: sourceStock?.stock - cantidad,
                     cantidad_fisica: sourceStock?.stock - cantidad
@@ -135,12 +136,12 @@ export const InventoryController = {
                 .eq('store_id', origen_store);
 
             if (updateSourceError) {
-                 res.status(500).json({ error: 'Error al actualizar stock de origen' });
+                res.status(500).json({ error: 'Error al actualizar stock de origen' });
             }
 
             // Verificar y actualizar o insertar stock en la store destino
             const { data: destStock } = await supabase
-                .from('inventario')
+                .from('inventory')
                 .select('stock, cantidad_fisica')
                 .eq('product_id', product_id)
                 .eq('store_id', destino_store)
@@ -148,7 +149,7 @@ export const InventoryController = {
 
             if (destStock) {
                 const { error: updateDestError } = await supabase
-                    .from('inventario')
+                    .from('inventory')
                     .update({
                         stock: destStock.stock + cantidad,
                         cantidad_fisica: destStock.cantidad_fisica + cantidad
@@ -157,11 +158,11 @@ export const InventoryController = {
                     .eq('store_id', destino_store);
 
                 if (updateDestError) {
-                     res.status(500).json({ error: 'Error al actualizar stock de destino' });
+                    res.status(500).json({ error: 'Error al actualizar stock de destino' });
                 }
             } else {
                 const { error: insertDestError } = await supabase
-                    .from('inventario')
+                    .from('inventory')
                     .insert({
                         product_id,
                         store_id: destino_store,
@@ -170,23 +171,22 @@ export const InventoryController = {
                     });
 
                 if (insertDestError) {
-                     res.status(500).json({ error: 'Error al insertar stock en destino' });
+                    res.status(500).json({ error: 'Error al insertar stock en destino' });
                 }
             }
 
             // Registrar el movimiento
             const { error: movementError } = await supabase
-                .from('movimientos')
+                .from('tranasfer')
                 .insert({
                     product_id,
-                    store_origen: origen_store,
-                    store_destino: destino_store,
-                    cantidad,
-                    fecha: new Date().toISOString()
+                    origin_store: origen_store,
+                    destination_store: destino_store,
+                    quantity: cantidad,
                 });
 
             if (movementError) {
-                 res.status(500).json({ error: 'Error al registrar movimiento' });
+                res.status(500).json({ error: 'Error al registrar movimiento' });
             }
 
             // Responder con éxito
@@ -196,6 +196,78 @@ export const InventoryController = {
             console.error(error);
             res.status(500).json({ error: `Error en transferencia: ${error.message}` });
         }
+    },
+    async updateInventory(req: Request, res: Response) {
+        const { product_id, store_id, cantidad } = req.body;
+        try {
+            // Verificar que la cantidad a editar sea válida
+            if (cantidad <= 0) {
+                 res.status(400).json({ error: 'La cantidad debe ser mayor a cero' });
+            }
+
+            // Verificar si el producto existe en el inventario de la tienda
+            const { data: currentStock, error: stockError } = await supabase
+                .from('inventory')
+                .select('stock, cantidad_fisica')
+                .eq('product_id', product_id)
+                .eq('store_id', store_id)
+                .single();
+
+            if (stockError) {
+                 res.status(500).json({ error: 'Error al verificar el stock' });
+            }
+
+            if (!currentStock) {
+                 res.status(404).json({ error: 'Producto no encontrado en la tienda' });
+            }
+
+            // Actualizar el stock en la tienda
+            const { error: updateError } = await supabase
+                .from('inventory')
+                .update({
+                    stock: cantidad,
+                    cantidad_fisica: cantidad
+                })
+                .eq('product_id', product_id)
+                .eq('store_id', store_id);
+
+            if (updateError) {
+                 res.status(500).json({ error: 'Error al actualizar el stock' });
+            }
+
+            // Registrar el movimiento de la edición
+            const { error: movementError } = await supabase
+                .from('movimientos')
+                .insert({
+                    product_id,
+                    store_origen: store_id, // En este caso, solo se usa la tienda de origen
+                    store_destino: store_id, // No hay destino, es la misma tienda
+                    cantidad,
+                    fecha: new Date().toISOString(),
+                    tipo: 'edicion' // Tipo de movimiento 'edicion'
+                });
+
+            if (movementError) {
+                 res.status(500).json({ error: 'Error al registrar el movimiento de edición' });
+            }
+
+            // Responder con éxito
+            res.status(200).json({ message: 'Stock editado correctamente' });
+
+        } catch (error: any) {
+            console.error(error);
+            res.status(500).json({ error: `Error en la edición: ${error.message}` });
+        }
+    },
+    async deleteInventory(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { userId } = req;
+
+            await BaseService.delete<Inventory>('inventory', id, userId);
+            res.json({ message: 'Client eliminada correctamente' });
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
+        }
     }
-    
 }

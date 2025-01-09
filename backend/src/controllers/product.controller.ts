@@ -2,12 +2,14 @@ import { Request, Response } from "express";
 import supabase from "../config/supabaseClient";
 import * as xlsx from 'xlsx';
 import { BaseService } from "../services/base.service";
+import { createProduct, createProductModel } from "../services/inventory.service";
 interface ProductoExcel {
     store: string;           // Código de la tienda
     modelo_producto: string; // Nombre del modelo del producto
     nombre_producto: string; // Nombre del producto
     codigo_item: string;     // Código único del producto
     cantidad: number;        // Cantidad de products
+    precio:number;
 }
 const tableName = 'products'; // Nombre de la tabla en la base de datos
 
@@ -25,14 +27,6 @@ async getAllProducts(req: Request, res: Response) {
     async masiveProductInventory(req: Request, res: Response) {
         try {
             // Define las interfaces para estructurar los datos del Excel e inventarios
-            interface ProductoExcel {
-                store: string; // Código de la tienda
-                modelo_producto: string; // Modelo del producto
-                nombre_producto: string;
-                codigo_item: string;
-                cantidad: number; // Cantidad de products
-            }
-
             interface InventarioData {
                 id?: string;
                 producto_id: string;
@@ -75,12 +69,12 @@ async getAllProducts(req: Request, res: Response) {
             for (const item of data) {
                 // Buscar o crear el modelo del producto
                 const { data: model, error: modelError } = await supabase
-                    .from('product_models')
+                    .from('models')
                     .select('id')
                     .eq('nombre', item.modelo_producto)
                     .single();
 
-                const modeloId = model?.id || (await this.createProductModel(item.modelo_producto));
+                const modeloId = model?.id || (await createProductModel(item.modelo_producto));
 
                 // Buscar o crear el producto
                 const { data: producto, error: productoError } = await supabase
@@ -89,7 +83,7 @@ async getAllProducts(req: Request, res: Response) {
                     .eq('codigo', item.codigo_item)
                     .single();
 
-                const productoId = producto?.id || (await this.createProduct(item, modeloId));
+                const productoId = producto?.id || (await createProduct(item, modeloId));
 
                 // Buscar la tienda correspondiente
                 const store = stores.find((s) => s.codigo === item.store);
@@ -172,55 +166,7 @@ async getAllProducts(req: Request, res: Response) {
         }
     },
 
-    // Función auxiliar para crear un modelo de producto
-    async createProductModel(nombre: string): Promise<string> {
-        try {
-            const { data: newModel, error: newModelError } = await supabase
-                .from('product_models')
-                .insert({ nombre })
-                .select('id')
-                .single();
-
-            if (newModelError) {
-                throw new Error(`Error al crear modelo de producto: ${newModelError.message}`);
-            }
-
-            if (!newModel || !newModel.id) {
-                throw new Error('Error inesperado: No se recibió el ID del modelo creado.');
-            }
-
-            return newModel.id;
-        } catch (error) {
-            throw new Error(`Error en createProductModel: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    },
-
-    // Función auxiliar para crear un producto
-    async createProduct(item: ProductoExcel, modeloId: string): Promise<string> {
-        try {
-            const { data: newProducto, error: newProductoError } = await supabase
-                .from('products')
-                .insert({
-                    nombre_producto: item.nombre_producto,
-                    codigo: item.codigo_item,
-                    modelo_producto: modeloId,
-                })
-                .select('id')
-                .single();
-
-            if (newProductoError) {
-                throw new Error(`Error al crear producto: ${newProductoError.message}`);
-            }
-
-            if (!newProducto || !newProducto.id) {
-                throw new Error('Error inesperado: No se recibió el ID del producto creado.');
-            }
-
-            return newProducto.id;
-        } catch (error) {
-            throw new Error(`Error en createProduct: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    }
+ 
 
 
 
