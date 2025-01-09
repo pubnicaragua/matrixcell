@@ -23,7 +23,7 @@ export const OperationController = {
                 'updated_at', 
                 'client_id', 
                 'clients(id, name, deadline, grant_date)'], where);
-            console.log(operations);
+            
             res.json(operations);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -36,6 +36,9 @@ export const OperationController = {
             const { userId } = req;
             const operation = await BaseService.create<Operation>(tableName, req.body, userId);
             res.status(201).json(OperationResource.formatOperation(operation));
+           
+            console.log(req.body)
+            console.log(operation)
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
@@ -45,8 +48,12 @@ export const OperationController = {
         try {
             const { id } = req.params;
             validateOperation(req.body); // Validar los datos
+            
             const { userId } = req;
             const operation = await BaseService.update<Operation>(tableName, parseInt(id), req.body, userId);
+            console.log(id)
+            console.log(req.body)
+            console.log(operation)
             res.json(OperationResource.formatOperation(operation));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
