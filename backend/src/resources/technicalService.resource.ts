@@ -9,6 +9,7 @@ export const TechnicalServiceResource = {
             status: technicalservice.status,
             cost: technicalservice.cost,
             store_id: technicalservice.store_id,
+            product_id: technicalservice.product_id,
             
         };
     },
