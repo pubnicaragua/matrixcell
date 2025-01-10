@@ -1,50 +1,112 @@
-:root {
-    --color-primary: #4CAF50; /* Verde */
-    --color-secondary: #2c3e50; /* Gris oscuro */
-    --color-background: #f4f4f4; /* Fondo claro */
-    --color-white: #ffffff; /* Blanco */
-    --color-text: #333333; /* Texto */
-    --font-primary: 'Poppins', sans-serif;
-    --font-secondary: 'Open Sans', sans-serif;
-    --color-danger: #ff0000;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 142 70% 49%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 215 19% 35%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
+    --radius: 0.5rem;
+
+    /* Tus variables personalizadas */
+    --color-primary: 142 70% 49%;
+    --color-secondary: 215 19% 35%;
+    --color-background: 0 0% 95.7%;
+    --color-white: 0 0% 100%;
+    --color-text: 0 0% 20%;
+    --color-danger: 0 100% 50%;
   }
-  
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 142 70% 49%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 215 19% 35%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    margin: 0;
-    padding: 0;
+    @apply bg-background text-foreground;
     font-family: var(--font-secondary);
-    background-color: var(--color-background);
-    color: var(--color-text);
   }
-  
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-primary);
   }
-  
   a {
-    color: var(--color-primary);
-    text-decoration: none;
+    @apply text-primary no-underline;
   }
-  
   button {
     font-family: var(--font-primary);
     cursor: pointer;
   }
-  
+}
 
+@layer components {
   .activity-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+    @apply w-full border-collapse mt-5;
   }
   .activity-table th,
   .activity-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+    @apply p-2.5 text-left border-b border-gray-200;
   }
-  
   .table-row:hover {
-    background-color: var(--color-light-gray);
+    @apply bg-muted;
   }
-  
+}
+
+/* Asegúrate de definir tus fuentes aquí o en el archivo HTML */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans&display=swap');
+

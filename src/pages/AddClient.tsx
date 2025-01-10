@@ -6,6 +6,8 @@ import OperationForm from '../components/OperationForm';
 import ClientsList from '../components/ClientList';
 import OperationsList from '../components/OperationList';
 import SendInvoiceForm from '../components/SendInvoiceForm';
+import ExportReport from '../components/ExportReport';
+
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -15,6 +17,9 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('add-client');
+  const [isNewClientAdded, setIsNewClientAdded] = useState(false);
+  const [isEditingClient, setIsEditingClient] = useState(false);
+
   const [email, setEmail] = useState('');
 
   useEffect(() => {
@@ -57,9 +62,19 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
     }
   };
 
-  const handleSetSelectedClient = (client: Client | null) => {
+  const handleSetSelectedClient = (client: Client | null, isEditing: boolean = false) => {
     setSelectedClient(client);
-    setActiveTab('add-client');
+    setIsEditingClient(isEditing);
+    if (isEditing) {
+      setActiveTab('add-client');
+    } else if (client) {
+      setIsNewClientAdded(true);
+      setActiveTab('add-operation');
+    }
+  };
+
+  const handleOperationSaved = () => {
+    setIsNewClientAdded(false);
   };
 
   const handleSetSelectedOperation: React.Dispatch<React.SetStateAction<Operation | null>> = (operation) => {
@@ -83,29 +98,35 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
     window.open(mailtoLink, '_blank');
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+      </div>
+    );
+
+  if (error) return <div className="text-red-500 text-center">Error: {error}</div>;
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Clientes y Operaciones</h1>
+      <h1 className="text-2xl text-center font-bold mb-4">Clientes y Operaciones</h1>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap justify-center gap-2">
         <button
           onClick={() => setActiveTab('add-client')}
-          className={`mr-2 px-4 py-2 ${activeTab === 'add-client' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`px-4 py-2 ${activeTab === 'add-client' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           Agregar Cliente
         </button>
         <button
           onClick={() => setActiveTab('add-operation')}
-          className={`mr-2 px-4 py-2 ${activeTab === 'add-operation' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`px-4 py-2 ${activeTab === 'add-operation' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           Agregar Operación
         </button>
         <button
           onClick={() => setActiveTab('client-list')}
-          className={`mr-2 px-4 py-2 ${activeTab === 'client-list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`px-4 py-2 ${activeTab === 'client-list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           Lista de Clientes
         </button>
@@ -117,14 +138,15 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('send-invoice')}
-          className={`ml-2 px-4 py-2 ${activeTab === 'send-invoice' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`px-4 py-2 ${activeTab === 'send-invoice' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
           Enviar por E-mail
         </button>
+        <ExportReport clients={clients} operations={operations} />
+
       </div>
 
       {activeTab === 'send-invoice' && <SendInvoiceForm />}
-
 
       {activeTab === 'add-client' && (
         <ClientForm
@@ -139,13 +161,15 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           clients={clients}
           selectedOperation={selectedOperation}
           fetchClientsAndOperations={fetchClientsAndOperations}
-          setSelectedOperation={handleSetSelectedOperation}
+          setSelectedOperation={setSelectedOperation}
+          isNewClientAdded={isNewClientAdded}
+          setIsNewClientAdded={setIsNewClientAdded}
         />
       )}
       {activeTab === 'client-list' && (
         <ClientsList
           clients={clients}
-          setSelectedClient={handleSetSelectedClient}
+          setSelectedClient={(client) => handleSetSelectedClient(client, true)}
           fetchClientsAndOperations={fetchClientsAndOperations}
         />
       )}
@@ -157,6 +181,9 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           deleteOperation={deleteOperation}
         />
       )}
+      {
+        
+      }
     </div>
   );
 };

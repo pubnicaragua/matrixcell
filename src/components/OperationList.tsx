@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Pagination from './Pagination';
 import { Operation, Client } from '../types';
 
 interface OperationListProps {
@@ -11,6 +12,10 @@ interface OperationListProps {
 }
 
 const OperationList: React.FC<OperationListProps> = ({ operations, clients, setSelectedOperation, deleteOperation }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const getClientName = (clientId: number) => {
     const client = clients.find(client => client.id === clientId);
     return client ? client.name : 'Desconocido';
@@ -19,6 +24,26 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
   const getClientPhone = (clientId: number) => {
     const client = clients.find(client => client.id === clientId);
     return client ? client.phone : 'Desconocido';
+  };
+
+  const filteredOperations = useMemo(() => {
+    return operations.filter(operation => {
+      const operationNumber = operation.operation_number ? operation.operation_number.toLowerCase() : '';
+      const clientName = getClientName(operation.client_id) ? getClientName(operation.client_id).toLowerCase() : '';
+      return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase());
+    });
+  }, [operations, searchTerm]);
+  
+
+  const paginatedOperations = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredOperations.slice(startIndex, endIndex);
+  }, [filteredOperations, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reiniciar a la primera página
   };
 
   const generatePdf = (clientId: number) => {
@@ -72,8 +97,17 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Lista de Operaciones</h2>
+
+      <input
+        type="text"
+        placeholder="Buscar por número de operación o nombre del cliente"
+        value={searchTerm}
+        onChange={handleSearchChange}
+        className="mb-6 p-2 w-full border rounded-lg"
+      />
+
       <div className="grid lg:grid-cols-2 gap-6">
-        {operations.map((operation) => (
+        {paginatedOperations.map((operation) => (
           <div
             key={operation.id}
             className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50 hover:shadow-lg transition-shadow"
@@ -90,7 +124,6 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
               <p><strong>Deuda Refinanciada:</strong> {operation.refinanced_debt}</p>
               <p><strong>Acción Judicial:</strong> {operation.judicial_action}</p>
               <p><strong>Cliente:</strong> {getClientName(operation.client_id)}</p>
-              <p><strong>Teléfono:</strong> {getClientPhone(operation.client_id)}</p>
             </div>
 
             <div className="mt-4 flex justify-between space-x-2">
@@ -116,12 +149,19 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
                 onClick={() => sendWhatsApp(operation.client_id)}
                 className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
               >
-                Enviar WhatsApp
+                WhatsApp
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      <Pagination
+        totalItems={filteredOperations.length}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

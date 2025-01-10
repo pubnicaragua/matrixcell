@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
-
+import { Button } from "../components/ui/button";
+import { Switch } from "../components/ui/switch";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -28,77 +30,49 @@ const Settings = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1 style={{ fontFamily: "var(--font-primary)", color: "var(--color-primary)" }}>
-        Configuración
-      </h1>
-      <p style={{ marginTop: "10px", fontFamily: "var(--font-secondary)", color: "#555" }}>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-primary mb-2">Configuración</h1>
+      <p className="text-muted-foreground mb-6">
         Ajusta la configuración de tu cuenta y preferencias del sistema.
       </p>
 
-      <div style={{ marginTop: "20px" }}>
-        {/* Modo Oscuro */}
-        <div style={{ marginBottom: "20px" }}>
-          <label>Modo Oscuro:</label>
-          <button
-            onClick={handleThemeToggle}
-            style={styles.button}
-          >
-            {settings.theme === "light" ? "Activar" : "Desactivar"}
-          </button>
-        </div>
-
-        {/* Notificaciones */}
-        <div style={{ marginBottom: "20px" }}>
-          <label>Notificaciones:</label>
-          <button
-            onClick={handleNotificationsToggle}
-            style={styles.button}
-          >
-            {settings.notifications ? "Desactivar" : "Activar"}
-          </button>
-        </div>
-
-        {/* API Key */}
-        <div>
-          <label>Clave API:</label>
-          <input
-            type="text"
-            value={settings.apiKey}
-            readOnly
-            style={styles.input}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="theme-toggle" className="text-lg">Modo Oscuro</Label>
+          <Switch
+            id="theme-toggle"
+            checked={settings.theme === "dark"}
+            onCheckedChange={handleThemeToggle}
           />
         </div>
 
-        {/* Guardar Cambios */}
-        <button
-          onClick={handleSave}
-          style={{ ...styles.button, marginTop: "20px" }}
-        >
+        <div className="flex items-center justify-between">
+          <Label htmlFor="notifications-toggle" className="text-lg">Notificaciones</Label>
+          <Switch
+            id="notifications-toggle"
+            checked={settings.notifications}
+            onCheckedChange={handleNotificationsToggle}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="api-key" className="text-lg">Clave API</Label>
+          <Input
+            id="api-key"
+            type="text"
+            value={settings.apiKey}
+            readOnly
+            className="w-full"
+          />
+        </div>
+
+        <Button onClick={handleSave} className="w-full">
           Guardar Cambios
-        </button>
+        </Button>
       </div>
     </div>
   );
 };
 
-const styles = {
-  button: {
-    marginLeft: "10px",
-    background: "var(--color-secondary)",
-    color: "var(--color-white)",
-    padding: "8px 12px",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  input: {
-    marginLeft: "10px",
-    padding: "8px",
-    border: "1px solid var(--color-secondary)",
-    borderRadius: "4px",
-    width: "300px",
-  },
-};
-
 export default Settings;
+
