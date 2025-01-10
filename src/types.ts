@@ -1,10 +1,11 @@
 // types.ts
 interface ClientListProps {
-  clients: Client[]; // Lista de clientes
-  setSelectedClient: (client: Client | null) => void; // Función para seleccionar un cliente
-  fetchClientsAndOperations: () => Promise<void>; // Para actualizar la lista después de una operación
-  
+  clients: Client[];
+  setSelectedClient: (client: Client | null) => void;
+  setActiveTab: (tab: string) => void; // Asegúrate de incluir esto
+  fetchClientsAndOperations: () => Promise<void>;
 }
+
 
 export interface Client {
     id?: number;
