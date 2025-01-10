@@ -17,11 +17,26 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
   const [address, setAddress] = useState(selectedClient?.address || '');
   const [city, setCity] = useState(selectedClient?.city || '');
   const [identityNumber, setIdentityNumber] = useState(selectedClient?.identity_number || '');
-  const [identityType, setIdentityType] = useState(selectedClient?.identity_type || '');
+  const [identityType, setIdentityType] = useState(selectedClient?.identity_type || 'Cédula');
   const [dueDate, setDueDate] = useState(selectedClient?.due_date || '');
   const [grantDate, setGrantDate] = useState(selectedClient?.grant_date || '');
   const [debtType, setDebtType] = useState(selectedClient?.debt_type || '');
   const [deadline, setDeadline] = useState(selectedClient?.deadline || 0);
+
+  // Función para limpiar el formulario
+  const resetForm = () => {
+    setName('');
+    setPhone('');
+    setAddress('');
+    setCity('');
+    setIdentityNumber('');
+    setIdentityType('Cédula'); // Restablecer a valor predeterminado
+    setDueDate('');
+    setGrantDate('');
+    setDebtType('');
+    setDeadline(0);
+    setSelectedClient(null); // Limpiar cliente seleccionado
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +72,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
 
       // Refrescar la lista de clientes y operaciones
       await fetchClientsAndOperations();
+      resetForm();
 
       // Si se creó un nuevo cliente, dirigir automáticamente a "Agregar Operación"
       if (!selectedClient && response?.data) {

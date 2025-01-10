@@ -31,8 +31,8 @@ export interface Client {
     amount_paid: number;
     days_overdue: number;
     cart_value: number;
-    refinanced_debt: number;
-    judicial_action: string;
+    refinanced_debt: string;
+    judicial_action: number;
     client_id: number;
     client?: { // Agrega esta propiedad opcional
         id: number;

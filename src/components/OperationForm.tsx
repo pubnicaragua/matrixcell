@@ -58,43 +58,43 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
             if (selectedClient) {
                 setDeadline(selectedClient.deadline);
                 setGrantDate(selectedClient.grant_date);
-    
+
                 // Obtener últimos 5 dígitos de la identificación
                 const identityNumber = selectedClient.identity_number || '';
                 const lastFiveDigits = identityNumber.slice(-5);
-    
+
                 // Generar 3 caracteres alfabéticos aleatorios
                 const randomChars = Array(3)
                     .fill(null)
                     .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // A-Z
                     .join('');
-    
+
                 // Concatenar últimos 5 dígitos y caracteres aleatorios
                 setOperationNumber(`${lastFiveDigits}${randomChars}`);
-    
+
                 // Calcular fechas de vencimiento y próximo vencimiento
                 const grantDateObj = new Date(selectedClient.grant_date);
-    
+
                 // Calcular la fecha de vencimiento como un mes después de la fecha de concesión
                 const dueDateCalculated = addMonths(grantDateObj, 1); // Un mes después
-    
+
                 // Calcular la fecha de próximo vencimiento como plazo (en meses) más la fecha de concesión
                 const proxDueDateCalculated = addMonths(grantDateObj, selectedClient.deadline);
-    
+
                 // Formatear fechas y actualizar los estados
                 const formattedDueDate = format(dueDateCalculated, 'yyyy-MM-dd');
                 const formattedProxDueDate = format(proxDueDateCalculated, 'yyyy-MM-dd');
-    
+
                 setCalculatedDueDate(formattedDueDate);
                 setCalculatedProxDueDate(formattedProxDueDate);
-    
+
                 // Actualizar directamente los valores del formulario
                 setDueDate(formattedDueDate);
                 setProxDueDate(formattedProxDueDate);
             }
         }
     }, [clientId, clients]);
-    
+
 
     // Limpiar campos del formulario después de guardar la operación
     const resetForm = () => {
@@ -287,25 +287,32 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
 
                 <div className="flex flex-col">
                     <label htmlFor="refinanced_debt" className="text-sm font-medium text-gray-700">Deuda Refinanciada</label>
-                    <input
+                    <select
                         id="refinanced_debt"
-                        type="number"
                         value={refinancedDebt}
-                        onChange={(e) => setRefinancedDebt(Number(e.target.value))}
+                        onChange={(e) => setRefinancedDebt(Number(e.target.value))} // Convertimos a número
                         required
                         className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value={1}>Sí</option>
+                        <option value={0}>No</option>
+                    </select>
                 </div>
 
                 <div className="flex flex-col">
                     <label htmlFor="judicial_action" className="text-sm font-medium text-gray-700">Acción Judicial</label>
-                    <input
+                    <select
                         id="judicial_action"
                         value={judicialAction}
-                        onChange={(e) => setJudicialAction(e.target.value)}
+                        onChange={(e) => setJudicialAction(Number(e.target.value))} // Convertimos a número
                         required
                         className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value={1}>Sí</option>
+                        <option value={0}>No</option>
+                    </select>
                 </div>
 
                 <div className="flex flex-col">
