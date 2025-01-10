@@ -3,6 +3,7 @@ interface ClientListProps {
   clients: Client[]; // Lista de clientes
   setSelectedClient: (client: Client | null) => void; // Función para seleccionar un cliente
   fetchClientsAndOperations: () => Promise<void>; // Para actualizar la lista después de una operación
+  
 }
 
 export interface Client {
@@ -32,5 +33,9 @@ export interface Client {
     refinanced_debt: number;
     judicial_action: string;
     client_id: number;
-  }
-  
+    client?: { // Agrega esta propiedad opcional
+        id: number;
+        name: string;
+        phone: string;
+    };
+}

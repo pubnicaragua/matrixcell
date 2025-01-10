@@ -3,7 +3,7 @@ import cors from 'cors'; // Importar cors
 import dotenv from 'dotenv'; // Importar dotenv
 import bodyParser from 'body-parser';
 // Importar rutas
-import authRoutes from './routes/auth';
+import authRoutes from './routes/auth.routes';
 import usuarioRoutes from './routes/usuario.routes';
 import rolRoutes from './routes/rol.route';
 import permisosRoutes from './routes/permiso.routes';
@@ -21,6 +21,8 @@ import statusRoutes from './routes/status.routes'; // Importar rutas de clientes
 import inventoryRoutes from './routes/inventory.routes'; // Importar rutas de clientes
 import productRoutes from './routes/product.routes'; // Importar rutas de clientes
 import { ClientController } from './controllers/client.controller'; // Importar controlador de clientes
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 // Importar configuraciones y servicios
 import { config } from './config/gobal';
@@ -60,6 +62,39 @@ app.use('/inventories', inventoryRoutes);
 app.use('/products', productRoutes); 
 // Ruta independiente para generar el informe
 app.post('/generate-report',sessionAuth, ClientController.generateEquifaxReport);
+const options = {
+  definition: {
+    openapi: "3.1.0",
+    info: {
+      title: "Matrix Cell API",
+      version: "0.1.0",
+      description:
+        "Esta es una API sencilla para gestionar operaciones en tienda de celulares, incluyendo el bloqueo y desbloqueo de dispositivos móviles.",
+      license: {
+        name: "MIT",
+        url: "https://spdx.org/licenses/MIT.html",
+      },
+      contact: {
+        name: "Soporte Matrix-Cell",
+        url: "https://matrix-cell.com",
+        email: "soporte@matrix-cell.com",
+      },
+    },
+    servers: [
+      {
+        url: "https://matrixcell.onrender.com/",
+      },
+    ],
+  },
+  apis: ["./src/routes/*.ts"],
+};
+
+const specs = swaggerJsdoc(options);
+app.use(
+  "/documentacion",
+  swaggerUi.serve,
+  swaggerUi.setup(specs)
+);
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

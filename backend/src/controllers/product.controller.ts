@@ -24,7 +24,7 @@ async getAllProducts(req: Request, res: Response) {
         }
     },
 
-    async masiveProductInventory(req: Request, res: Response) {
+async masiveProductInventory(req: Request, res: Response) {
         try {
             // Define las interfaces para estructurar los datos del Excel e inventarios
             interface InventarioData {
@@ -52,9 +52,9 @@ async getAllProducts(req: Request, res: Response) {
 
             // Consultar las tiendas en la base de datos
             const { data: stores, error: storeError } = await supabase
-                .from('stores')
-                .select('id, codigo')
-                .in('codigo', storeCodes);
+                .from('store')
+                .select('id, name')
+                .in('name', storeCodes);
 
             if (storeError) {
                 throw new Error(`Error al obtener tiendas: ${storeError.message}`);
@@ -71,7 +71,7 @@ async getAllProducts(req: Request, res: Response) {
                 const { data: model, error: modelError } = await supabase
                     .from('models')
                     .select('id')
-                    .eq('nombre', item.modelo_producto)
+                    .eq('name', item.modelo_producto)
                     .single();
 
                 const modeloId = model?.id || (await createProductModel(item.modelo_producto));
@@ -86,14 +86,14 @@ async getAllProducts(req: Request, res: Response) {
                 const productoId = producto?.id || (await createProduct(item, modeloId));
 
                 // Buscar la tienda correspondiente
-                const store = stores.find((s) => s.codigo === item.store);
+                const store = stores.find((s) => s.name === item.store);
                 if (!store) {
                     throw new Error(`No se encontró la tienda con el código: ${item.store}`);
                 }
 
                 // Consultar o preparar inventario
                 const { data: inventario, error: inventarioError } = await supabase
-                    .from('inventario')
+                    .from('inventory')
                     .select('id, stock, cantidad_fisica')
                     .eq('producto_id', productoId)
                     .eq('store_id', store.id)
@@ -128,7 +128,7 @@ async getAllProducts(req: Request, res: Response) {
                     if (inventario.id) {
                         // Actualizar inventario existente
                         const { error: updateError } = await supabase
-                            .from('inventario')
+                            .from('inventory')
                             .update({
                                 stock: inventario.stock,
                                 cantidad_fisica: inventario.cantidad_fisica,
@@ -141,11 +141,10 @@ async getAllProducts(req: Request, res: Response) {
                     } else {
                         // Insertar nuevo inventario
                         const { error: insertError } = await supabase
-                            .from('inventario')
+                            .from('inventory')
                             .insert({
-                                producto_id: inventario.producto_id,
+                                product_id: inventario.producto_id,
                                 store_id: inventario.store_id,
-                                modelo_producto: inventario.modelo_producto,
                                 stock: inventario.stock,
                                 cantidad_fisica: inventario.cantidad_fisica,
                             });

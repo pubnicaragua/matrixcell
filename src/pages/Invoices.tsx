@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../axiosConfig'; // Importar la configuración de axios
+import * as XLSX from 'xlsx'; // Importar la librería xlsx para exportar a Excel
 
 interface Invoice {
   id: number;
@@ -54,20 +55,47 @@ const InvoicesView = () => {
     invoice.number.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Función para exportar a Excel
+  const handleExportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    // Convertir las facturas a una hoja de trabajo
+    const ws = XLSX.utils.json_to_sheet(
+      filteredInvoices.map((invoice) => ({
+        'Número': invoice.number,
+        'Monto': invoice.amount !== null ? `$${invoice.amount.toFixed(2)}` : 'N/A',
+        'ID del Dispositivo': invoice.device_id,
+        'Estado': invoice.status,
+        'Fecha de Creación': new Date(invoice.created_at).toLocaleString(),
+      }))
+    );
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Facturas');
+
+    // Exportar el libro de trabajo como archivo .xlsx
+    XLSX.writeFile(wb, 'facturas.xlsx');
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold text-center mb-6">Lista de Facturas</h1>
 
       {error && <p className="text-red-500 text-center">{error}</p>}
 
-      <div className="mb-4">
+      <div className="mb-4 flex justify-between">
         <input
           type="text"
           placeholder="Buscar por número de factura"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg"
+          className="w-full md:w-2/3 p-2 border border-gray-300 rounded-lg"
         />
+        <button
+          onClick={handleExportToExcel}
+          className="ml-4 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
+        >
+          Exportar a Excel
+        </button>
       </div>
 
       {loading ? (
