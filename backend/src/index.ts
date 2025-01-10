@@ -3,7 +3,7 @@ import cors from 'cors'; // Importar cors
 import dotenv from 'dotenv'; // Importar dotenv
 import bodyParser from 'body-parser';
 // Importar rutas
-import authRoutes from './routes/auth';
+import authRoutes from './routes/auth.routes';
 import usuarioRoutes from './routes/usuario.routes';
 import rolRoutes from './routes/rol.route';
 import permisosRoutes from './routes/permiso.routes';
@@ -66,28 +66,29 @@ const options = {
   definition: {
     openapi: "3.1.0",
     info: {
-      title: "LogRocket Express API with Swagger",
+      title: "Matrix Cell API",
       version: "0.1.0",
       description:
-        "This is a simple CRUD API application made with Express and documented with Swagger",
+        "Esta es una API sencilla para gestionar operaciones en tienda de celulares, incluyendo el bloqueo y desbloqueo de dispositivos móviles.",
       license: {
         name: "MIT",
         url: "https://spdx.org/licenses/MIT.html",
       },
       contact: {
-        name: "LogRocket",
-        url: "https://logrocket.com",
-        email: "info@email.com",
+        name: "Soporte Matrix-Cell",
+        url: "https://matrix-cell.com",
+        email: "soporte@matrix-cell.com",
       },
     },
     servers: [
       {
-        url: "http://localhost:3000",
+        url: "https://matrixcell.onrender.com/",
       },
     ],
   },
-  apis: ["./routes/*.ts"],
+  apis: ["./src/routes/*.ts"],
 };
+
 const specs = swaggerJsdoc(options);
 app.use(
   "/documentacion",
