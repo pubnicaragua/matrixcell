@@ -1,11 +1,12 @@
-'use client'
+'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import axios from '../axiosConfig';
 import { Client } from '../types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Trash2, Edit } from 'lucide-react'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Trash2, Edit } from 'lucide-react';
+import Pagination from './Pagination'; // Importar componente reutilizable
 
 interface ClientListProps {
   clients: Client[];
@@ -14,6 +15,10 @@ interface ClientListProps {
 }
 
 const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fetchClientsAndOperations }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const deleteClient = async (id: number) => {
     try {
       if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
@@ -27,11 +32,39 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
     }
   };
 
+  const filteredClients = useMemo(() => {
+    return clients.filter(client =>
+      (client.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (client.identity_number?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+  }, [clients, searchTerm]);
+  
+
+  const paginatedClients = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredClients.slice(startIndex, endIndex);
+  }, [filteredClients, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reiniciar a la primera página
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Lista de Clientes</h2>
+
+      <input
+        type="text"
+        placeholder="Buscar por nombre o número de cédula"
+        value={searchTerm}
+        onChange={handleSearchChange}
+        className="mb-6 p-2 w-full border rounded-lg"
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {clients.map((client) => (
+        {paginatedClients.map((client) => (
           <Card key={client.id} className="overflow-hidden transition-shadow duration-300 ease-in-out hover:shadow-lg">
             <CardHeader>
               <CardTitle className="text-xl font-semibold text-gray-800">{client.name}</CardTitle>
@@ -39,13 +72,8 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
             <CardContent>
               <div className="space-y-2">
                 <InfoItem label="Teléfono" value={client.phone} />
-                <InfoItem label="Dirección" value={client.address} />
-                <InfoItem label="Ciudad" value={client.city} />
-                <InfoItem label="Tipo de Identificación" value={client.identity_type} />
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
-                <InfoItem label="Fecha de Corte" value={client.due_date} />
-                <InfoItem label="Fecha de Concesión" value={client.grant_date} />
-                <InfoItem label="Tipo de Deudor" value={client.debt_type} />
+                <InfoItem label="Ciudad" value={client.city} />
                 <InfoItem label="Plazo" value={`${client.deadline} meses`} />
               </div>
             </CardContent>
@@ -70,6 +98,13 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
           </Card>
         ))}
       </div>
+
+      <Pagination
+        totalItems={filteredClients.length}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };
@@ -82,4 +117,3 @@ const InfoItem: React.FC<{ label: string; value: string | number }> = ({ label, 
 );
 
 export default ClientsList;
-
