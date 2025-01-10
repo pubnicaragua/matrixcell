@@ -284,5 +284,67 @@ export const DeviceController = {
             res.status(500).json({ success: false, message: 'Error bloqueando el dispositivo.' });
         }
     },
+    async unlockDevices(req: Request, res: Response) {
+        const { id } = req.params;
+        const { unlockCode } = req.body;  // El código de desbloqueo debe ser enviado en el cuerpo de la solicitud
+
+        if (!id) {
+            res.status(400).json({ success: false, message: 'El ID del dispositivo es requerido.' });
+        }
+
+        if (!unlockCode) {
+            res.status(400).json({ success: false, message: 'El código de desbloqueo es requerido.' });
+        }
+
+        try {
+            // Actualizar el estado del dispositivo a "desbloqueado"
+            const { data: device, error } = await supabase
+                .from('devices')
+                .update({ status: 'Desbloqueado' })
+                .eq('id', id)
+                .select('imei')
+                .single();
+
+            if (error) {
+                console.error('Error al actualizar el estado del dispositivo:', error);
+                res.status(500).json({ success: false, message: 'Error al desbloquear el dispositivo en la base de datos.' });
+            }
+
+            if (!device) {
+                res.status(404).json({ success: false, message: 'Dispositivo no encontrado.' });
+            }
+
+            // Obtener el push_token del dispositivo desbloqueado
+            const pushToken = device?.imei;
+
+            // Enviar notificación si el push_token existe
+            if (pushToken) {
+                const message = {
+                    body: 'Tu dispositivo ha sido desbloqueado. ¡Gracias por realizar el pago!',
+                    data: { deviceId: id },
+                };
+
+                try {
+                    await sendPushNotification([pushToken], message);
+                } catch (notificationError) {
+                    console.error('Error enviando notificación push:', notificationError);
+                    res.status(500).json({
+                        success: false,
+                        message: 'El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.'
+                    });
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Dispositivo desbloqueado y notificación enviada correctamente.'
+            });
+
+        } catch (error) {
+            console.error('Error desbloqueando el dispositivo:', error);
+            res.status(500).json({ success: false, message: 'Error desbloqueando el dispositivo.' });
+        }
+    }
+
 
 }

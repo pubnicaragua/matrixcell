@@ -20,6 +20,7 @@ import Profile from "./pages/Profile";
 import Security from "./pages/Security";
 import { AuthProvider } from './context/AuthContext';
 import Layout from '../src/layouts/Layout'; // Importar el Layout
+import RegisterForm from './components/RegisterForm';
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/security" element={<Layout><Security /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/register" element={<RegisterForm />} />
       </Routes>
     </AuthProvider>
   );

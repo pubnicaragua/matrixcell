@@ -50,7 +50,8 @@ export const ClientController = {
         try {
             const { id } = req.params;
             const { userId } = req;
-
+            const { data, error } = await supabase.from('operations').delete().eq('client_id', id);
+            if (error) throw new Error(error.message);
             await BaseService.delete<Client>(tableName, id, userId);
             res.json({ message: 'Client eliminada correctamente' });
         } catch (error: any) {
@@ -143,22 +144,20 @@ export const ClientController = {
                 FECHA_SIG_VENCIMIENTO: string | Date;
             };
 
-            // Función para normalizar fechas
             const normalizeDate = (date: string | number | undefined | Date): Date | null => {
                 if (!date) return null;
                 if (typeof date === 'number') {
-                    // Si la fecha es un número (Excel almacena fechas como días desde 1900)
-                    return new Date((date - 25569) * 86400 * 1000); // Convertir a timestamp
+                    return new Date((date - 25569) * 86400 * 1000);
                 }
                 if (typeof date === 'string') {
                     const parts = date.split('/');
                     if (parts.length === 3) {
                         const [day, month, year] = parts.map(Number);
-                        const fullYear = year < 100 ? 2000 + year : year; // Convertir año corto a año completo
+                        const fullYear = year < 100 ? 2000 + year : year;
                         return new Date(fullYear, month - 1, day);
                     }
                 }
-                return null; // Formato no reconocido
+                return null;
             };
 
             const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -170,51 +169,51 @@ export const ClientController = {
             }
 
             for (const row of sheetData) {
-                const client = {
-                    identity_number: row.CODIGO_ID_SUJETO,
-                    name: row.NOMBRE_SUJETO,
-                    address: row.DIRECCION,
-                    city: row.CIUDAD,
-                    phone: row.TELEFONO,
-                    debt_type: row.TIPO_DEUDOR,
-                    due_date : normalizeDate(row.FECHA_CONCESION) || null,
-                    created_at: new Date(),
-                };
-                const { data: clientData, error: clientError } = await supabase
+                const { data: existingClients, error: clientCheckError } = await supabase
                     .from('clients')
-                    .insert(client)
-                    .select()
-                    .single();
+                    .select('id')
+                    .eq('identity_number', row.CODIGO_ID_SUJETO);
 
-                if (clientError) throw new Error(`Error al insertar cliente: ${clientError.message}`);
+                if (clientCheckError) {
+                    throw new Error(`Error al verificar cliente: ${clientCheckError.message}`);
+                }
+                if (!existingClients || existingClients.length === 0) {
+                    const client = {
+                        identity_number: row.CODIGO_ID_SUJETO,
+                        name: row.NOMBRE_SUJETO,
+                        address: row.DIRECCION,
+                        city: row.CIUDAD,
+                        phone: row.TELEFONO,
+                        debt_type: row.TIPO_DEUDOR,
+                        due_date: normalizeDate(row.FECHA_CONCESION) || null,
+                        created_at: new Date(),
+                    };
 
-                const operation = {
-                    operation_number: row.NUMERO_DE_OPERACION || null,
-                    operation_value: row.VAL_OPERACION || null,
-                    amount_due: row.VAL_A_VENCER || null,
-                    amount_paid: row.VAL_VENCIDO || null,
-                    judicial_action: row.VA_DEM_JUDICIAL > 0,
-                    cart_value: row.VAL_CART_CASTIGADA || null,
-                    days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS || null),
-                    due_date: normalizeDate(row.FECHA_DE_VENCIMIENTO) || null,
-                    refinanced_debt: row.DEUDA_REFINANCIADA || null,
-                    prox_due_date: normalizeDate(row.FECHA_SIG_VENCIMIENTO) || null,
-                    client_id: clientData.id,
-                    created_at: new Date(),
-                };
-                const { error: operationError } = await supabase.from('operations').insert(operation);
-                if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
+                    const { data: clientData, error: clientError } = await supabase
+                        .from('clients')
+                        .insert(client)
+                        .select()
+                        .single();
 
-                /*const status = {
-                    total_operations: 1,
-                    total_due: 0,//row.VAL_A_VENCER,
-                    total_overdue: row.NUM_DIAS_VENCIDOS > 0 ? row.VAL_VENCIDO : 0,
-                    judicial_operations: row.VA_DEM_JUDICIAL > 0 ? 1 : 0,
-                    client_id: clientData.id,
-                    created_at: new Date(),
-                };*/
-                /*const { error: statusError } = await supabase.from('statuses').insert(status);
-                if (statusError) throw new Error(`Error al insertar estado: ${statusError.message}`);*/
+                    if (clientError) throw new Error(`Error al insertar cliente: ${clientError.message}`);
+
+                    const operation = {
+                        operation_number: row.NUMERO_DE_OPERACION || null,
+                        operation_value: row.VAL_OPERACION || null,
+                        amount_due: row.VAL_A_VENCER || null,
+                        amount_paid: row.VAL_VENCIDO || null,
+                        judicial_action: row.VA_DEM_JUDICIAL > 0,
+                        cart_value: row.VAL_CART_CASTIGADA || null,
+                        days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS || null),
+                        due_date: normalizeDate(row.FECHA_DE_VENCIMIENTO) || null,
+                        refinanced_debt: row.DEUDA_REFINANCIADA || null,
+                        prox_due_date: normalizeDate(row.FECHA_SIG_VENCIMIENTO) || null,
+                        client_id: clientData.id,
+                        created_at: new Date(),
+                    };
+                    const { error: operationError } = await supabase.from('operations').insert(operation);
+                    if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
+                }
             }
 
             res.status(200).json({ message: 'Datos procesados e insertados con éxito.' });
@@ -223,5 +222,6 @@ export const ClientController = {
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     }
+
 
 }
