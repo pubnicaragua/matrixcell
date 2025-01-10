@@ -1,14 +1,14 @@
 class Product {
     id?: number;
-    codigo: string |null;
-    articulo: string|null;
-    precio?: number|null;
+    code: string |null;
+    article: string|null;
+    price?: number|null;
     model_id: number|null;
     constructor(
   
     ) {
-      this.codigo = null;
-      this.articulo = null;
+      this.code = null;
+      this.article = null;
       this.model_id = null;
-      this.precio = null;
+      this.price = null;
     }}

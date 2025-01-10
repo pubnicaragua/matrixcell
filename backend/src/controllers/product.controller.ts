@@ -17,7 +17,7 @@ export const ProductController = {
 async getAllProducts(req: Request, res: Response) {
         try {
             const where = { ...req.query };
-            const products = await BaseService.getAll<Product>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status'], where);
+            const products = await BaseService.getAll<Product>(tableName, ['id', 'created_at', 'code', 'model_id', 'models(id,name)','price'], where);
             res.json(products);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
