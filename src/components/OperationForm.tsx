@@ -10,11 +10,13 @@ interface OperationFormProps {
     setSelectedOperation: React.Dispatch<React.SetStateAction<Operation | null>>;
 }
 
-const OperationForm: React.FC<OperationFormProps> = ({
+const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; setIsNewClientAdded: React.Dispatch<React.SetStateAction<boolean>> }> = ({
     clients,
     selectedOperation,
     fetchClientsAndOperations,
-    setSelectedOperation
+    setSelectedOperation,
+    isNewClientAdded, // Nueva prop
+    setIsNewClientAdded, // Nueva prop
 }) => {
     const [operationNumber, setOperationNumber] = useState(selectedOperation?.operation_number || '');
     const [operationValue, setOperationValue] = useState(selectedOperation?.operation_value || 0);
@@ -39,6 +41,16 @@ const OperationForm: React.FC<OperationFormProps> = ({
     // Estado para el valor vencido
     const [calculatedAmountPaid, setCalculatedAmountPaid] = useState<number>(0);
 
+    // Preseleccionar cliente recién creado si se agregó un cliente nuevo
+    useEffect(() => {
+        if (isNewClientAdded && clients.length > 0) {
+            const lastClient = clients[clients.length - 1]; // Último cliente
+            if (lastClient && lastClient.id) {
+                setClientId(lastClient.id.toString());
+            }
+        }
+    }, [isNewClientAdded, clients]);
+
     useEffect(() => {
         if (clientId) {
             const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
@@ -46,40 +58,58 @@ const OperationForm: React.FC<OperationFormProps> = ({
             if (selectedClient) {
                 setDeadline(selectedClient.deadline);
                 setGrantDate(selectedClient.grant_date);
-
+    
                 // Obtener últimos 5 dígitos de la identificación
                 const identityNumber = selectedClient.identity_number || '';
                 const lastFiveDigits = identityNumber.slice(-5);
-
+    
                 // Generar 3 caracteres alfabéticos aleatorios
                 const randomChars = Array(3)
                     .fill(null)
                     .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))) // A-Z
                     .join('');
-
+    
                 // Concatenar últimos 5 dígitos y caracteres aleatorios
                 setOperationNumber(`${lastFiveDigits}${randomChars}`);
-
+    
                 // Calcular fechas de vencimiento y próximo vencimiento
                 const grantDateObj = new Date(selectedClient.grant_date);
-
-                // Calcular la fecha de vencimiento sumando el plazo
-                const dueDateCalculated = addMonths(grantDateObj, selectedClient.deadline);
-                const proxDueDateCalculated = addMonths(dueDateCalculated, selectedClient.deadline);
-
-                // Actualizar los estados
+    
+                // Calcular la fecha de vencimiento como un mes después de la fecha de concesión
+                const dueDateCalculated = addMonths(grantDateObj, 1); // Un mes después
+    
+                // Calcular la fecha de próximo vencimiento como plazo (en meses) más la fecha de concesión
+                const proxDueDateCalculated = addMonths(grantDateObj, selectedClient.deadline);
+    
+                // Formatear fechas y actualizar los estados
                 const formattedDueDate = format(dueDateCalculated, 'yyyy-MM-dd');
                 const formattedProxDueDate = format(proxDueDateCalculated, 'yyyy-MM-dd');
-
+    
                 setCalculatedDueDate(formattedDueDate);
                 setCalculatedProxDueDate(formattedProxDueDate);
-
+    
                 // Actualizar directamente los valores del formulario
                 setDueDate(formattedDueDate);
                 setProxDueDate(formattedProxDueDate);
             }
         }
     }, [clientId, clients]);
+    
+
+    // Limpiar campos del formulario después de guardar la operación
+    const resetForm = () => {
+        setOperationNumber('');
+        setOperationValue(0);
+        setDueDate('');
+        setProxDueDate('');
+        setAmountDue(0);
+        setAmountPaid(0);
+        setDaysOverdue(0);
+        setCartValue(0);
+        setRefinancedDebt(0);
+        setJudicialAction('');
+        setClientId('');
+    };
 
 
     // Calcular el valor vencido
@@ -93,13 +123,11 @@ const OperationForm: React.FC<OperationFormProps> = ({
             const dueDateObj = new Date(dueDate);
             const currentDate = new Date();
             const daysDiff = differenceInDays(currentDate, dueDateObj);
-    
-            // Si la fecha de vencimiento es mayor o igual a la fecha actual, los días vencidos serán 0
-            const calculatedDaysOverdue = daysDiff > 0 ? daysDiff : 0;
-            setDaysOverdue(calculatedDaysOverdue);
-        }
-    }, [dueDate]); // Se ejecuta cada vez que cambie la fecha de vencimiento
 
+            // Si la fecha de vencimiento es mayor o igual a la fecha actual, los días vencidos serán 0
+            setDaysOverdue(daysDiff > 0 ? daysDiff : 0);
+        }
+    }, [dueDate]);  // Se ejecuta cada vez que cambie la fecha de vencimiento
 
     useEffect(() => {
         if (calculatedDueDate) {
@@ -131,7 +159,6 @@ const OperationForm: React.FC<OperationFormProps> = ({
             client_id: clientId
         };
 
-
         try {
             // Hacer la solicitud POST a la ruta '/operations'
             if (selectedOperation) {
@@ -143,9 +170,11 @@ const OperationForm: React.FC<OperationFormProps> = ({
                 await axios.post('/operations', operationData);
             }
             // Una vez que la operación se haya guardado, refrescamos los datos
-            fetchClientsAndOperations();
-            // Limpiamos la selección de la operación
-            setSelectedOperation(null);
+            await fetchClientsAndOperations();
+
+            resetForm(); // Limpia el formulario
+            setSelectedOperation(null); // Limpia la selección de operación
+            setIsNewClientAdded(false); // Limpia el estado de cliente nuevo (prop desde el padre)
         } catch (error) {
             console.error('Error al guardar la operación:', error);
             // Aquí podrías manejar el error con un mensaje al usuario si lo deseas

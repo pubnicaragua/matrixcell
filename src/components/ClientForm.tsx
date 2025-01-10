@@ -27,8 +27,8 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
     e.preventDefault();
 
     if (!grantDate || isNaN(new Date(grantDate).getTime())) {
-        alert("Por favor, ingresa una fecha de concesión válida.");
-        return;
+      alert("Por favor, ingresa una fecha de concesión válida.");
+      return;
     }
 
     // Creamos el objeto con los datos del formulario
@@ -46,17 +46,30 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
     };
 
     try {
-        if (selectedClient) {
-            await axios.put(`/clients/${selectedClient.id}`, clientData);
-        } else {
-            await axios.post('/clients', clientData);
-        }
-        fetchClientsAndOperations();
+      let response; // Declaración de la variable response
+      if (selectedClient) {
+        // Si hay un cliente seleccionado, actualizamos el cliente existente
+        await axios.put(`/clients/${selectedClient.id}`, clientData);
+      } else {
+        // Si no hay cliente seleccionado, creamos uno nuevo y guardamos la respuesta
+        response = await axios.post('/clients', clientData);
+      }
+
+      // Refrescar la lista de clientes y operaciones
+      await fetchClientsAndOperations();
+
+      // Si se creó un nuevo cliente, dirigir automáticamente a "Agregar Operación"
+      if (!selectedClient && response?.data) {
+        const newClient = response.data; // Suponiendo que el backend devuelve el cliente creado
+        setSelectedClient(newClient); // Preselecciona el cliente nuevo
+        // Limpiar la selección del cliente
         setSelectedClient(null);
+      }
     } catch (error) {
-        console.error('Error al guardar el cliente', error);
+      console.error('Error al guardar el cliente:', error);
     }
-};
+
+  };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
