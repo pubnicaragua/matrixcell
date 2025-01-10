@@ -47,8 +47,8 @@ const App = () => {
         <Route path="/security" element={<Layout><Security /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/register" element={<RegisterForm />} />
-        <Route path='forgot-password' element={< ForgotPassword />} />
-        <Route path='reset-password' element={< ResetPassword />} />
+        <Route path='/forgot-password' element={< ForgotPassword />} />
+        <Route path='/reset-password' element={< ResetPassword />} />
       </Routes>
     </AuthProvider>
   );
