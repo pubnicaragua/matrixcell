@@ -20,6 +20,7 @@ interface InventoryItem {
       name: string;
     };
     article: string;
+    price:number;
   };
   store: {
     id: number;
@@ -304,6 +305,7 @@ className = "bg-green-500 text-white px-2 py-1 rounded text-sm"
       <tr>
       <th className="px-4 py-2" > ID </th>
         < th className = "px-4 py-2" > Producto </th>
+        < th className = "px-4 py-2" > Precio </th>
           < th className = "px-4 py-2" > Stock </th>
             < th className = "px-4 py-2" > Tienda </th>
               < th className = "px-4 py-2" > Accciones </th>
@@ -320,6 +322,7 @@ className = "bg-green-500 text-white px-2 py-1 rounded text-sm"
       <tr key= { item.id } >
       <td className="px-4 py-2" > { item.id } </td>
     < td className = "px-4 py-2" > { item.products.article } </td>
+    < td className = "px-4 py-2" > { item.products.price } </td>
     <td className="px-4 py-2">
                   {editingItem?.id === item.id ? (
                     <input

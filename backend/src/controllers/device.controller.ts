@@ -344,7 +344,10 @@ export const DeviceController = {
             console.error('Error desbloqueando el dispositivo:', error);
             res.status(500).json({ success: false, message: 'Error desbloqueando el dispositivo.' });
         }
-    }
+    },
+    async unlockValidate(req: Request, res: Response){
+        const { unlockCode } = req.body;  // El código de desbloqueo debe ser enviado en el cuerpo de la solicitud
 
+    }
 
 }
