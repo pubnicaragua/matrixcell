@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';
 import { Client, Operation } from '../types';
 import ClientForm from '../components/ClientForm';
-import OperationForm from '../components/OperationForm';
 import ClientsList from '../components/ClientList';
-import OperationsList from '../components/OperationList';
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -76,15 +74,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           fetchClientsAndOperations={fetchClientsAndOperations}
         />
       )}
-      {activeTab === 'add-operation' && (
-        <OperationForm
-          clients={clients}
-          selectedOperation={selectedOperation}
-          fetchClientsAndOperations={fetchClientsAndOperations}
-          setSelectedOperation={setSelectedOperation} // Aquí es donde pasas este prop
-        />
-      )}
-
+ 
       {activeTab === 'client-list' && <ClientsList
         clients={clients}
         setSelectedClient={setSelectedClient}
@@ -92,7 +82,6 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
       />
 
       }
-      {activeTab === 'operation-list' && <OperationsList operations={operations} clients={clients} setSelectedOperation={setSelectedOperation} deleteOperation={deleteOperation} />}
     </div>
   );
 };
