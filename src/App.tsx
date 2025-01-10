@@ -21,7 +21,7 @@ import Security from "./pages/Security";
 import { AuthProvider } from './context/AuthContext';
 import Layout from '../src/layouts/Layout'; // Importar el Layout
 import RegisterForm from './components/RegisterForm';
-import ForgotPassword from './pages/ForgorPassword';
+import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword'
 
 const App = () => {
