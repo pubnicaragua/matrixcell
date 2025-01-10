@@ -144,22 +144,20 @@ export const ClientController = {
                 FECHA_SIG_VENCIMIENTO: string | Date;
             };
 
-            // Función para normalizar fechas
             const normalizeDate = (date: string | number | undefined | Date): Date | null => {
                 if (!date) return null;
                 if (typeof date === 'number') {
-                    // Si la fecha es un número (Excel almacena fechas como días desde 1900)
-                    return new Date((date - 25569) * 86400 * 1000); // Convertir a timestamp
+                    return new Date((date - 25569) * 86400 * 1000);
                 }
                 if (typeof date === 'string') {
                     const parts = date.split('/');
                     if (parts.length === 3) {
                         const [day, month, year] = parts.map(Number);
-                        const fullYear = year < 100 ? 2000 + year : year; // Convertir año corto a año completo
+                        const fullYear = year < 100 ? 2000 + year : year;
                         return new Date(fullYear, month - 1, day);
                     }
                 }
-                return null; // Formato no reconocido
+                return null;
             };
 
             const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -171,16 +169,15 @@ export const ClientController = {
             }
 
             for (const row of sheetData) {
-                const { data: existingClient, error: clientCheckError } = await supabase
+                const { data: existingClients, error: clientCheckError } = await supabase
                     .from('clients')
                     .select('id')
-                    .eq('identity_number', row.CODIGO_ID_SUJETO)
-                    .single();
+                    .eq('identity_number', row.CODIGO_ID_SUJETO);
 
                 if (clientCheckError) {
                     throw new Error(`Error al verificar cliente: ${clientCheckError.message}`);
                 }
-                if (!existingClient) {
+                if (!existingClients || existingClients.length === 0) {
                     const client = {
                         identity_number: row.CODIGO_ID_SUJETO,
                         name: row.NOMBRE_SUJETO,
@@ -191,6 +188,7 @@ export const ClientController = {
                         due_date: normalizeDate(row.FECHA_CONCESION) || null,
                         created_at: new Date(),
                     };
+
                     const { data: clientData, error: clientError } = await supabase
                         .from('clients')
                         .insert(client)
@@ -217,11 +215,13 @@ export const ClientController = {
                     if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
                 }
             }
+
             res.status(200).json({ message: 'Datos procesados e insertados con éxito.' });
         } catch (error: any) {
             console.error('Error al procesar el archivo Excel:', error);
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     }
+
 
 }
