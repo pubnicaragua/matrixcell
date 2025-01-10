@@ -5,6 +5,7 @@ import ClientForm from '../components/ClientForm';
 import OperationForm from '../components/OperationForm';
 import ClientsList from '../components/ClientList';
 import OperationsList from '../components/OperationList';
+import SendInvoiceForm from '../components/SendInvoiceForm';
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -14,6 +15,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('add-client');
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     fetchClientsAndOperations();
@@ -38,7 +40,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   const deleteClient = async (id: number): Promise<void> => {
     try {
       await api.delete(`/clients/${id}`);
-      await fetchClientsAndOperations(); // Actualiza la lista después de eliminar
+      await fetchClientsAndOperations();
       alert('Cliente eliminado exitosamente.');
     } catch (error) {
       console.error('Error al eliminar el cliente:', error);
@@ -57,21 +59,29 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
 
   const handleSetSelectedClient = (client: Client | null) => {
     setSelectedClient(client);
-    setActiveTab('add-client'); // Cambia la pestaña activa al formulario de cliente
+    setActiveTab('add-client');
   };
 
   const handleSetSelectedOperation: React.Dispatch<React.SetStateAction<Operation | null>> = (operation) => {
     if (typeof operation === 'function') {
-      // Si es una función, evalúa el estado previo
       setSelectedOperation((prev) => operation(prev));
     } else {
-      // Si es un objeto de operación, establece el estado directamente
       setSelectedOperation(operation);
-      setActiveTab('add-operation'); // Cambia la pestaña activa al formulario de operación
+      setActiveTab('add-operation');
     }
   };
-  
 
+  const handleSendEmail = () => {
+    if (!email) {
+      alert('Por favor, ingrese un correo electrónico válido.');
+      return;
+    }
+
+    const subject = encodeURIComponent('Información de Clientes y Operaciones');
+    const body = encodeURIComponent('Estimado usuario, aquí está la información solicitada.');
+    const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+    window.open(mailtoLink, '_blank');
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -79,6 +89,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Clientes y Operaciones</h1>
+
       <div className="mb-4">
         <button
           onClick={() => setActiveTab('add-client')}
@@ -102,18 +113,26 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           onClick={() => setActiveTab('operation-list')}
           className={`px-4 py-2 ${activeTab === 'operation-list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
-          Lista de Operaciones por cliente
+          Lista de Operaciones
+        </button>
+        <button
+          onClick={() => setActiveTab('send-invoice')}
+          className={`ml-2 px-4 py-2 ${activeTab === 'send-invoice' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
+          Enviar por E-mail
         </button>
       </div>
 
+      {activeTab === 'send-invoice' && <SendInvoiceForm />}
+
+
       {activeTab === 'add-client' && (
         <ClientForm
-        clients={clients}
-        selectedClient={selectedClient}
-        fetchClientsAndOperations={fetchClientsAndOperations}
-        setSelectedClient={handleSetSelectedClient} // Asegúrate de usar este manejador correctamente
-      />
-      
+          clients={clients}
+          selectedClient={selectedClient}
+          fetchClientsAndOperations={fetchClientsAndOperations}
+          setSelectedClient={handleSetSelectedClient}
+        />
       )}
       {activeTab === 'add-operation' && (
         <OperationForm
@@ -139,7 +158,6 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         />
       )}
     </div>
-
   );
 };
 
