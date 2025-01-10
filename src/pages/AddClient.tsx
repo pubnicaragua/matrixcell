@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';
 import { Client, Operation } from '../types';
 import ClientForm from '../components/ClientForm';
+import OperationForm from '../components/OperationForm';
 import ClientsList from '../components/ClientList';
-<<<<<<< HEAD
-=======
 import OperationsList from '../components/OperationList';
 import SendInvoiceForm from '../components/SendInvoiceForm';
->>>>>>> 52aca45a1344de609b712b0bfbf03b0424641d8d
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -136,16 +134,6 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           setSelectedClient={handleSetSelectedClient}
         />
       )}
-<<<<<<< HEAD
- 
-      {activeTab === 'client-list' && <ClientsList
-        clients={clients}
-        setSelectedClient={setSelectedClient}
-        fetchClientsAndOperations={fetchClientsAndOperations} // Esta es la propiedad correcta
-      />
-
-      }
-=======
       {activeTab === 'add-operation' && (
         <OperationForm
           clients={clients}
@@ -169,7 +157,6 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           deleteOperation={deleteOperation}
         />
       )}
->>>>>>> 52aca45a1344de609b712b0bfbf03b0424641d8d
     </div>
   );
 };
