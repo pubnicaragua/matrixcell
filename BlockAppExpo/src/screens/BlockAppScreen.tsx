@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { error } from 'console';
 
 const BlockAppScreen = () => {
   const [unlockCode, setUnlockCode] = useState('');
@@ -10,8 +12,10 @@ const BlockAppScreen = () => {
 
   const handleUnlock = async () => {
     const correctCode = 'ABC123'; // Este código se debe obtener de un servicio backend o similar
-
-    if (unlockCode === correctCode) {
+    const response = await axios.post('https://matrix-cell.com/devices/unlock-validate', {
+      code: correctCode
+        });
+    if (response.status === 200) {
       await AsyncStorage.setItem('isUnlocked', 'true');
       Alert.alert('Desbloqueado', 'El dispositivo ha sido desbloqueado hasta la próxima fecha de corte.');
     } else {

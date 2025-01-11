@@ -296,5 +296,111 @@ router.patch('/:id/block', DeviceController.blockDevices);
  *         description: Error al desbloquear el dispositivo o falta del código de desbloqueo.
  */
 router.patch('/:id/unlock', DeviceController.unlockDevices);
+/**
+ * @swagger
+ * /unlock-request:
+ *   post:
+ *     summary: Solicitar desbloqueo de un dispositivo
+ *     description: Procesa una solicitud de desbloqueo de un dispositivo basado en los datos proporcionados.
+ *     tags: [Desbloquear Dispositivo]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               codigo_id_sujeto:
+ *                 type: string
+ *                 description: Identificador del cliente en el sistema.
+ *                 example: "12345678"
+ *               voucher_pago:
+ *                 type: string
+ *                 description: Comprobante de pago para la solicitud de desbloqueo.
+ *                 example: "VCHR12345"
+ *               imei:
+ *                 type: string
+ *                 description: IMEI del dispositivo que se desea desbloquear.
+ *                 example: "123456789012345"
+ *               ip:
+ *                 type: string
+ *                 description: Dirección IP desde donde se realiza la solicitud.
+ *                 example: "192.168.0.1"
+ *     responses:
+ *       200:
+ *         description: Solicitud procesada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Solicitud recibida. Nos comunicaremos pronto."
+ *                 unlock_code:
+ *                   type: string
+ *                   description: Código de desbloqueo generado (opcional).
+ *                   example: "UNLOCK12345"
+ *       400:
+ *         description: Solicitud incorrecta.
+ *       404:
+ *         description: Cliente o dispositivo no encontrado.
+ *       500:
+ *         description: Error interno del servidor.
+ */
+router.post('/unlock-request', DeviceController.unlockRequest);
+
+/**
+ * @swagger
+ * /unlock-validate:
+ *   post:
+ *     summary: Validar código o IMEI para desbloqueo
+ *     description: Valida si un código de desbloqueo o IMEI es correcto.
+ *     tags: [Desbloquear Dispositivo]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Código de desbloqueo del dispositivo.
+ *                 example: "ABC12345"
+ *               imei:
+ *                 type: string
+ *                 description: IMEI del dispositivo.
+ *                 example: "123456789012345"
+ *     responses:
+ *       200:
+ *         description: Validación exitosa.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "El código o IMEI son válidos"
+ *                 next_due_date:
+ *                   type: string
+ *                   format: date
+ *                   description: Fecha de vencimiento de la próxima operación (si aplica).
+ *                   example: "2025-01-15"
+ *       400:
+ *         description: Parámetros obligatorios faltantes o incorrectos.
+ *       404:
+ *         description: Código o IMEI incorrectos.
+ *       500:
+ *         description: Error interno del servidor.
+ */
+router.post('/unlock-validate', DeviceController.unlockValidate);
 
 export default router;
