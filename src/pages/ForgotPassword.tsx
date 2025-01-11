@@ -4,6 +4,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardHeader, CardContent, CardFooter } from '../components/ui/card';
 import { Alert } from '../components/ui/alert';
+import axios from '../axiosConfig';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -17,17 +18,17 @@ const ForgotPassword = () => {
   const handleSubmit = async () => {
     if (!email) {
       setError('Por favor, ingresa un correo válido.');
+      setMessage('');
       return;
     }
 
     try {
-      // Simula la solicitud de envío
-      console.log('Email enviado para restablecer contraseña:', email);
-      setMessage('Se ha enviado a tu correo un mensaje de verificación.');
+      const response = await axios.post('auth/reset-password', { email });
+      setMessage(response.data.message); // Mensaje del backend
       setError('');
-    } catch (err) {
-      setError('Hubo un problema al enviar el correo. Por favor, intenta nuevamente.');
-      console.error(err);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Hubo un problema al enviar el correo. Por favor, intenta nuevamente.');
+      setMessage('');
     }
   };
 
@@ -52,14 +53,10 @@ const ForgotPassword = () => {
 
           {message && (
             <Alert type="success" title="Éxito" description={message} />
-
-            
           )}
 
           {error && (
-            <Alert type="error" title="Éxito" description={message} />
-
-            
+            <Alert type="error" title="Error" description={error} />
           )}
         </CardContent>
 

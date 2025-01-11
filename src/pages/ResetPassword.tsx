@@ -4,12 +4,15 @@ import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from '../components/ui/card';
 import { Alert } from '../components/ui/alert';
+import axiosConfig from '../axiosConfig';
+import { useNavigate } from 'react-router-dom';
 
 const CreateNewPassword: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,15 +30,14 @@ const CreateNewPassword: React.FC = () => {
     }
 
     try {
-      // Simulación de una solicitud para cambiar la contraseña
-      // Reemplazar esta sección con tu lógica de solicitud de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setMessage('Tu contraseña se ha actualizado con éxito.');
+      // Enviar la nueva contraseña al backend
+      const response = await axiosConfig.post('/auth/update-password', { newPassword });
+      console.log(response)
+      setMessage(response.data.message); // Mensaje del backend
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error) {
-      setError('Hubo un error al actualizar la contraseña. Por favor, intenta de nuevo.');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Hubo un error al actualizar la contraseña. Por favor, intenta de nuevo.');
     }
   };
 
