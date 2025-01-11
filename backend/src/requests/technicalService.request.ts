@@ -10,7 +10,6 @@ const technicalserviceSchema = Joi.object({
     status: Joi.string().required().default("Pendiente"),
     cost: Joi.number(),
     technicalservice_id: Joi.number().required(),
-    product_id: Joi.number().required(),
 });
 
 export const validateTechnicalService = (technicalservice: TechnicalService) => {

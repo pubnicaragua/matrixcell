@@ -1,288 +1,273 @@
 import React, { useEffect, useState } from "react";
-import api from "../axiosConfig"; // Importa la configuración de axios
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+import api from "../axiosConfig";
 
-interface Service {
+interface Store {
   id: number;
-  client: string;
-  service_type: string;
-  description: string;
-  status: string;
-  cost: number;
-  store_id: string;
+  name: string;
+}
+
+interface Inventory {
+  id: number;
+  store_id: number;
+  product_id: number;
+  stock: number;
+  products: {
+    id: number;
+    article: string;
+    price: number;
+  };
 }
 
 const TechnicalServices: React.FC = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [newService, setNewService] = useState<Omit<Service, "id">>({
+  const [stores, setStores] = useState<Store[]>([]);
+  const [inventories, setInventories] = useState<Inventory[]>([]);
+  const [selectedStore, setSelectedStore] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Inventory | null>(null);
+  const [selectedItem, setselectedItem] = useState<Inventory | null>(null);
+  const [quantity, setQuantity] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
+  const [serviceDetails, setServiceDetails] = useState<any | null>(null);
+  const [formData, setFormData] = useState({
     client: "",
-    service_type: "",
+    serviceType: "",
     description: "",
     status: "Pendiente",
-    cost: 0,
-    store_id: "",
   });
-  const [editingService, setEditingService] = useState<Service | null>(null);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [stores, setStores] = useState<any[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const servicesPerPage = 5;
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const response = await api.get(apiBaseUrl+"/technical_services");
-        setServices(response.data);
-      } catch (err: any) {
-        setError(err.message || "Error fetching services");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const fetchStores = async () => {
       try {
-        const response = await api.get(apiBaseUrl+"/stores");
+        const response = await api.get("/stores");
         setStores(response.data);
-      } catch (err: any) {
-        alert("Error al cargar las tiendas: " + err.message);
+      } catch (error) {
+        console.error("Error fetching stores:", error);
       }
     };
 
-    fetchServices();
     fetchStores();
   }, []);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewService({ ...newService, [name]: name === "cost" ? parseFloat(value) : value });
-  };
-
-  const validateService = () => {
-    if (
-      !newService.client ||
-      !newService.service_type ||
-      !newService.description ||
-      newService.cost <= 0 ||
-      !newService.store_id
-    ) {
-      alert("Todos los campos son obligatorios, el costo debe ser mayor a 0 y debe seleccionar una tienda.");
-      return false;
-    }
-    return true;
-  };
-
-  const handleAddService = async () => {
-    if (validateService()) {
-      try {
-        const response = await api.post(apiBaseUrl+"/technical_services", newService);
-        setServices([...services, response.data]);
-        setNewService({ client: "", service_type: "", description: "", status: "Pendiente", cost: 0, store_id: "" });
-      } catch (err: any) {
-        alert("Error al agregar el servicio: " + err.message);
-      }
+  const handleStoreChange = async (storeId: number) => {
+    setSelectedStore(storeId);
+    setSelectedProduct(null);
+    setQuantity(0);
+    setTotalCost(0);
+    try {
+      const response = await api.get(`/inventories?store_id=${storeId}`);
+      setInventories(response.data);
+    } catch (error) {
+      console.error("Error fetching inventories:", error);
     }
   };
 
-  const handleUpdateService = async () => {
-    if (editingService) {
-      try {
-        const response = await api.put(
-          `http://localhost:5000/technical_services/${editingService.id}`,
-          editingService
-        );
-        setServices(
-          services.map((service) =>
-            service.id === editingService.id ? response.data : service
-          )
-        );
-        setEditingService(null);
-      } catch (err: any) {
-        alert("Error al actualizar el servicio: " + err.message);
-      }
+  const handleProductChange = (productId: number) => {
+    const product = inventories.find((inventory) => inventory.product_id === productId) || null;
+    setSelectedProduct(product);
+    setQuantity(0);
+    setTotalCost(0);
+  };
+
+  const handleQuantityChange = (qty: number) => {
+    setQuantity(qty);
+    if (selectedProduct) {
+      setTotalCost(qty * selectedProduct.products.price);
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setCurrentPage(1);
-  };
+  const handleSaveService = async () => {
+  if (!selectedStore || !selectedProduct || quantity <= 0 || !formData.client) {
+    alert("Debe completar todos los campos requeridos.");
+    return;
+  }
 
-  const filteredServices = services.filter(
-    (service) =>
-      service.client.toLowerCase().includes(search.toLowerCase()) ||
-      service.service_type.toLowerCase().includes(search.toLowerCase()) ||
-      service.description.toLowerCase().includes(search.toLowerCase())
-  );
+  try {
+    // Guardar el servicio en la tabla `technical_services`
+    await api.post("/technical_services", {
+      client: formData.client,
+      service_type: formData.serviceType,
+      description: formData.description,
+      status: formData.status,
+      cost: totalCost,
+      store_id: selectedStore, // ID de la tienda
+    });
 
-  const indexOfLastService = currentPage * servicesPerPage;
-  const indexOfFirstService = indexOfLastService - servicesPerPage;
-  const currentServices = filteredServices.slice(
-    indexOfFirstService,
-    indexOfLastService
-  );
+    // Calcular el nuevo stock restante
+    const updatedStock = selectedProduct.stock - quantity;
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+    // Actualizar el stock en la tabla `inventories`
+    await api.put(`/inventories/${selectedProduct.id}`, {
+      product_id: selectedProduct.products.id, // ID del producto
+      cantidad: updatedStock, // Cantidad restante
+      store_id: selectedStore
+    });
+
+    // Actualizar el resumen del servicio
+    setServiceDetails({
+      client: formData.client,
+      serviceType: formData.serviceType,
+      description: formData.description,
+      status: formData.status,
+      costPerItem: selectedProduct.products.price,
+      store: stores.find((store) => store.id === selectedStore)?.name || "",
+      total: totalCost,
+    });
+
+    // Reiniciar el formulario
+    setFormData({ client: "", serviceType: "", description: "", status: "Pendiente" });
+    setSelectedStore(null);
+    setSelectedProduct(null);
+    setQuantity(0);
+    setTotalCost(0);
+    alert("Servicio guardado exitosamente.");
+  } catch (error) {
+    console.error("Error saving service or updating inventory:", error);
+    alert("Error al guardar el servicio o actualizar el inventario.");
+  }
+};
+
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl text-center text-blue-500 font-bold mb-6">Servicios Técnicos</h1>
+      <h1 className="text-3xl text-center text-blue-500 font-bold mb-6">
+        Servicios Técnicos
+      </h1>
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Buscar por cliente, tipo o descripción"
-          value={search}
-          onChange={handleSearch}
-          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:ring-blue-300"
-        />
-      </div>
+      {/* Formulario */}
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="client">Cliente</label>
+          <input
+            id="client"
+            type="text"
+            className="block w-full p-3 rounded-lg border border-gray-300"
+            value={formData.client}
+            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+            required
+          />
+        </div>
 
-      <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-2xl text-blue-500 font-semibold mb-4">
-          {editingService ? "Editar Servicio" : "Agregar Servicio"}
-        </h2>
-        <input
-          type="text"
-          name="client"
-          placeholder="Cliente"
-          value={editingService ? editingService.client : newService.client}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, client: e.target.value })
-              : handleInputChange(e)
-          }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
-        />
-        <input
-          type="text"
-          name="service_type"
-          placeholder="Tipo de Servicio"
-          value={editingService ? editingService.service_type : newService.service_type}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, service_type: e.target.value })
-              : handleInputChange(e)
-          }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
-        />
-        <textarea
-          name="description"
-          placeholder="Descripción"
-          value={editingService ? editingService.description : newService.description}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, description: e.target.value })
-              : handleInputChange(e)
-          }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
-        ></textarea>
-        <select
-          name="status"
-          value={editingService ? editingService.status : newService.status}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, status: e.target.value })
-              : handleInputChange(e)
-          }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
-        >
-          <option value="Pendiente">Pendiente</option>
-          <option value="En Proceso">En Proceso</option>
-          <option value="Completado">Completado</option>
-        </select>
-        <div className="relative w-full">
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-        <input
-          type="number"
-          name="cost"
-          placeholder="Costo"
-          value={editingService ? editingService.cost : newService.cost}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, cost: parseFloat(e.target.value) || 0 })
-              : handleInputChange(e)
-          }
-          className="block w-full pl-8 p-3 rounded-lg border border-gray-300 mb-4"
-        />
-      </div>
-        <select
-          name="store_id"
-          value={editingService ? editingService.store_id : newService.store_id}
-          onChange={(e) =>
-            editingService
-              ? setEditingService({ ...editingService, store_id: e.target.value })
-              : handleInputChange(e)
-          }
-          className="block w-full p-3 rounded-lg border border-gray-300 mb-4"
-        >
-          <option value="">Seleccionar tienda</option>
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>
-              {store.name}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label htmlFor="serviceType">Tipo de Servicio</label>
+          <input
+            id="serviceType"
+            type="text"
+            className="block w-full p-3 rounded-lg border border-gray-300"
+            value={formData.serviceType}
+            onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+            required
+          />
+        </div>
 
-        <button
-          onClick={editingService ? handleUpdateService : handleAddService}
-          className={`w-full py-3 text-white font-semibold rounded-lg transition-colors ${editingService ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"}`}
-        >
-          {editingService ? "Actualizar Servicio" : "Agregar Servicio"}
-        </button>
-      </div>
+        <div>
+          <label htmlFor="description">Descripción</label>
+          <textarea
+            id="description"
+            className="block w-full p-3 rounded-lg border border-gray-300"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            required
+          />
+        </div>
 
-      <div>
-        {loading ? (
-          <p className="text-center">Cargando servicios...</p>
-        ) : error ? (
-          <p className="text-red-500 text-center">{error}</p>
-        ) : currentServices.length === 0 ? (
-          <p className="text-center">No hay servicios técnicos registrados.</p>
-        ) : (
-          <div>
-            {currentServices.map((service) => (
-              <div
-                key={service.id}
-                className="bg-white p-4 rounded-lg shadow-md mb-4"
-              >
-                <h3 className="text-xl text-blue-500 font-bold mb-2">{service.client}</h3>
-                <p><strong>Tipo de Servicio:</strong> {service.service_type}</p>
-                <p><strong>Descripción:</strong> {service.description}</p>
-                <p><strong>Estado:</strong> {service.status}</p>
-                <p><strong>Costo:</strong> {service.cost} $</p>
-                <p><strong>Tienda:</strong> {stores.find((store) => store.id === service.store_id)?.name || "Desconocida"}</p>
-                <button
-                  onClick={() => setEditingService(service)}
-                  className="mt-4 text-blue-500 hover:text-blue-600"
-                >
-                  Editar
-                </button>
-              </div>
+        {/* Tiendas */}
+        <div>
+          <label htmlFor="store">Seleccionar Tienda</label>
+          <select
+            id="store"
+            className="block w-full p-3 rounded-lg border border-gray-300"
+            value={selectedStore || ""}
+            onChange={(e) => handleStoreChange(Number(e.target.value))}
+          >
+            <option value="">Seleccione una tienda</option>
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
             ))}
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </button>
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={currentPage * servicesPerPage >= filteredServices.length}
-              >
-                Siguiente
-              </button>
-            </div>
+          </select>
+        </div>
+
+        {/* Productos */}
+        {selectedStore && (
+          <div>
+            <label htmlFor="product">Seleccionar Producto</label>
+            <select
+              id="product"
+              className="block w-full p-3 rounded-lg border border-gray-300"
+              value={selectedProduct?.product_id || ""}
+              onChange={(e) => handleProductChange(Number(e.target.value))}
+            >
+              <option value="">Seleccione un producto</option>
+              {inventories.map((inventory) => (
+                <option key={inventory.product_id} value={inventory.product_id}>
+                  {inventory.products.article}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Detalles del Producto */}
+        {selectedProduct && (
+          <div>
+            <p>
+              <strong>Precio por unidad:</strong> ${selectedProduct.products.price}
+            </p>
+            <p>
+              <strong>Stock disponible:</strong> {selectedProduct.stock}
+            </p>
+            <label htmlFor="quantity">Cantidad</label>
+            <input
+              id="quantity"
+              type="number"
+              className="block w-full p-3 rounded-lg border border-gray-300"
+              value={quantity}
+              onChange={(e) => handleQuantityChange(Number(e.target.value))}
+              min="1"
+              max={selectedProduct.stock}
+              required
+            />
+            <p>
+              <strong>Costo total:</strong> ${totalCost.toFixed(2)}
+            </p>
           </div>
         )}
       </div>
+
+      <button
+        onClick={handleSaveService}
+        className="w-full mt-6 py-3 text-white font-bold bg-blue-500 rounded-lg hover:bg-blue-600"
+      >
+        Guardar Servicio
+      </button>
+
+      {/* Resumen del Servicio */}
+      {serviceDetails && (
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+          <h2 className="text-xl font-bold mb-4">Resumen del Servicio</h2>
+          <p>
+            <strong>Cliente:</strong> {serviceDetails.client}
+          </p>
+          <p>
+            <strong>Tipo de Servicio:</strong> {serviceDetails.serviceType}
+          </p>
+          <p>
+            <strong>Descripción:</strong> {serviceDetails.description}
+          </p>
+          <p>
+            <strong>Estado:</strong> {serviceDetails.status}
+          </p>
+          <p>
+            <strong>Costo por Artículo:</strong> ${serviceDetails.costPerItem}
+          </p>
+          <p>
+            <strong>Tienda:</strong> {serviceDetails.store}
+          </p>
+          <p>
+            <strong>Total:</strong> ${serviceDetails.total.toFixed(2)}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

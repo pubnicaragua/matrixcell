@@ -7,7 +7,6 @@ export class TechnicalService{
     cost: number | null;
     store_id: number | null;
     created_at: Date|null;
-    product_id: number | null;
     constructor(){
         this.client = null;
         this.service_type = null;
@@ -16,7 +15,6 @@ export class TechnicalService{
         this.cost = null;
         this.store_id = null;
         this.created_at = null;
-        this.product_id = null;
     }
 }
 
