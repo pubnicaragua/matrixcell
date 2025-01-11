@@ -348,7 +348,7 @@ export const DeviceController = {
     },
     async unlockRequest(req: Request, res: Response) {
         try {
-            const { codigo_id_sujeto, voucher_pago, imei, ip } = req.body;
+            const { CODIGO_ID_SUJETO, VOUCHER_PAGO, imei, ip } = req.body;
 
             // Generar código de desbloqueo
             const unlockCode = generarCodigoDesbloqueo();
@@ -357,7 +357,7 @@ export const DeviceController = {
             const { data: cliente, error: errorCliente } = await supabase
                 .from('clients')
                 .select('id')
-                .eq('identity_number', codigo_id_sujeto)
+                .eq('identity_number', CODIGO_ID_SUJETO)
                 .single();
 
             if (errorCliente || !cliente) {
@@ -387,7 +387,7 @@ export const DeviceController = {
 
             // Crear notificación
             const mensaje = {
-                message: `El cliente con CODIGO_ID_SUJETO: ${codigo_id_sujeto} y VOUCHER_PAGO: ${voucher_pago} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
+                message: `El cliente con CODIGO_ID_SUJETO: ${CODIGO_ID_SUJETO} y VOUCHER_PAGO: ${VOUCHER_PAGO} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
                 status: 'No Leida',
             };
             await BaseService.create<Notification>('notifications', mensaje);

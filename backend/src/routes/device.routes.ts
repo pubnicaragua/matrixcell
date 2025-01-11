@@ -359,7 +359,7 @@ router.post('/unlock-request', DeviceController.unlockRequest);
  *   post:
  *     summary: Validar código o IMEI para desbloqueo
  *     description: Valida si un código de desbloqueo o IMEI es correcto.
- *     tags: [DeviceUnlock]
+ *     tags: [Desbloquear Dispositivo]
  *     requestBody:
  *       required: true
  *       content:
