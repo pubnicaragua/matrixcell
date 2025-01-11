@@ -16,7 +16,7 @@ const ExportEquifax: React.FC = () => {
     "TELEFONO",
     "FEC_CORTE_SALDO",
     "TIPO_DEUDOR",
-    "NUMERO DE OPERACIÓN",
+    //"NUMERO DE OPERACIÓN",
     "FECHA_CONCESION",
     "VAL_OPERACION",
     "VAL_A_VENCER",
@@ -27,8 +27,8 @@ const ExportEquifax: React.FC = () => {
     "FECHA_DE_VENCIMIENTO",
     "DEUDA_REFINANCIADA",
     "FECHA_SIG_VENCIMIENTO",
-    "PLAZO EN MESES",
-    "VALOR MENSUAL",
+    //"PLAZO_EN_MESES",
+    "VALOR_MENSUAL",
     "FRECUENCIA_PAGO",
   ];
 
@@ -90,13 +90,13 @@ const ExportEquifax: React.FC = () => {
 
     return {
       ...client,
-      "NUMERO DE OPERACION": operationNumber,
+      "NUMERO_DE_OPERACION": operationNumber,
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
       FEC_CORTE_SALDO: finalDueDate.toISOString().split("T")[0],
       FRECUENCIA_PAGO: paymentFrequency,
-      PLAZO: `${creditTerm} meses`,
+      PLAZO_EN_MESES:` ${creditTerm} meses`,
       FECHA_DE_VENCIMIENTO: firstDueDate.toISOString().split("T")[0],
       FECHA_SIG_VENCIMIENTO: finalDueDate.toISOString().split("T")[0],
     };
@@ -219,4 +219,4 @@ const ExportEquifax: React.FC = () => {
   );
 };
 
-export default ExportEquifax;
+export default ExportEquifax;
