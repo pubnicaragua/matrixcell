@@ -77,10 +77,20 @@ export const UsuarioController = {
                 password: req.body.password,
             });
             if (error) throw new Error(error.message);
+            
+            const perfil = {
+                name: req.body.name, 
+                auth_id: data.user?.id, 
+                rol_id: req.body.rol_id
+            }
+            console.log(perfil)
+
             const { data: profile, error: errorProfile } = await supabase
+
                .from('profile')
                .insert({ name: req.body.name, auth_id: data.user?.id, rol_id: req.body.rol_id })
                .select();
+               
             if (errorProfile) throw new Error(errorProfile.message);
             res.json(data);
         } catch (error) {
@@ -96,7 +106,7 @@ export const UsuarioController = {
                 .updateUserById(id, { email: updatedData.email });
             const { data: profile, error: errorProfile } = await supabase
                 .from('profile')
-                .update({ name: updatedData.name, email: updatedData.rol_id })
+                .update({ name: updatedData.name, rol_id: updatedData.rol_id })
                 .eq('auth_id', id)
                 .select();
             if (error) {

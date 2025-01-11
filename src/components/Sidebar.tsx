@@ -10,6 +10,8 @@ import {
   FaUsers,
   FaChartLine,
   FaCogs,
+  FaUsersCog,
+  FaTools,
   FaLock,
   FaSignOutAlt,
   FaBars,
@@ -47,9 +49,8 @@ export default function Sidebar() {
 
       {/* Menú lateral */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-green-600 text-white transition-transform duration-300 transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:static`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-green-600 text-white transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:static`}
       >
         <div className="p-4 mt-10 md:mt-0">
           <h2 className="text-xl font-bold">MatrixCell Admin</h2>
@@ -71,6 +72,16 @@ export default function Sidebar() {
             <span>Notificaciones</span>
           </Link>
 
+          <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaUsersCog className="h-5 w-5" />
+            <span>Gestionar Clientes</span>
+          </Link>
+
+          <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaTools className="h-5 w-5" />
+            <span>Gestionar Servicios Técnicos</span>
+          </Link>
+
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
               Gestión
@@ -82,6 +93,10 @@ export default function Sidebar() {
             <Link to="/users" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaUsers className="h-5 w-5" />
               <span>Usuarios</span>
+            </Link>
+            <Link to="/stores" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaLock className="h-5 w-5" />
+              <span>Tiendas</span>
             </Link>
           </div>
 
@@ -127,21 +142,22 @@ export default function Sidebar() {
               <FaLock className="h-5 w-5" />
               <span>Seguridad</span>
             </Link>
-          </div>
-          </nav>
 
-<div className="border-t border-green-700 p-4">
-  <button
-    onClick={handleLogout}
-    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700"
-  >
-    <FaSignOutAlt className="h-5 w-5" />
-    <span>Cerrar Sesión</span>
-  </button>
-</div>
-</div>
-</aside>
-);
+          </div>
+        </nav>
+
+        <div className="border-t border-green-700 p-4">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700"
+          >
+            <FaSignOutAlt className="h-5 w-5" />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
 }
 
 const styles = {

@@ -10,6 +10,7 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  //Manejar login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

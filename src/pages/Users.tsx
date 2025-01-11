@@ -1,208 +1,209 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../axiosConfig';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Card, CardHeader, CardContent, CardFooter } from '../components/ui/card';
 
 interface User {
   id: string;
-  nombre: string;
+  name: string;
   email: string;
-  rol: string;
-  permisos: string[];
+  perfil?: {
+    name: string;
+    roles: {
+      name: string;
+    };
+    rol_id: number;
+    permisos: string[];
+  };
 }
 
 const Users = () => {
-  // Lista estática de usuarios de ejemplo
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      nombre: 'Juan Pérez',
-      email: 'juan.perez@example.com',
-      rol: 'manager',
-      permisos: ['Ver dashboard', 'Editar usuarios', 'Crear reportes'],
-    },
-    {
-      id: '2',
-      nombre: 'Ana Gómez',
-      email: 'ana.gomez@example.com',
-      rol: 'tecnico',
-      permisos: ['Ver dashboard', 'Manejar servicios técnicos'],
-    },
-    {
-      id: '3',
-      nombre: 'Carlos Martínez',
-      email: 'carlos.martinez@example.com',
-      rol: 'lector',
-      permisos: ['Ver dashboard'],
-    },
-    {
-      id: '4',
-      nombre: 'Lucía Fernández',
-      email: 'lucia.fernandez@example.com',
-      rol: 'manager',
-      permisos: ['Ver dashboard', 'Editar usuarios', 'Crear reportes', 'Manejar servicios técnicos'],
-    },
-    {
-      id: '5',
-      nombre: 'Pedro Sánchez',
-      email: 'pedro.sanchez@example.com',
-      rol: 'tecnico',
-      permisos: ['Ver dashboard', 'Manejar servicios técnicos'],
-    },
-  ]);
-
-  // Estados para el formulario de agregar usuario
-  const [newUser, setNewUser] = useState({
-    nombre: '',
+  const [users, setUsers] = useState<User[]>([]);
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
     email: '',
-    rol: 'lector', // Valor predeterminado
-    permisos: ['Ver dashboard'],
+    rol_id: '',
+    password: '', // Nuevo campo para la contraseña
   });
+  
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [isFormVisible, setIsFormVisible] = useState(false);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  // Opciones de roles
-  const roles = ['manager', 'tecnico', 'lector'];
-  // Opciones de permisos
-  const permisosOptions = [
-    'Ver dashboard',
-    'Editar usuarios',
-    'Crear reportes',
-    'Manejar servicios técnicos',
-  ];
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/usuarios');
+      setUsers(response.data);
+      console.log('Usuarios obtenidos:', response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
 
-  // Función para manejar el cambio en el formulario
-  // Modificar la función handleInputChange para manejar diferentes tipos de elementos
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-
-    setNewUser((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    setNewUser((prevState) => {
-      const updatedPermissions = checked
-        ? [...prevState.permisos, value]
-        : prevState.permisos.filter((permiso) => permiso !== value);
-      return { ...prevState, permisos: updatedPermissions };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        rol_id: parseInt(formData.rol_id),
+        ...(isEditing ? {} : { password: formData.password }), // Solo agregar contraseña al crear
+      };
+  
+      console.log('Payload enviado:', payload);
+  
+      if (isEditing) {
+        await api.put(`/usuarios/${formData.id}`, payload);
+        alert('Usuario actualizado exitosamente.');
+      } else {
+        await api.post('/usuarios', payload);
+        alert('Usuario creado exitosamente.');
+      }
+      fetchUsers();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving user:', error);
+    }
+  };
+  
+  const handleEdit = (user: User) => {
+    setFormData({
+      id: user.id,
+      name: user.perfil?.name || '',
+      email: user.email,
+      rol_id: user.perfil?.rol_id?.toString() || '', // Convertimos rol_id a string para el select
+      password: '', // Añadimos la contraseña como una cadena vacía
     });
+    setIsEditing(true);
+  };
+  
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/usuarios/${id}`);
+      alert('Usuario eliminado exitosamente.');
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
   };
 
-  // Función para agregar un nuevo usuario
-  const handleAddUser = () => {
-    const newUserData = { ...newUser, id: String(users.length + 1) };
-    setUsers((prevUsers) => [...prevUsers, newUserData]);
-    setIsFormVisible(false); // Ocultar el formulario después de agregar
+  const resetForm = () => {
+    setFormData({ id: '', name: '', email: '', rol_id: '', password: '' });
+    setIsEditing(false);
   };
+  
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 text-center text-gray-700">Gestión de Usuarios</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Gestión de Usuarios</h1>
 
-      {/* Mostrar formulario de agregar usuario */}
-      <div className="text-center mb-6">
-        <button
-          onClick={() => setIsFormVisible(!isFormVisible)}
-          className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-green-600 transition"
-        >
-          {isFormVisible ? 'Cancelar' : 'Agregar Usuario'}
-        </button>
-      </div>
-
-      {isFormVisible && (
-        <div className="bg-white p-6 shadow-md rounded-lg mb-6">
-          <h2 className="text-2xl font-bold text-gray-700 mb-4">Nuevo Usuario</h2>
-          <div className="mb-4">
-            <label className="block text-gray-700">Nombre:</label>
-            <input
-              type="text"
-              name="nombre"
-              value={newUser.nombre}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-              placeholder="Nombre del usuario"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={newUser.email}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-              placeholder="Email del usuario"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Rol:</label>
-            <select
-              name="rol"
-              value={newUser.rol}
-              onChange={handleInputChange}  // Ahora esta línea debería funcionar correctamente
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            >
-              {roles.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700">Permisos:</label>
-            <div className="space-y-2">
-              {permisosOptions.map((permiso) => (
-                <div key={permiso} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={permiso}
-                    checked={newUser.permisos.includes(permiso)}
-                    onChange={handleCheckboxChange}
-                    className="mr-2"
-                  />
-                  <label>{permiso}</label>
-                </div>
-              ))}
+      <Card className="mb-6">
+        <CardHeader>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {isEditing ? 'Editar Usuario' : 'Crear Usuario'}
+          </h2>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nombre</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
             </div>
-          </div>
-          <div className="text-center">
-            <button
-              onClick={handleAddUser}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-600 transition"
-            >
-              Agregar Usuario
-            </button>
-          </div>
-        </div>
-      )}
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
 
-      {/* Tabla de usuarios */}
+            {!isEditing && (
+  <div>
+    <Label htmlFor="password">Contraseña</Label>
+    <Input
+      id="password"
+      name="password"
+      type="password"
+      value={formData.password}
+      onChange={handleInputChange}
+      required
+    />
+  </div>
+)}
+
+            
+            <div>
+              <Label htmlFor="rol_id">Rol</Label>
+              <select
+                id="rol_id"
+                name="rol_id"
+                value={formData.rol_id}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-lg"
+                required
+              >
+                <option value="">Seleccione un rol</option>
+                <option value="1">Admin</option>
+                <option value="2">Reportes</option>
+                <option value="3">Bodega</option>
+              </select>
+            </div>
+
+            <Button type="submit" className="w-full">
+              {isEditing ? 'Actualizar Usuario' : 'Crear Usuario'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse">
+        <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
-              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Email</th>
-              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Rol</th>
-              <th className="px-6 py-2 text-left text-sm font-medium text-gray-700">Permisos</th>
+              <th className="px-6 py-2 text-left">Nombre</th>
+              <th className="px-6 py-2 text-left">Email</th>
+              <th className="px-6 py-2 text-left">Rol</th>
+              <th className="px-6 py-2 text-left">Permisos</th>
+              <th className="px-6 py-2 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-800">{user.nombre}</td>
-                <td className="px-6 py-4 text-sm text-gray-800">{user.email}</td>
-                <td className="px-6 py-4 text-sm text-gray-800">{user.rol}</td>
-                <td className="px-6 py-4 text-sm text-gray-800">
-                  <ul className="list-disc pl-5 space-y-1">
-                    {user.permisos.map((permiso, index) => (
-                      <li key={index}>{permiso}</li>
-                    ))}
-                  </ul>
+              <tr key={user.id} className="border-b">
+                <td className="px-6 py-4">{user.perfil?.name || 'Sin nombre'}</td>
+                <td className="px-6 py-4">{user.email}</td>
+                <td className="px-6 py-4">{user.perfil?.roles?.name || 'Sin rol'}</td>
+                <td className="px-6 py-4">
+                  {user.perfil?.permisos ? user.perfil.permisos.join(', ') : 'Sin permisos'}
+                </td>
+                <td className="px-6 py-4 space-x-2">
+                  <Button onClick={() => handleEdit(user)} variant="outline">
+                    Editar
+                  </Button>
+                  <Button onClick={() => handleDelete(user.id)} variant="destructive">
+                    Eliminar
+                  </Button>
                 </td>
               </tr>
             ))}
