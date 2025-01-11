@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import { Device } from "../models/device.model";
+import { Notification } from "../models/notification.model";
 import { validateDevice } from "../requests/device.request";
 import { BaseService } from "../services/base.service";
 import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
-import { sendPushNotification } from "../services/notifications";
+import { generarCodigoDesbloqueo } from "../services/client.service";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -58,7 +59,7 @@ export const DeviceController = {
 
                 try {
                     const pushToken = device.imei !== null ? device.imei : '';
-                    await sendPushNotification([pushToken], message);
+                    // await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
                     console.error('Error enviando notificación push:', notificationError);
                     res.status(500).json({
@@ -264,7 +265,7 @@ export const DeviceController = {
 
                 try {
 
-                    await sendPushNotification([pushToken], message);
+                    //  await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
                     console.error('Error enviando notificación push:', notificationError);
                     res.status(500).json({
@@ -325,7 +326,7 @@ export const DeviceController = {
                 };
 
                 try {
-                    await sendPushNotification([pushToken], message);
+                    // await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
                     console.error('Error enviando notificación push:', notificationError);
                     res.status(500).json({
@@ -345,9 +346,126 @@ export const DeviceController = {
             res.status(500).json({ success: false, message: 'Error desbloqueando el dispositivo.' });
         }
     },
-    async unlockValidate(req: Request, res: Response){
-        const { unlockCode } = req.body;  // El código de desbloqueo debe ser enviado en el cuerpo de la solicitud
+    async unlockRequest(req: Request, res: Response) {
+        try {
+            const { codigo_id_sujeto, voucher_pago, imei, ip } = req.body;
 
+            // Generar código de desbloqueo
+            const unlockCode = generarCodigoDesbloqueo();
+
+            // Buscar cliente en la tabla `clients`
+            const { data: cliente, error: errorCliente } = await supabase
+                .from('clients')
+                .select('id')
+                .eq('identity_number', codigo_id_sujeto)
+                .single();
+
+            if (errorCliente || !cliente) {
+                res.status(404).json({ error: 'Cliente no encontrado.' });
+            }
+
+            // Buscar dispositivo en la tabla `devices` usando imei o id del cliente
+            const { data: dispositivo, error: errorDispositivo } = await supabase
+                .from('devices')
+                .select('*')
+                .or(`imei.eq.${imei},owner.eq.${cliente?.id}`)
+                .single();
+
+            if (errorDispositivo || !dispositivo) {
+                res.status(404).json({ error: 'Dispositivo no encontrado.' });
+            }
+
+            // Actualizar el código de desbloqueo en la tabla `devices`
+            const { error: errorActualizacion } = await supabase
+                .from('devices')
+                .update({ unlock_code: unlockCode })
+                .eq('id', dispositivo.id);
+
+            if (errorActualizacion) {
+                throw new Error('Error actualizando el código de desbloqueo.');
+            }
+
+            // Crear notificación
+            const mensaje = {
+                message: `El cliente con CODIGO_ID_SUJETO: ${codigo_id_sujeto} y VOUCHER_PAGO: ${voucher_pago} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
+                status: 'No Leida',
+            };
+            await BaseService.create<Notification>('notifications', mensaje);
+
+            res.status(200).json({
+                status: 'success',
+                message: 'Solicitud recibida. Nos comunicaremos pronto.',
+                unlock_code: unlockCode, // Opcional, si deseas devolver el código
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Error interno del servidor.' });
+        }
+    },
+    async unlockValidate(req: Request, res: Response) {
+        try {
+            // Validar que se envíe al menos uno de los parámetros necesarios
+            const { code, imei } = req.body;
+            let queryResult;
+            // Intentar buscar por IMEI si se proporciona
+            if (imei) {
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('clients(identity_number,operations(prox_due_date))')
+                    .eq('imei', imei);
+
+                if (error) {
+                    throw new Error("Error al consultar la base de datos por IMEI.");
+                }
+
+                // Si se encuentran resultados, usar estos datos
+                if (data && data.length > 0) {
+                    queryResult = data;
+                }
+            }
+
+            // Si no se encontraron resultados con el IMEI, intentar por código
+            if (!queryResult || queryResult.length === 0) {
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('clients(identity_number,operations(prox_due_date))')
+                    .eq('unlock_code', code);
+
+                if (error) {
+                    throw new Error("Error al consultar la base de datos por código.");
+                }
+
+                // Validar si no se encontraron resultados
+                if (!data || data.length === 0) {
+                    throw new Error("Código o IMEI incorrectos.");
+                }
+
+                queryResult = data;
+            }
+
+            // Respuesta exitosa
+            res.status(200).json({
+                status: "success",
+                message: "El código o IMEI son válidos",
+                next_due_date: "",
+            });
+        } catch (error: any) {
+            let statusCode = 500;
+            let message = "Error interno del servidor.";
+            if (error.message.includes("obligatorios")) {
+                statusCode = 400;
+                message = error.message;
+            } else if (error.message.includes("incorrectos")) {
+                statusCode = 404;
+                message = error.message;
+            } else if (error.message.includes("Error al consultar la base de datos")) {
+                statusCode = 500;
+                message = error.message;
+            }
+            res.status(statusCode).json({
+                status: "error",
+                message,
+            });
+        }
     }
-
-}
+}    
