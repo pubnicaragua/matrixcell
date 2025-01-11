@@ -13,7 +13,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /inventory:
+ * /inventories:
  *   get:
  *     summary: Obtener todos los inventarios
  *     tags: [Inventario]
@@ -30,7 +30,7 @@ router.get('/', sessionAuth, InventoryController.getAllInventory);
 
 /**
  * @swagger
- * /inventory/moved:
+ * /inventories/moved:
  *   post:
  *     summary: Registrar movimiento de inventario
  *     tags: [Inventario]
@@ -69,7 +69,7 @@ router.post('/moved', sessionAuth, InventoryController.inventoryMoved);
 
 /**
  * @swagger
- * /inventory/store-moved:
+ * /inventories/store-moved:
  *   post:
  *     summary: Registrar movimiento de productos entre tiendas
  *     tags: [Inventario]
@@ -103,7 +103,7 @@ router.post('/store-moved', sessionAuth, InventoryController.storeMoved);
 
 /**
  * @swagger
- * /inventory/{id}:
+ * /inventories/{id}:
  *   put:
  *     summary: Actualizar inventario
  *     tags: [Inventario]
@@ -144,7 +144,7 @@ router.put('/:id', sessionAuth, InventoryController.updateInventory);
 
 /**
  * @swagger
- * /inventory/{id}:
+ * /inventories/{id}:
  *   delete:
  *     summary: Eliminar inventario
  *     tags: [Inventario]
