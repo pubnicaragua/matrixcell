@@ -10,6 +10,8 @@ import supabase from "../config/supabaseClient";
 const tableName = 'clients'; // Nombre de la tabla en la base de datos
 import * as XLSX from 'xlsx';
 import { extractFirstNumber } from "../services/client.service";
+import { number } from "joi";
+import { identity } from "lodash";
 
 export const ClientController = {
     async getAllClients(req: Request, res: Response) {
@@ -124,6 +126,7 @@ export const ClientController = {
             }
 
             type ExcelData = {
+                COD_TIPO_ID: string;
                 CODIGO_ID_SUJETO: string;
                 NOMBRE_SUJETO: string;
                 DIRECCION: string;
@@ -142,6 +145,9 @@ export const ClientController = {
                 FECHA_DE_VENCIMIENTO: string | Date;
                 DEUDA_REFINANCIADA: number;
                 FECHA_SIG_VENCIMIENTO: string | Date;
+                PLAZO_EN_MESES: string;
+                VALOR_MENSUAL: string;
+                FRECUENCIA_PAGO: string;
             };
 
             const normalizeDate = (date: string | number | undefined | Date): Date | null => {
@@ -169,6 +175,7 @@ export const ClientController = {
             }
 
             for (const row of sheetData) {
+                console.log('fila', row) 
                 const { data: existingClients, error: clientCheckError } = await supabase
                     .from('clients')
                     .select('id')
@@ -180,15 +187,18 @@ export const ClientController = {
                 if (!existingClients || existingClients.length === 0) {
                     const client = {
                         identity_number: row.CODIGO_ID_SUJETO,
+                        identity_type: row.COD_TIPO_ID,
                         name: row.NOMBRE_SUJETO,
                         address: row.DIRECCION,
                         city: row.CIUDAD,
                         phone: row.TELEFONO,
                         debt_type: row.TIPO_DEUDOR,
-                        due_date: normalizeDate(row.FECHA_CONCESION) || null,
+                        grant_date: row.FECHA_CONCESION || null,
+                        due_date: row.FEC_CORTE_SALDO || null,
+                        deadline: extractFirstNumber(row.PLAZO_EN_MESES) || null,
                         created_at: new Date(),
                     };
-
+                    console.log(client)
                     const { data: clientData, error: clientError } = await supabase
                         .from('clients')
                         .insert(client)
@@ -204,13 +214,16 @@ export const ClientController = {
                         amount_paid: row.VAL_VENCIDO || null,
                         judicial_action: row.VA_DEM_JUDICIAL > 0,
                         cart_value: row.VAL_CART_CASTIGADA || null,
-                        days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS || null),
-                        due_date: normalizeDate(row.FECHA_DE_VENCIMIENTO) || null,
+                        days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS) || null,
+                        due_date: row.FECHA_DE_VENCIMIENTO|| null,
                         refinanced_debt: row.DEUDA_REFINANCIADA || null,
-                        prox_due_date: normalizeDate(row.FECHA_SIG_VENCIMIENTO) || null,
+                        prox_due_date: row.FECHA_SIG_VENCIMIENTO || null,
                         client_id: clientData.id,
                         created_at: new Date(),
+                        monthly_value: row.VALOR_MENSUAL || null,
+                        frequency: row.FRECUENCIA_PAGO || null
                     };
+                    console.log(operation)
                     const { error: operationError } = await supabase.from('operations').insert(operation);
                     if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
                 }

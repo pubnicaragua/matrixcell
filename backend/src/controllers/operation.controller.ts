@@ -37,8 +37,8 @@ export const OperationController = {
             const operation = await BaseService.create<Operation>(tableName, req.body, userId);
             res.status(201).json(OperationResource.formatOperation(operation));
            
-            console.log(req.body)
-            console.log(operation)
+            // console.log(req.body)
+            // console.log(operation)
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
@@ -51,9 +51,9 @@ export const OperationController = {
             
             const { userId } = req;
             const operation = await BaseService.update<Operation>(tableName, parseInt(id), req.body, userId);
-            console.log(id)
-            console.log(req.body)
-            console.log(operation)
+            // console.log(id)
+            // console.log(req.body)
+            // console.log(operation)
             res.json(OperationResource.formatOperation(operation));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
