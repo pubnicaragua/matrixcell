@@ -9,6 +9,7 @@ export const InvoiceResource = {
             device_id: invoice.device_id,
             status: invoice.status,
             created_at: invoice.created_at,
+            operation_id: invoice.operation_id
         };
     },
 

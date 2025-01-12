@@ -1,4 +1,3 @@
-import { Bar, Pie } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
 import api from '../axiosConfig';
 import React, { useState, useEffect } from 'react';
@@ -12,18 +11,45 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import PendingInvoicesChart from '../components/PendingInvoicesChart';
+import InvoiceStatusChart from '../components/InvoiceStatusChart';
+import BlockedDevices from '../components/BlockedDevices';
+import InvoiceDelinquencyChart from '../components/InvoiceDelinquencyChart';
+import RecentActivities from '../components/RecentActivities';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 interface Invoice {
   status: string;
   created_at: string;
+  operation_id: number; // Añadir esta propiedad
 }
+
 
 interface Device {
   id: number;
   imei: string;
   status: string;
+}
+
+interface Operations {
+  id?: number;
+  operation_number: string;
+  operation_value: number;
+  due_date: string;
+  prox_due_date: string;
+  amount_due: number;
+  amount_paid: number;
+  days_overdue: number;
+  cart_value: number;
+  refinanced_debt: string;
+  judicial_action: number;
+  client_id: number;
+  client?: { // Agrega esta propiedad opcional
+    id: number;
+    name: string;
+    phone: string;
+  };
 }
 
 const Dashboard = () => {
@@ -34,51 +60,59 @@ const Dashboard = () => {
   const [pieChartData, setPieChartData] = useState<any>(null);
   const [morosityChartData, setMorosityChartData] = useState<any>(null);
   const [devices, setDevices] = useState<Device[]>([]);
-  const [invoice, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [operations, setOperations] = useState<Operations[]>([]);
+  // Para agrupar facturas por mes y año
+  const invoicesByMonthYear: Record<string, number> = {};
+
+  // Para contar facturas por estado
+  const statusCounts: Record<string, number> = {};
+
 
   useEffect(() => {
     const fetchInvoicesAndDevices = async () => {
-      try {        
+      try {
         const invoicesResponse = await api.get('/invoices');
-
         const devicesResponse = await api.get('/devices');
-
-        const invoices: Invoice[] = invoicesResponse.data;
-        const devices: Device[] = devicesResponse.data;
+        const operationsResponse = await api.get('/operations');
 
         setDevices(devicesResponse.data);
         setInvoices(invoicesResponse.data);
+        setOperations(operationsResponse.data)
 
-        // Filtrar facturas pendientes
-        const pendingInvoices = invoices.filter(invoice => invoice.status === 'Pendiente');
-
-        // Agrupar por mes
-        const invoicesByMonth = Array(12).fill(0);
-        pendingInvoices.forEach(invoice => {
-          const month = new Date(invoice.created_at).getMonth();
-          invoicesByMonth[month]++;
+        // Merge invoices with operations by operation_id
+        const mergedData = invoices.map((invoice) => {
+          const operation = operations.find(op => op.id === invoice.operation_id);
+          return {
+            ...invoice,
+            due_date: operation ? operation.due_date : null,
+            days_overdue: operation ? operation.days_overdue : null,
+          };
         });
 
-        // Datos para el gráfico de barras
+        // Filter pending invoices
+        const pendingInvoices = mergedData.filter(invoice => invoice.status === 'Pendiente');
+
+        // Group pending invoices by month and year based on due_date
+        const invoicesByMonthYear: Record<string, number> = {};
+        pendingInvoices.forEach(invoice => {
+          if (invoice.due_date) {
+            const date = new Date(invoice.due_date);
+            const key = `${date.getFullYear()}-${date.getMonth() + 1}`; // YYYY-MM format
+            invoicesByMonthYear[key] = (invoicesByMonthYear[key] || 0) + 1;
+          }
+        });
+
+        const barLabels = Object.keys(invoicesByMonthYear).sort();
+        const barData = barLabels.map(label => invoicesByMonthYear[label]);
+
+        // Data for Pending Invoices Chart
         setBarChartData({
-          labels: [
-            'Enero',
-            'Febrero',
-            'Marzo',
-            'Abril',
-            'Mayo',
-            'Junio',
-            'Julio',
-            'Agosto',
-            'Septiembre',
-            'Octubre',
-            'Noviembre',
-            'Diciembre',
-          ],
+          labels: barLabels,
           datasets: [
             {
               label: 'Facturas Pendientes',
-              data: invoicesByMonth,
+              data: barData,
               backgroundColor: 'rgba(75, 192, 192, 0.6)',
               borderColor: 'rgba(75, 192, 192, 1)',
               borderWidth: 1,
@@ -87,52 +121,59 @@ const Dashboard = () => {
         });
 
         // Contar facturas por estado
-        const paidCount = invoices.filter(invoice => invoice.status === 'Pagada').length;
-        const pendingCount = invoices.filter(invoice => invoice.status === 'Pendiente').length;
+        const statusCounts: Record<string, number> = {};
+pendingInvoices.forEach(invoice => {
+  statusCounts[invoice.status] = (statusCounts[invoice.status] || 0) + 1;
+});
 
-        // Datos para el gráfico de pastel
+const pieLabels = Object.keys(statusCounts);
+const pieData = pieLabels.map(label => statusCounts[label]);
+
         setPieChartData({
-          labels: ['Pagadas', 'Pendientes'],
+          labels: pieLabels,
           datasets: [
             {
-              data: [paidCount, pendingCount],
+              data: pieData,
               backgroundColor: ['#4caf50', '#f44336'],
               hoverBackgroundColor: ['#45a049', '#e53935'],
             },
           ],
         });
 
-        // Calcular morosidad
-        const currentDate = new Date();
-        const morosityBuckets = [0, 0, 0, 0]; // [0-30 días, 31-60 días, 61-90 días, >90 días]
+
+        // Calculate delinquency buckets
+        const delinquencyBuckets = [0, 0, 0, 0]; // [0-30 days, 31-60 days, 61-90 days, >90 days]
 
         pendingInvoices.forEach(invoice => {
-          const createdDate = new Date(invoice.created_at);
-          const diffInDays = Math.floor((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (invoice.days_overdue !== null) {
+            const overdue = invoice.days_overdue;
 
-          if (diffInDays <= 30) morosityBuckets[0]++;
-          else if (diffInDays <= 60) morosityBuckets[1]++;
-          else if (diffInDays <= 90) morosityBuckets[2]++;
-          else morosityBuckets[3]++;
+            if (overdue <= 30) delinquencyBuckets[0]++;
+            else if (overdue <= 60) delinquencyBuckets[1]++;
+            else if (overdue <= 90) delinquencyBuckets[2]++;
+            else delinquencyBuckets[3]++;
+          }
         });
 
-        // Datos para el gráfico de morosidad
+        // Data for Invoice Delinquency Chart
         setMorosityChartData({
           labels: ['0-30 días', '31-60 días', '61-90 días', '>90 días'],
           datasets: [
             {
               label: 'Morosidad de Facturas',
-              data: morosityBuckets,
+              data: delinquencyBuckets,
               backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
             },
           ],
         });
+
       } catch (err: any) {
         setError(err.message || 'Error fetching data');
       } finally {
         setLoading(false);
       }
     };
+
 
     fetchInvoicesAndDevices();
   }, []);
@@ -145,14 +186,7 @@ const Dashboard = () => {
     { id: 5, action: 'Mantenimiento', device: 'Dispositivo 5', date: '2024-12-25' },
   ];
 
-  const renderTableRows = () =>
-    activities.map(activity => (
-      <tr key={activity.id}>
-        <td>{activity.action}</td>
-        <td>{activity.device}</td>
-        <td>{activity.date}</td>
-      </tr>
-    ));
+
 
   const quickActions = (
     <div className="flex gap-4 mt-6">
@@ -192,91 +226,16 @@ const Dashboard = () => {
         <h1 className="text-3xl font-semibold text-center text-blue-600 mb-6">Dashboard</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Facturas Pendientes por Mes</h3>
-            {barChartData ? (
-              <Bar
-                data={barChartData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: 'Facturas Pendientes por Mes' },
-                  },
-                }}
-              />
-            ) : (
-              <p>No hay datos para mostrar.</p>
-            )}
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Estado de las Facturas</h3>
-            {pieChartData ? (
-              <Pie
-                data={pieChartData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: 'Facturas: Pagadas vs Pendientes' },
-                  },
-                }}
-              />
-            ) : (
-              <p>No hay datos para mostrar.</p>
-            )}
-          </div>
+          <PendingInvoicesChart data={barChartData} />
+          <InvoiceStatusChart data={pieChartData} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Dispositivos Bloqueados</h3>
-            {devices.filter(device => device.status === 'Bloqueado').length > 0 ? (
-              <ul className="list-disc pl-6">
-                {devices
-                  .filter(device => device.status === 'Bloqueado')
-                  .map(device => (
-                    <li key={device.id}>IMEI: {device.imei}</li>
-                  ))}
-              </ul>
-            ) : (
-              <p>No hay dispositivos bloqueados.</p>
-            )}
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Morosidad de Facturas</h3>
-            {morosityChartData ? (
-              <Bar
-                data={morosityChartData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: 'Morosidad de Facturas' },
-                  },
-                }}
-              />
-            ) : (
-              <p>No hay datos para mostrar.</p>
-            )}
-          </div>
+          <BlockedDevices devices={devices} />
+          <InvoiceDelinquencyChart data={morosityChartData} />
         </div>
 
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Últimas Actividades</h2>
-          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2 text-left font-bold">Acción</th>
-                <th className="px-4 py-2 text-left font-bold">Dispositivo/Cliente</th>
-                <th className="px-4 py-2 text-left font-bold">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>{renderTableRows()}</tbody>
-          </table>
-        </div>
+        <RecentActivities activities={activities} />
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
@@ -288,3 +247,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

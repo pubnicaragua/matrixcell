@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
 import Notifications from './pages/Notifications';
 import Invoices from './pages/Invoices';
 import Login from './pages/Login';
@@ -23,6 +22,7 @@ import Layout from '../src/layouts/Layout'; // Importar el Layout
 import RegisterForm from './components/RegisterForm';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword'
+import Dashboard from './pages/Dashboard';
 
 const App = () => {
   return (
