@@ -7,6 +7,7 @@ import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
 import { generarCodigoDesbloqueo } from "../services/client.service";
+import { Client } from "../models/client.model";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -349,10 +350,10 @@ export const DeviceController = {
     async unlockRequest(req: Request, res: Response) {
         try {
             const { CODIGO_ID_SUJETO, VOUCHER_PAGO, imei, ip } = req.body;
-
+   
             // Generar código de desbloqueo
             const unlockCode = generarCodigoDesbloqueo();
-
+    
             // Buscar cliente en la tabla `clients`
             const { data: cliente, error: errorCliente } = await supabase
                 .from('clients')
@@ -361,47 +362,64 @@ export const DeviceController = {
                 .single();
 
             if (errorCliente || !cliente) {
-                res.status(404).json({ error: 'Cliente no encontrado.' });
+                res.status(404).json({ error: 'Cliente no encontrado.',errorCliente });
             }
-
+   
             // Buscar dispositivo en la tabla `devices` usando imei o id del cliente
             const { data: dispositivo, error: errorDispositivo } = await supabase
                 .from('devices')
                 .select('*')
                 .or(`imei.eq.${imei},owner.eq.${cliente?.id}`)
                 .single();
-
+    
             if (errorDispositivo || !dispositivo) {
-                res.status(404).json({ error: 'Dispositivo no encontrado.' });
+                throw new Error('Dispositivo no encontrado.');
             }
-
+    
             // Actualizar el código de desbloqueo en la tabla `devices`
             const { error: errorActualizacion } = await supabase
                 .from('devices')
                 .update({ unlock_code: unlockCode })
                 .eq('id', dispositivo.id);
-
+    
             if (errorActualizacion) {
                 throw new Error('Error actualizando el código de desbloqueo.');
             }
-
+    
             // Crear notificación
             const mensaje = {
                 message: `El cliente con CODIGO_ID_SUJETO: ${CODIGO_ID_SUJETO} y VOUCHER_PAGO: ${VOUCHER_PAGO} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
                 status: 'No Leida',
             };
             await BaseService.create<Notification>('notifications', mensaje);
-
+    
             res.status(200).json({
                 status: 'success',
                 message: 'Solicitud recibida. Nos comunicaremos pronto.',
                 unlock_code: unlockCode, // Opcional, si deseas devolver el código
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            res.status(500).json({ error: 'Error interno del servidor.' });
+    
+            // Manejo de diferentes tipos de errores
+            let statusCode = 500;
+            let errorMessage = 'Error interno del servidor.';
+    
+            if (error.message === 'Cliente no encontrado.') {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message === 'Dispositivo no encontrado.') {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message === 'Error actualizando el código de desbloqueo.') {
+                statusCode = 500;
+                errorMessage = error.message;
+            }
+    
+            res.status(statusCode).json({ error: errorMessage });
         }
     },
+    
     async unlockValidate(req: Request, res: Response) {
         try {
             // Validar que se envíe al menos uno de los parámetros necesarios
