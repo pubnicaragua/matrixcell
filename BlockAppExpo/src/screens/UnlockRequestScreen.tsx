@@ -14,7 +14,7 @@ const UnlockRequestScreen = ({ navigation }: { navigation: any }) => {
     }
 
     try {
-      const response = await axios.post('https://matrix-cell.com/devices/unlock-request', {
+      const response = await axios.post('https://matrixcell.onrender.com/devices/unlock-request', {
         CODIGO_ID_SUJETO: codigoId,
         VOUCHER_PAGO: voucherPago,
       });

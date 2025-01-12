@@ -12,7 +12,7 @@ const BlockAppScreen = () => {
 
   const handleUnlock = async () => {
     const correctCode = 'ABC123'; // Este código se debe obtener de un servicio backend o similar
-    const response = await axios.post('https://matrix-cell.com/devices/unlock-validate', {
+    const response = await axios.post('https://matrixcell.onrender.com/devices/unlock-validate', {
       code: correctCode
         });
     if (response.status === 200) {
