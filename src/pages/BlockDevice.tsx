@@ -7,6 +7,7 @@ interface Device {
   status: string;
   owner: string;
   store_id: number;
+  unlock_code: string;
 }
 
 interface Store {
@@ -162,10 +163,11 @@ const DevicesView: React.FC = () => {
           <tr className="bg-gray-200">
             <th className="border border-gray-300 px-4 py-2">ID</th>
             <th className="border border-gray-300 px-4 py-2">IMEI</th>
-            <th className="border border-gray-300 px-4 py-2">Status</th>
-            <th className="border border-gray-300 px-4 py-2">Owner</th>
-            <th className="border border-gray-300 px-4 py-2">Store</th>
-            <th className="border border-gray-300 px-4 py-2">Actions</th>
+            <th className="border border-gray-300 px-4 py-2">Estado</th>
+            <th className="border border-gray-300 px-4 py-2">Cliente</th>
+            <th className="border border-gray-300 px-4 py-2">Tienda</th>
+            <th className="border border-gray-300 px-4 py-2">Codigo de Desbloqueo</th>
+            <th className="border border-gray-300 px-4 py-2">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -176,6 +178,7 @@ const DevicesView: React.FC = () => {
               <td className="border border-gray-300 px-4 py-2 text-center">{device.status}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">{getClientName(device.owner)}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">{getStoreName(device.store_id)}</td>
+              <td className="border border-gray-300 px-4 py-2 text-center">{device.unlock_code}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">
                 <button
                   onClick={() => toggleDeviceStatus(device)}
