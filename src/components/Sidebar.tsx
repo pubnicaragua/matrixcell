@@ -16,6 +16,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
+  FaMobile,
 } from 'react-icons/fa';
 import api from '../axiosConfig';
 
@@ -75,6 +76,10 @@ export default function Sidebar() {
           <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
             <FaUsersCog className="h-5 w-5" />
             <span>Gestionar Clientes</span>
+          </Link>          
+          <Link to="/blockdevice" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <FaMobile className="h-5 w-5" />
+            <span>Bloquear Dispositivo</span>
           </Link>
 
           <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">

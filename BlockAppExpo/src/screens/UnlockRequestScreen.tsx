@@ -1,8 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import axios from 'axios';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-const UnlockRequestScreen = ({ navigation }: { navigation: any }) => {
+type RootStackParamList = {
+  UnlockRequest: undefined;
+  BlockAppScreen: undefined;
+};
+
+type UnlockRequestScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'UnlockRequest'
+>;
+
+type Props = {
+  navigation: UnlockRequestScreenNavigationProp;
+};
+
+const UnlockRequestScreen: React.FC<Props> = ({ navigation }) => {
   const [codigoId, setCodigoId] = useState('');
   const [voucherPago, setVoucherPago] = useState('');
   const [error, setError] = useState('');
@@ -14,17 +29,20 @@ const UnlockRequestScreen = ({ navigation }: { navigation: any }) => {
     }
 
     try {
-      const response = await axios.post('https://matrixcell.onrender.com/devices/unlock-request', {
-        CODIGO_ID_SUJETO: codigoId,
-        VOUCHER_PAGO: voucherPago,
-      });
+      const response = await axios.post(
+        'https://matrixcell.onrender.com/devices/unlock-request',
+        {
+          CODIGO_ID_SUJETO: codigoId,
+          VOUCHER_PAGO: voucherPago,
+        }
+      );
 
       if (response.status === 200) {
         Alert.alert(
           'Solicitud enviada',
-          `La solicitud ha sido enviada correctamente. Su desbloqueo será procesado.`
+          'La solicitud ha sido enviada correctamente. Su desbloqueo será procesado.'
         );
-        navigation.navigate('BlockAppScreen'); // Navega a la pantalla de bloqueo
+        navigation.navigate('BlockAppScreen');
       } else {
         setError('Hubo un problema al enviar la solicitud. Inténtelo de nuevo.');
       }
@@ -39,18 +57,22 @@ const UnlockRequestScreen = ({ navigation }: { navigation: any }) => {
       <Text style={styles.title}>Solicitud de Desbloqueo</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ingrese su Cédula o Código ID Sujeto"
+        placeholder="Código ID"
+        placeholderTextColor="#ccc"
         value={codigoId}
         onChangeText={setCodigoId}
       />
       <TextInput
         style={styles.input}
-        placeholder="Ingrese el número del Voucher de Pago"
+        placeholder="Voucher de Pago"
+        placeholderTextColor="#ccc"
         value={voucherPago}
         onChangeText={setVoucherPago}
       />
       {error && <Text style={styles.error}>{error}</Text>}
-      <Button title="Enviar Solicitud" onPress={handleSubmit} />
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Enviar Solicitud</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -61,11 +83,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#000',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 16,
   },
   input: {
@@ -73,12 +96,25 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 4,
     width: '80%',
-    padding: 8,
+    padding: 10,
     marginBottom: 16,
+    color: '#fff',
+    backgroundColor: '#333',
   },
   error: {
     color: 'red',
     marginBottom: 8,
+  },
+  button: {
+    backgroundColor: '#28a745',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 4,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
