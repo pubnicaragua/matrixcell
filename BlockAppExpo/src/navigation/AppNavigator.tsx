@@ -1,9 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlockAppScreen from "../screens/BlockAppScreen";
-import DeviceDetailScreen from "../screens/DeviceDetailScreen";
 import UnlockRequestScreen from "../screens/UnlockRequestScreen";
 
 const Stack = createNativeStackNavigator();
@@ -14,12 +11,12 @@ const AppNavigator = () => {
       <Stack.Screen
         name="UnlockRequest"
         component={UnlockRequestScreen}
-        options={{ title: 'Solicitud de Desbloqueo' }}
+        options={{ title: "Solicitud de Desbloqueo" }}
       />
       <Stack.Screen
-        name="BlockApp"
+        name="BlockAppScreen" // Asegúrate de que coincide con el navigate
         component={BlockAppScreen}
-        options={{ title: 'Pantalla de Bloqueo' }}
+        options={{ title: "Pantalla de Bloqueo" }}
       />
     </Stack.Navigator>
   );

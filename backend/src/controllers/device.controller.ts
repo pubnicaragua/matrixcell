@@ -7,6 +7,7 @@ import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
 import { generarCodigoDesbloqueo } from "../services/client.service";
+import { Client } from "../models/client.model";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -14,7 +15,7 @@ export const DeviceController = {
     async getAllDevices(req: Request, res: Response) {
         try {
             const where = { ...req.query };
-            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status'], where);
+            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status', 'unlock_code'], where);
 
             // Asegurarse de que `formatDevice` pueda manejar un arreglo de dispositivos
             res.json(devices.map(device => DeviceResource.formatDevice(device)));
@@ -148,7 +149,6 @@ export const DeviceController = {
             // Tipo de datos esperados en el archivo Excel
             type DeviceRow = {
                 'Nombre': string; // Nombre del cliente
-                'Tienda': string;   // Nombre de la tienda
                 'Modelo': string;        // Modelo del dispositivo
                 'IMEI': string;          // IMEI del dispositivo
                 'Marca': string;         // Marca del dispositivo
@@ -166,10 +166,9 @@ export const DeviceController = {
 
             // Obtén nombres únicos de clientes y stores
             const nombresClientes = Array.from(new Set(sheetData.map(row => row['Nombre'])));
-            const nombresStores = Array.from(new Set(sheetData.map(row => row['Tienda'])));
 
-            // Busca IDs de clientes
-            const { data: clientes, error: errorClientes } = await supabase
+            // Busca IDs de clientes existentes
+            const { data: clientesExistentes, error: errorClientes } = await supabase
                 .from('clients')
                 .select('id, name')
                 .in('name', nombresClientes);
@@ -178,37 +177,42 @@ export const DeviceController = {
                 res.status(500).json({ error: `Error al obtener IDs de clientes: ${errorClientes.message}` });
             }
 
-            // Crea un mapa de nombres de clientes a IDs
-            const clienteIdMap = new Map(clientes?.map(client => [client.name, client.id]));
+            // Determina clientes que no existen
+            const clientesExistentesSet = new Set(clientesExistentes?.map(client => client.name));
+            const nuevosClientes = nombresClientes.filter(nombre => !clientesExistentesSet.has(nombre));
 
-            // Busca IDs de stores
-            const { data: stores, error: errorStores } = await supabase
-                .from('store')
-                .select('id, name')
-                .in('name', nombresStores);
+            // Inserta nuevos clientes
+            if (nuevosClientes.length > 0) {
+                const nuevosClientesInsertar = nuevosClientes.map(name => ({ name }));
+                const { data: nuevosClientesData, error: errorInsertClientes } = await supabase
+                    .from('clients')
+                    .insert(nuevosClientesInsertar)
+                    .select();
 
-            if (errorStores) {
-                res.status(500).json({ error: `Error al obtener IDs de stores: ${errorStores.message}` });
+                if (errorInsertClientes) {
+                    res.status(500).json({ error: `Error al insertar nuevos clientes: ${errorInsertClientes.message}` });
+                }
+
+                // Agrega los nuevos clientes al mapa de IDs
+                nuevosClientesData?.forEach(cliente => {
+                    clientesExistentesSet.add(cliente.name);
+                    clientesExistentes?.push(cliente);
+                });
             }
 
-            // Crea un mapa de nombres de stores a IDs
-            const storeIdMap = new Map(stores?.map(store => [store.name, store.id]));
+            // Crea un mapa de nombres de clientes a IDs
+            const clienteIdMap = new Map(clientesExistentes?.map(client => [client.name, client.id]));
 
             // Construye los datos para la inserción
             const devicesToInsert = sheetData.map(row => {
                 const clienteId = clienteIdMap.get(row['Nombre']);
-                const storeId = storeIdMap.get(row['Tienda']);
 
                 if (!clienteId) {
                     throw new Error(`No se encontró un cliente con el nombre: ${row['Nombre']}`);
                 }
-                if (!storeId) {
-                    throw new Error(`No se encontró una tienda con el nombre: ${row['Tienda']}`);
-                }
 
                 return {
                     owner: clienteId,
-                    store_id: storeId || null, // Agrega el ID del store
                     imei: row.IMEI,
                     modelo: row['Modelo'] || '',
                     marca: row['Marca'] || '',
@@ -228,6 +232,7 @@ export const DeviceController = {
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     },
+
     async blockDevices(req: Request, res: Response) {
         const { id } = req.params;
 
@@ -361,7 +366,7 @@ export const DeviceController = {
                 .single();
 
             if (errorCliente || !cliente) {
-                res.status(404).json({ error: 'Cliente no encontrado.' });
+                res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
             }
 
             // Buscar dispositivo en la tabla `devices` usando imei o id del cliente
@@ -372,7 +377,7 @@ export const DeviceController = {
                 .single();
 
             if (errorDispositivo || !dispositivo) {
-                res.status(404).json({ error: 'Dispositivo no encontrado.' });
+                throw new Error('Dispositivo no encontrado.');
             }
 
             // Actualizar el código de desbloqueo en la tabla `devices`
@@ -397,11 +402,28 @@ export const DeviceController = {
                 message: 'Solicitud recibida. Nos comunicaremos pronto.',
                 unlock_code: unlockCode, // Opcional, si deseas devolver el código
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            res.status(500).json({ error: 'Error interno del servidor.' });
+
+            // Manejo de diferentes tipos de errores
+            let statusCode = 500;
+            let errorMessage = 'Error interno del servidor.';
+
+            if (error.message === 'Cliente no encontrado.') {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message === 'Dispositivo no encontrado.') {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message === 'Error actualizando el código de desbloqueo.') {
+                statusCode = 500;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({ error: errorMessage });
         }
     },
+
     async unlockValidate(req: Request, res: Response) {
         try {
             // Validar que se envíe al menos uno de los parámetros necesarios

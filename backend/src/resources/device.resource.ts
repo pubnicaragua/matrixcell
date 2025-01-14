@@ -8,7 +8,8 @@ export const DeviceResource = {
             status: device.status,
             owner: device.owner,
             store_id: device.store_id,
-            cliente: device.cliente
+            cliente: device.cliente,
+            unlock_code: device.unlock_code
         };
     },
 
