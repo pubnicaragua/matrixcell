@@ -16,7 +16,6 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaMobile,
 } from 'react-icons/fa';
 import api from '../axiosConfig';
 
@@ -42,7 +41,7 @@ export default function Sidebar() {
     <aside className="h-screen relative">
       {/* Botón para desplegar el menú */}
       <button
-        className="absolute top-4 left-4 block md:hidden text-gray-800"
+        className="absolute top-4 left-4 z-50 block md:hidden text-gray-800"
         onClick={toggleMenu}
       >
         {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -77,10 +76,6 @@ export default function Sidebar() {
           <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
             <FaUsersCog className="h-5 w-5" />
             <span>Gestionar Clientes</span>
-          </Link>          
-          <Link to="/blockdevice" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
-            <FaMobile className="h-5 w-5" />
-            <span>Bloquear Dispositivo</span>
           </Link>
 
           <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
