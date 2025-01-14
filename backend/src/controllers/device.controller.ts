@@ -467,9 +467,86 @@ export const DeviceController = {
 
             // Respuesta exitosa
             res.status(200).json({
+                "status": "success",
+                "message": "Código válido. Dispositivo desbloqueado.",
+                "next_due_date": ""
+            }
+            );
+        } catch (error: any) {
+            let statusCode = 500;
+            let message = "Error interno del servidor.";
+            if (error.message.includes("obligatorios")) {
+                statusCode = 400;
+                message = error.message;
+            } else if (error.message.includes("incorrectos")) {
+                statusCode = 404;
+                message = error.message;
+            } else if (error.message.includes("Error al consultar la base de datos")) {
+                statusCode = 500;
+                message = error.message;
+            }
+            res.status(statusCode).json({
+                status: "error",
+                message,
+            });
+        }
+    },
+    async validateCode(req: Request, res: Response) {
+        try {
+            const { code, imei } = req.body;
+            let queryResult;
+
+            // Intentar buscar por IMEI si se proporciona
+            if (imei) {
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('clients(identity_number,operations(prox_due_date))')
+                    .eq('imei', imei);
+
+                if (error) {
+                    throw new Error("Error al consultar la base de datos por IMEI.");
+                }
+
+                // Si se encuentran resultados, usar estos datos
+                if (data && data.length > 0) {
+                    queryResult = data;
+                }
+            }
+
+            // Si no se encontraron resultados con el IMEI, intentar por código
+            if (!queryResult || queryResult.length === 0) {
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('clients(identity_number,operations(prox_due_date))')
+                    .eq('unlock_code', code);
+
+                if (error) {
+                    throw new Error("Error al consultar la base de datos por código.");
+                }
+
+                // Validar si no se encontraron resultados
+                if (!data || data.length === 0) {
+                    throw new Error("Código o IMEI incorrectos.");
+                }
+
+                queryResult = data;
+            }
+
+            // Actualizar el estado a "Desbloqueado" en la base de datos
+            const { error: updateError } = await supabase
+                .from(tableName)
+                .update({ status: 'Desbloqueado' }) // Cambiar el campo `status` a "Desbloqueado"
+                .eq('unlock_code', code);
+
+            if (updateError) {
+                throw new Error("Error al actualizar el estado en la base de datos.");
+            }
+
+            // Respuesta exitosa
+            res.status(200).json({
                 status: "success",
-                message: "El código o IMEI son válidos",
-                next_due_date: "",
+                message: "Desbloqueado",
+                data: queryResult,
             });
         } catch (error: any) {
             let statusCode = 500;
@@ -490,4 +567,5 @@ export const DeviceController = {
             });
         }
     }
+
 }    

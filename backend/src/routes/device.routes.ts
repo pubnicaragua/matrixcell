@@ -402,5 +402,102 @@ router.post('/unlock-request', DeviceController.unlockRequest);
  *         description: Error interno del servidor.
  */
 router.post('/unlock-validate', DeviceController.unlockValidate);
+/**
+ * @swagger
+ * /validate-code:
+ *   post:
+ *     tags:
+ *       - [Desbloquear Dispositivo]
+ *     summary: Validar código de desbloqueo
+ *     description: Permite validar un código de desbloqueo o IMEI y desbloquear un dispositivo si la información es válida.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Código de desbloqueo del dispositivo.
+ *                 example: "123456"
+ *               imei:
+ *                 type: string
+ *                 description: IMEI del dispositivo.
+ *                 example: "123456789012345"
+ *     responses:
+ *       200:
+ *         description: Dispositivo desbloqueado con éxito.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Desbloqueado"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       clients:
+ *                         type: object
+ *                         properties:
+ *                           identity_number:
+ *                             type: string
+ *                             example: "987654321"
+ *                       operations:
+ *                         type: object
+ *                         properties:
+ *                           prox_due_date:
+ *                             type: string
+ *                             example: "2025-01-14"
+ *       400:
+ *         description: Solicitud inválida. Algún campo obligatorio falta o está mal formado.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Descripción del error."
+ *       404:
+ *         description: Código o IMEI incorrecto.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Descripción del error."
+ *       500:
+ *         description: Error interno del servidor.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "error"
+ *                 message:
+ *                   type: string
+ *                   example: "Descripción del error."
+ */
+router.post('/validate-code', DeviceController.validateCode);
 
 export default router;
