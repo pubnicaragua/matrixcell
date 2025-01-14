@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../axiosConfig";
 import * as XLSX from "xlsx";
+import Loader from "./ui/loader";
 
 const ExportEquifax: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
@@ -224,7 +225,13 @@ console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
           Exportar a Excel
         </button>
         <button onClick={handleSend} style={{ marginLeft: "10px" }} disabled={isLoading}>
-          {isLoading ? "Enviando..." : "Enviar Consolidado"}
+          {isLoading ?(
+            <>
+            "Enviando..." 
+            <Loader />
+            </>
+             
+             ): "Enviar Consolidado"}
         </button>
       </div>
     </div>
