@@ -74,7 +74,7 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
                 <InfoItem label="Teléfono" value={client.phone} />
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
                 <InfoItem label="Ciudad" value={client.city} />
-                <InfoItem label="Plazo" value={`${client.deadline} meses`} />
+                <InfoItem label="Plazo" value={client.deadline ? `${client.deadline} meses` : 'No hay plazo'} />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
