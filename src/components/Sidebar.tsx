@@ -16,6 +16,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
+  FaMobileAlt
 } from 'react-icons/fa';
 import api from '../axiosConfig';
 
@@ -49,9 +50,8 @@ export default function Sidebar() {
 
       {/* Menú lateral */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 h-full w-64 flex-shrink-0 flex flex-col overflow-auto bg-green-600 text-white transition-transform duration-300 transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:relative`}
+        className={`fixed inset-y-0 left-0 z-40 h-full w-64 flex-shrink-0 flex flex-col overflow-auto bg-green-600 text-white transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:relative`}
       >
         <div className="p-4 mt-10 md:mt-0">
           <h2 className="text-xl font-bold">MatrixCell Admin</h2>
@@ -73,24 +73,10 @@ export default function Sidebar() {
             <span>Notificaciones</span>
           </Link>
 
-          <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
-            <FaUsersCog className="h-5 w-5" />
-            <span>Gestionar Clientes</span>
-          </Link>
-
-          <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
-            <FaTools className="h-5 w-5" />
-            <span>Gestionar Servicios Técnicos</span>
-          </Link>
-
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">
               Gestión
             </p>
-            <Link to="/profile" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
-              <FaUser className="h-5 w-5" />
-              <span>Mi Perfil</span>
-            </Link>
             <Link to="/users" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaUsers className="h-5 w-5" />
               <span>Usuarios</span>
@@ -99,6 +85,21 @@ export default function Sidebar() {
               <FaLock className="h-5 w-5" />
               <span>Tiendas</span>
             </Link>
+            <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaUsersCog className="h-5 w-5" />
+              <span>Clientes</span>
+            </Link>
+
+            <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaTools className="h-5 w-5" />
+              <span>Servicios Técnicos</span>
+            </Link>
+
+            <Link to="/blockdevices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaMobileAlt className="h-5 w-5" />
+              <span>Dispositivos</span>
+            </Link>
+
           </div>
 
           <div className="pt-4">
@@ -138,6 +139,10 @@ export default function Sidebar() {
             <Link to="/settings" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaCogs className="h-5 w-5" />
               <span>Configuración</span>
+            </Link>
+            <Link to="/profile" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaUser className="h-5 w-5" />
+              <span>Mi Perfil</span>
             </Link>
             <Link to="/security" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaLock className="h-5 w-5" />
