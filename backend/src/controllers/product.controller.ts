@@ -3,21 +3,15 @@ import supabase from "../config/supabaseClient";
 import * as xlsx from 'xlsx';
 import { BaseService } from "../services/base.service";
 import { createProduct, createProductModel } from "../services/inventory.service";
-interface ProductoExcel {
-    store: string;           // Código de la tienda
-    modelo_producto: string; // Nombre del modelo del producto
-    nombre_producto: string; // Nombre del producto
-    codigo_item: string;     // Código único del producto
-    cantidad: number;        // Cantidad de products
-    precio:number;
-}
+import { ProductoExcel } from "../interface/productExcel.interface";
+
 const tableName = 'products'; // Nombre de la tabla en la base de datos
 
 export const ProductController = {
 async getAllProducts(req: Request, res: Response) {
         try {
             const where = { ...req.query };
-            const products = await BaseService.getAll<Product>(tableName, ['id', 'created_at', 'code', 'model_id', 'models(id,name)','price'], where);
+            const products = await BaseService.getAll<Product>(tableName, ['id', 'created_at', 'code', 'model_id', 'models(id,name)','categories(id,name)','price','busines_price'], where);
             res.json(products);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -74,7 +68,16 @@ async masiveProductInventory(req: Request, res: Response) {
                     .eq('name', item.modelo_producto)
                     .single();
 
-                const modeloId = model?.id || (await createProductModel(item.modelo_producto));
+                const modeloId = model?.id || (await createProductModel(item.modelo_producto));  
+                
+                
+                const { data: categories, error: categoryError } = await supabase
+                    .from('categories')
+                    .select('id')
+                    .eq('code', item.code_category)
+                    .single();
+
+                const categoryId = categories?.id ;
 
                 // Buscar o crear el producto
                 const { data: producto, error: productoError } = await supabase
@@ -82,8 +85,7 @@ async masiveProductInventory(req: Request, res: Response) {
                     .select('id')
                     .eq('codigo', item.codigo_item)
                     .single();
-
-                const productoId = producto?.id || (await createProduct(item, modeloId));
+                const productoId = producto?.id || (await createProduct(item, modeloId,categoryId));
 
                 // Buscar la tienda correspondiente
                 const store = stores.find((s) => s.name === item.store);
@@ -99,8 +101,8 @@ async masiveProductInventory(req: Request, res: Response) {
                     .eq('store_id', store.id)
                     .single();
 
-                const stockActualizado = (inventario?.stock ?? 0) + item.cantidad;
-                const cantidadFisicaActualizada = (inventario?.cantidad_fisica ?? 0) + item.cantidad;
+                const stockActualizado = (inventario?.stock ?? 0) + item.Cantidad;
+                const cantidadFisicaActualizada = (inventario?.cantidad_fisica ?? 0) + item.Cantidad;
 
                 if (inventario) {
                     inventarios.push({

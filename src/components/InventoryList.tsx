@@ -10,6 +10,7 @@ interface Inventory {
     products: {
         id: number;
         price: number;
+        busines_price:number;
         models: {
             id: number;
             name: string;

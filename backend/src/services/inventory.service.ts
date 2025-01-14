@@ -1,12 +1,5 @@
 import supabase from "../config/supabaseClient";
-interface ProductoExcel {
-    store: string;           // Código de la tienda
-    modelo_producto: string; // Nombre del modelo del producto
-    nombre_producto: string; // Nombre del producto
-    codigo_item: string;     // Código único del producto
-    cantidad: number;        // Cantidad de products
-    precio:number;
-}
+import { ProductoExcel } from "../interface/productExcel.interface";
    // Función auxiliar para crear un modelo de producto
    export const createProductModel = async(nombre: string): Promise<string> => {
     try {
@@ -30,16 +23,17 @@ interface ProductoExcel {
     }
 }
 // Función auxiliar para crear un producto
-export const createProduct =async(item: ProductoExcel, modeloId: string): Promise<string> =>  {
+export const createProduct =async(item: ProductoExcel, modeloId: string, category_id:number): Promise<string> =>  {
     try {
         const { data: newProducto, error: newProductoError } = await supabase
             .from('products')
             .insert({
                 article: item.nombre_producto,
                 code: item.codigo_item,
-                price: item.precio,
+                price: item["Precio al cliente"],
+                busines_price: item["precio para negocio"],
                 model_id: modeloId,
-
+                category_id:category_id,
             })
             .select('id')
             .single();
