@@ -10,7 +10,7 @@ export const InventoryController = {
     async getAllInventory(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const inventarios = await BaseService.getAll<Inventory>(tableName, ['id', 'store_id', 'product_id', 'stock', 'created_at', 'products(id,article,price,busines_price,models(id,name),categories(id,name))', 'store(id,name)'], where);
+            const inventarios = await BaseService.getAll<Inventory>(tableName, ['id', 'store_id', 'product_id', 'stock', 'created_at', 'products(id,article,price,busines_price,models(id,name),categories(id,name))', 'store(id,name)', 'imei'], where);
             res.json(inventarios);
         } catch (error) {
             console.error(error);
