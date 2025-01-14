@@ -10,7 +10,7 @@ import supabase from "../config/supabaseClient";
 const tableName = 'clients'; // Nombre de la tabla en la base de datos
 import * as XLSX from 'xlsx';
 import { extractFirstNumber } from "../services/client.service";
-import { number } from "joi";
+import { number, string } from "joi";
 import { identity } from "lodash";
 
 export const ClientController = {
@@ -175,7 +175,8 @@ export const ClientController = {
             }
 
             for (const row of sheetData) {
-                console.log('fila', row) 
+                console.log('fila', row)
+
                 const { data: existingClients, error: clientCheckError } = await supabase
                     .from('clients')
                     .select('id')
@@ -184,47 +185,92 @@ export const ClientController = {
                 if (clientCheckError) {
                     throw new Error(`Error al verificar cliente: ${clientCheckError.message}`);
                 }
+
+                let clientId;
+
+                // Verifica si se encontró un cliente
                 if (!existingClients || existingClients.length === 0) {
-                    const client = {
-                        identity_number: row.CODIGO_ID_SUJETO,
-                        identity_type: row.COD_TIPO_ID,
-                        name: row.NOMBRE_SUJETO,
-                        address: row.DIRECCION,
-                        city: row.CIUDAD,
-                        phone: row.TELEFONO,
-                        debt_type: row.TIPO_DEUDOR,
-                        grant_date: row.FECHA_CONCESION || null,
-                        due_date: row.FEC_CORTE_SALDO || null,
-                        deadline: extractFirstNumber(row.PLAZO_EN_MESES) || null,
-                        created_at: new Date(),
-                    };
-                    console.log(client)
+                    console.log(`Cliente no encontrado para: ${row.CODIGO_ID_SUJETO}`);
+                    clientId = null; // Esto indica que el cliente no existe
+                } else {
+                    clientId = existingClients[0].id; // Cliente encontrado
+                    console.log(`Cliente encontrado con ID: ${clientId}`);
+                }
+
+                const client = {
+                    identity_number: row.CODIGO_ID_SUJETO,
+                    identity_type: row.COD_TIPO_ID,
+                    name: row.NOMBRE_SUJETO,
+                    address: row.DIRECCION,
+                    city: row.CIUDAD,
+                    phone: row.TELEFONO,
+                    debt_type: row.TIPO_DEUDOR,
+                    grant_date: row.FECHA_CONCESION || null,
+                    due_date: row.FEC_CORTE_SALDO || null,
+                    deadline: extractFirstNumber(row.PLAZO_EN_MESES) || null,
+                    created_at: new Date(),
+                }
+
+                console.log(client)
+
+                if (!clientId) {
                     const { data: clientData, error: clientError } = await supabase
                         .from('clients')
                         .insert(client)
                         .select()
                         .single();
 
+                    clientId = clientData.id;
                     if (clientError) throw new Error(`Error al insertar cliente: ${clientError.message}`);
 
-                    const operation = {
-                        operation_number: row.NUMERO_DE_OPERACION || null,
-                        operation_value: row.VAL_OPERACION || null,
-                        amount_due: row.VAL_A_VENCER || null,
-                        amount_paid: row.VAL_VENCIDO || null,
-                        judicial_action: row.VA_DEM_JUDICIAL > 0,
-                        cart_value: row.VAL_CART_CASTIGADA || null,
-                        days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS) || null,
-                        due_date: row.FECHA_DE_VENCIMIENTO|| null,
-                        refinanced_debt: row.DEUDA_REFINANCIADA || null,
-                        prox_due_date: row.FECHA_SIG_VENCIMIENTO || null,
-                        client_id: clientData.id,
-                        created_at: new Date(),
-                        monthly_value: row.VALOR_MENSUAL || null,
-                        frequency: row.FRECUENCIA_PAGO || null
-                    };
-                    console.log(operation)
-                    const { error: operationError } = await supabase.from('operations').insert(operation);
+                } else {
+                    const { error: clientError } = await supabase
+                        .from('clients')
+                        .update(client)
+                        .eq('id', clientId);
+                    console.log(`Cliente ${client.name} actualizado`)
+                    if (clientError) throw new Error(`Error al actualizar cliente: ${clientError.message}`);
+                }
+                const { data: existingOperations, error: operationsError } = await supabase
+                    .from('operations')
+                    .select('id')
+                    .eq('client_id', clientId);
+
+                if (operationsError) {
+                    throw new Error(`Error al verificar operaciones: ${operationsError.message}`);
+                }
+
+                const operation = {
+                    operation_number: row.NUMERO_DE_OPERACION || null,
+                    operation_value: row.VAL_OPERACION || null,
+                    amount_due: row.VAL_A_VENCER || null,
+                    amount_paid: row.VAL_VENCIDO || null,
+                    judicial_action: row.VA_DEM_JUDICIAL > 0,
+                    cart_value: row.VAL_CART_CASTIGADA || null,
+                    days_overdue: extractFirstNumber(row.NUM_DIAS_VENCIDOS) || null,
+                    due_date: row.FECHA_DE_VENCIMIENTO || null,
+                    refinanced_debt: row.DEUDA_REFINANCIADA || null,
+                    prox_due_date: row.FECHA_SIG_VENCIMIENTO || null,
+                    client_id: clientId,
+                    created_at: new Date(),
+                    monthly_value: row.VALOR_MENSUAL || null,
+                    frequency: row.FRECUENCIA_PAGO || null
+                };
+
+                console.log(operation)
+
+                if (existingOperations?.length > 0) {
+                    const { error: operationError } = await supabase
+                        .from('operations')
+                        .update(operation)
+                        .eq('id', existingOperations[0].id);
+
+                    if (operationError) throw new Error(`Error al actualizar operación: ${operationError.message}`);
+                } else {
+                    const { error: operationError } = await supabase
+                        .from('operations')
+                        .insert(operation);
+
                     if (operationError) throw new Error(`Error al insertar operación: ${operationError.message}`);
                 }
             }
