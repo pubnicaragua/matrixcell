@@ -5,13 +5,13 @@ import { MovimientoInventario } from "../models/movimientoInventario.model";
 import { Inventory } from "../models/inventory.model";
 import { error } from "console";
 
-const tableName= 'inventory'
+const tableName = 'inventory'
 export const InventoryController = {
     async getAllInventory(req: Request, res: Response) {
         try {
-            const where = {...req.query }; // Convertir los parámetros de consulta en filtros
-           const inventarios = await BaseService.getAll<Inventory>(tableName,['id', 'store_id', 'product_id', 'stock', 'created_at','products(id,article,price,models(id,name))','store(id,name)'], where);
-           res.json(inventarios);
+            const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
+            const inventarios = await BaseService.getAll<Inventory>(tableName, ['id', 'store_id', 'product_id', 'stock', 'created_at', 'products(id,article,price,busines_price,models(id,name),categories(id,name))', 'store(id,name)', 'imei'], where);
+            res.json(inventarios);
         } catch (error) {
             console.error(error);
             res.status(500).send('Error al obtener inventarios');
@@ -208,11 +208,12 @@ export const InventoryController = {
         }
     },
     async updateInventory(req: Request, res: Response) {
-        const { product_id, store_id, cantidad } = req.body;
+        const { product_id, store_id, cantidad, imei } = req.body;
+        const imei_product = imei === undefined ? null : imei;
         try {
             // Verificar que la cantidad a editar sea válida
             if (cantidad <= 0) {
-                 res.status(400).json({ error: 'La cantidad debe ser mayor a cero' });
+                res.status(400).json({ error: 'La cantidad debe ser mayor a cero' });
             }
 
             // Verificar si el producto existe en el inventario de la tienda
@@ -224,11 +225,11 @@ export const InventoryController = {
                 .single();
 
             if (stockError) {
-                 res.status(500).json({ error: 'Error al verificar el stock' });
+                res.status(500).json({ error: 'Error al verificar el stock' });
             }
 
             if (!currentStock) {
-                 res.status(404).json({ error: 'Producto no encontrado en la tienda' });
+                res.status(404).json({ error: 'Producto no encontrado en la tienda' });
             }
 
             // Actualizar el stock en la tienda
@@ -236,15 +237,16 @@ export const InventoryController = {
                 .from('inventory')
                 .update({
                     stock: cantidad,
-                    cantidad_fisica: cantidad
+                    cantidad_fisica: cantidad,
+                    imei: imei_product
                 })
                 .eq('product_id', product_id)
                 .eq('store_id', store_id);
 
             if (updateError) {
-                 res.status(500).json({ error: 'Error al actualizar el stock' });
+                res.status(500).json({ error: 'Error al actualizar el stock' });
             }
-                     // Responder con éxito
+            // Responder con éxito
             res.status(200).json({ message: 'Stock editado correctamente' });
 
         } catch (error: any) {

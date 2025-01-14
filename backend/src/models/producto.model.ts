@@ -4,6 +4,7 @@ class Product {
     article: string|null;
     price?: number|null;
     model_id: number|null;
+    categoria_id:number|null;
     constructor(
   
     ) {
@@ -11,4 +12,5 @@ class Product {
       this.article = null;
       this.model_id = null;
       this.price = null;
+      this.categoria_id=null;
     }}

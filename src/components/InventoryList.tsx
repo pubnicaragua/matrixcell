@@ -7,9 +7,11 @@ interface Inventory {
     product_id: number;
     stock: number;
     created_at: string;
+    imei:string;
     products: {
         id: number;
         price: number;
+        busines_price:number;
         models: {
             id: number;
             name: string;
@@ -61,7 +63,8 @@ const InventoryList = () => {
                         <th className="border px-4 py-2">Producto</th>
                         <th className="border px-4 py-2">Modelo</th>
                         <th className="border px-4 py-2">Artículo</th>
-                        <th className="border px-4 py-2">Precio</th>
+                        <th className="border px-4 py-2">Precio del Cliente</th>
+                        <th className="border px-4 py-2">Precio del Negocio</th>
                         <th className="border px-4 py-2">Stock</th>
                         <th className="border px-4 py-2">Fecha de Creación</th>
                     </tr>
@@ -75,7 +78,9 @@ const InventoryList = () => {
                             <td className="border px-4 py-2">{inventory.products.models.name}</td>
                             <td className="border px-4 py-2">{inventory.products.article}</td>
                             <td className="border px-4 py-2">${inventory.products.price}</td>
+                            <td className="border px-4 py-2">${inventory.products.busines_price}</td>
                             <td className="border px-4 py-2">{inventory.stock}</td>
+                            <td className="border px-4 py-2">{inventory.imei}</td>
                             <td className="border px-4 py-2">
                                 {new Date(inventory.created_at).toLocaleDateString()}
                             </td>

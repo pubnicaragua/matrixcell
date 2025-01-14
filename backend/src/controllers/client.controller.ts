@@ -53,6 +53,7 @@ export const ClientController = {
             const { id } = req.params;
             const { userId } = req;
             const { data, error } = await supabase.from('operations').delete().eq('client_id', id);
+            const { data:dataDevices, error:errorDevices } = await supabase.from('devices').delete().eq('owner', id);
             if (error) throw new Error(error.message);
             await BaseService.delete<Client>(tableName, id, userId);
             res.json({ message: 'Client eliminada correctamente' });

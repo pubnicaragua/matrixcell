@@ -16,6 +16,7 @@ interface Inventory {
     article: string;
     price: number;
   };
+  imei: string;
 }
 
 const TechnicalServices: React.FC = () => {
@@ -27,6 +28,7 @@ const TechnicalServices: React.FC = () => {
   const [quantity, setQuantity] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [serviceDetails, setServiceDetails] = useState<any | null>(null);
+  const [imei, setImei] = useState<string>("");
   const [formData, setFormData] = useState({
     client: "",
     serviceType: "",
@@ -98,7 +100,8 @@ const TechnicalServices: React.FC = () => {
     await api.put(`/inventories/${selectedProduct.id}`, {
       product_id: selectedProduct.products.id, // ID del producto
       cantidad: updatedStock, // Cantidad restante
-      store_id: selectedStore
+      store_id: selectedStore,
+      imei: imei, // IMEI del producto
     });
 
     // Actualizar el resumen del servicio
@@ -118,6 +121,7 @@ const TechnicalServices: React.FC = () => {
     setSelectedProduct(null);
     setQuantity(0);
     setTotalCost(0);
+    setImei("");
     alert("Servicio guardado exitosamente.");
   } catch (error) {
     console.error("Error saving service or updating inventory:", error);
@@ -145,7 +149,18 @@ const TechnicalServices: React.FC = () => {
             required
           />
         </div>
-
+        <div>
+        <label htmlFor="client">IMEI</label>
+        <input
+          id="imei"
+          type="text"
+          placeholder="IMEI"
+          className="block w-full p-3 rounded-lg border border-gray-300"
+          value={imei}
+          maxLength={15} // Limita a 15 caracteres
+          onChange={(e) => setImei(e.target.value)}
+        />
+      </div>
         <div>
           <label htmlFor="serviceType">Tipo de Servicio</label>
           <input
