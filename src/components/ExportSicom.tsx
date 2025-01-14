@@ -87,6 +87,16 @@ const ExportEquifax: React.FC = () => {
 
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
     const valVencido = valOperacion - valAVencer;
+    
+    function getLastDayOfCurrentMonth() {
+      const today = new Date(); // Fecha actual del sistema
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1); // Primer día del próximo mes
+      const lastDayOfMonth = new Date(nextMonth.getTime() - 1); // Último día del mes actual
+      return lastDayOfMonth.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+    }
+
+    const FEC_CORTE_SALDO = getLastDayOfCurrentMonth();
+console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
 
     return {
       ...client,
@@ -94,13 +104,15 @@ const ExportEquifax: React.FC = () => {
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
-      FEC_CORTE_SALDO: finalDueDate.toISOString().split("T")[0],
+      FEC_CORTE_SALDO: getLastDayOfCurrentMonth(),
       FRECUENCIA_PAGO: paymentFrequency,
       PLAZO_EN_MESES:` ${creditTerm} meses`,
       FECHA_DE_VENCIMIENTO: firstDueDate.toISOString().split("T")[0],
       FECHA_SIG_VENCIMIENTO: finalDueDate.toISOString().split("T")[0],
     };
   };
+
+
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
