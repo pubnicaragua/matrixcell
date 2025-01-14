@@ -38,10 +38,10 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="relative">
+    <aside className="h-screen relative">
       {/* Botón para desplegar el menú */}
       <button
-        className="absolute top-4 left-4 z-50 block md:hidden text-gray-800"
+        className="absolute top-4 left-4 block md:hidden text-gray-800"
         onClick={toggleMenu}
       >
         {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -49,8 +49,9 @@ export default function Sidebar() {
 
       {/* Menú lateral */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-green-600 text-white transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 md:static`}
+        className={`fixed inset-y-0 left-0 z-40 h-full w-64 flex-shrink-0 flex flex-col overflow-auto bg-green-600 text-white transition-transform duration-300 transform ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 md:relative`}
       >
         <div className="p-4 mt-10 md:mt-0">
           <h2 className="text-xl font-bold">MatrixCell Admin</h2>
@@ -159,16 +160,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-
-const styles = {
-  layout: {
-    display: 'flex',
-    flexDirection: 'column' as 'column', // Cambiar a columna en pantallas pequeñas
-    height: '100vh',
-  },
-  content: {
-    flex: 1,
-    padding: '20px',
-    overflowY: 'auto' as 'auto',
-  },
-};
