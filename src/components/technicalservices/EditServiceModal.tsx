@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 import api from "../../axiosConfig";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+
 
 interface Store {
   id: number;
@@ -22,7 +28,7 @@ interface Inventory {
 interface Service {
   id: number;
   client: string;
-  serviceType: string;
+  service_type: string; // Cambia de serviceType a service_type
   description: string;
   status: string;
   product_id: number;
@@ -30,6 +36,7 @@ interface Service {
   cost: number;
   store_id: number;
 }
+
 
 interface EditServiceModalProps {
   service: Service | null;
@@ -117,130 +124,129 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
     if (!formData) return;
   
     try {
-      // Encuentra el producto seleccionado en el inventario
       const product = inventories.find((item) => item.product_id === formData.product_id);
   
       if (product) {
-        // Calcula el stock actualizado
         const updatedStock = product.stock + (service!.quantity - formData.quantity);
   
-        // Realiza la solicitud PUT para actualizar el inventario
         await api.put(`/inventories/${product.id}`, {
-          product_id: product.products.id, // ID del producto desde el inventario
-          cantidad: updatedStock, // Cantidad restante calculada
-          store_id: formData.store_id, // Tienda seleccionada desde formData
-         // imei: product.imei || imei, // IMEI del producto (asegúrate de que `imei` esté definido)
+          product_id: product.products.id,
+          cantidad: updatedStock,
+          store_id: formData.store_id,
         });
       }
   
-      // Realiza la solicitud PUT para actualizar el servicio
       const response = await api.put(`/technical_services/${formData.id}`, formData);
   
-      // Llama al callback onSave con los datos actualizados
       onSave(response.data);
-  
-      // Cierra el modal
       onClose();
     } catch (error) {
       console.error("Error al guardar cambios:", error);
       alert("Error al guardar el servicio o actualizar el inventario.");
     }
   };
-  
 
   if (!formData) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg w-1/3">
-        <h2 className="text-xl font-bold mb-4">Editar Servicio</h2>
-        <div className="space-y-4">
-          <div>
-            <label>Cliente</label>
-            <input
-              type="text"
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Editar Servicio</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="client" className="text-right">
+              Cliente
+            </Label>
+            <Input
+              id="client"
               value={formData.client}
               onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-              className="w-full p-2 border rounded"
+              className="col-span-3"
             />
           </div>
-
-          <div>
-            <label htmlFor="store">Seleccionar Tienda</label>
-            <select
-              id="store"
-              className="block w-full p-3 rounded-lg border border-gray-300"
-              value={formData.store_id || ""}
-              onChange={(e) => handleStoreChange(Number(e.target.value))}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="store" className="text-right">
+              Tienda
+            </Label>
+            <Select
+              value={formData.store_id.toString()}
+              onValueChange={(value) => handleStoreChange(Number(value))}
             >
-              <option value="">Seleccione una tienda</option>
-              {stores.map((store) => (
-                <option key={store.id} value={store.id}>
-                  {store.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Seleccione una tienda" />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((store) => (
+                  <SelectItem key={store.id} value={store.id.toString()}>
+                    {store.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          <div>
-            <label htmlFor="product">Seleccionar Producto</label>
-            <select
-              id="product"
-              className="block w-full p-3 rounded-lg border border-gray-300"
-              value={formData.product_id || ""}
-              onChange={(e) => handleProductChange(Number(e.target.value))}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="product" className="text-right">
+              Producto
+            </Label>
+            <Select
+              value={formData.product_id.toString()}
+              onValueChange={(value) => handleProductChange(Number(value))}
             >
-              <option value="">Seleccione un producto</option>
-              {inventories.map((item) => (
-                <option key={item.product_id} value={item.product_id}>
-                  {item.products.article}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Seleccione un producto" />
+              </SelectTrigger>
+              <SelectContent>
+                {inventories.map((item) => (
+                  <SelectItem key={item.product_id} value={item.product_id.toString()}>
+                    {item.products.article}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
           {selectedProduct && (
-            <div>
-              <p>
-                <strong>Precio por unidad:</strong> ${selectedProduct.products.price}
-              </p>
-              <p>
-                <strong>Stock disponible:</strong> {selectedProduct.stock}
-              </p>
-              <label htmlFor="quantity">Cantidad</label>
-              <input
-                id="quantity"
-                type="number"
-                className="block w-full p-3 rounded-lg border border-gray-300"
-                value={formData.quantity}
-                onChange={(e) => handleQuantityChange(Number(e.target.value))}
-                min="1"
-                max={selectedProduct.stock}
-              />
-            </div>
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Precio por unidad</Label>
+                <span className="col-span-3">${selectedProduct.products.price}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Stock disponible</Label>
+                <span className="col-span-3">{selectedProduct.stock}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="quantity" className="text-right">
+                  Cantidad
+                </Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                  min="1"
+                  max={selectedProduct.stock}
+                  className="col-span-3"
+                />
+              </div>
+            </>
           )}
-
-          <p>
-            <strong>Costo Total:</strong> ${totalCost.toFixed(2)}
-          </p>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Costo Total</Label>
+            <span className="col-span-3">${totalCost.toFixed(2)}</span>
+          </div>
         </div>
-
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={onClose}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md mr-2"
-          >
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-          >
+          </Button>
+          <Button type="button" onClick={handleSave}>
             Actualizar
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
