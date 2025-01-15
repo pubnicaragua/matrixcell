@@ -127,6 +127,7 @@ const FileUploader: React.FC = () => {
       const response = await api.put(`/inventories/${editingItem.id}`, {
         cantidad: editingStock,
         product_id:editingProduct,
+        imei:'',
         store_id:editingStore
       });
       setInventory(prev =>
