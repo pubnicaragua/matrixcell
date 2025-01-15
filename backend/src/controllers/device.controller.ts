@@ -464,7 +464,13 @@ export const DeviceController = {
 
                 queryResult = data;
             }
-
+            const { error: updateError } = await supabase
+                .from(tableName)
+                .update({ status: 'Desbloqueado' }) // Cambiar el campo `status` a "Desbloqueado"
+                .eq('unlock_code', code);
+                if (updateError) {
+                    throw new Error("Error al consultar la base de datos por IMEI.");
+                }
             // Respuesta exitosa
             res.status(200).json({
                 "status": "success",
