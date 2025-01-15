@@ -1,6 +1,21 @@
+'use client'
+
 import React, { useEffect, useState } from "react";
 import api from "../../axiosConfig";
 import jsPDF from "jspdf";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Search, Download, Filter } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface Store {
   id: number;
@@ -41,35 +56,25 @@ const ServiceListPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [inventories, setInventories] = useState<Inventory[]>([]);
-
-  useEffect(() => {
-    const fetchInventories = async () => {
-      try {
-        const response = await api.get("/inventories");
-        setInventories(response.data);
-      } catch (err) {
-        console.error("Error fetching inventories:", err);
-      }
-    };
-
-    fetchInventories();
-  }, []);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [servicesRes, storesRes, productsRes] = await Promise.all([
+        const [servicesRes, storesRes, productsRes, inventoriesRes] = await Promise.all([
           api.get("/technical_services"),
           api.get("/stores"),
           api.get("/products"),
+          api.get("/inventories"),
         ]);
         setServices(servicesRes.data);
         setStores(storesRes.data);
         setProducts(productsRes.data);
+        setInventories(inventoriesRes.data);
       } catch (err) {
         setError("Error al obtener los datos.");
       } finally {
@@ -102,61 +107,88 @@ const ServiceListPage: React.FC = () => {
     doc.save(`Servicio_${service.id}.pdf`);
   };
 
+  const filteredServices = services.filter((service) => {
+    const searchMatch = 
+      service.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.service_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const statusMatch = !statusFilter || service.status === statusFilter;
+
+    return searchMatch && statusMatch;
+  });
+
   if (loading) return <p>Cargando servicios...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">Lista de Servicios</h2>
-      <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border px-4 py-2">Cliente</th>
-            <th className="border px-4 py-2">Tipo de Servicio</th>
-            <th className="border px-4 py-2">Estado</th>
-            <th className="border px-4 py-2">Descripción</th>
-            <th className="border px-4 py-2">Costo</th>
-            <th className="border px-4 py-2">Cantidad</th>
-            <th className="border px-4 py-2">Producto</th>
-            <th className="border px-4 py-2">Tienda</th>
-            <th className="border px-4 py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {services.map((service) => {
-            // Buscar el producto asociado al ID
-            const inventoryItem = inventories.find((inventory) => inventory.product_id === service.product_id);
-            const productName = inventoryItem ? inventoryItem.products.article : "Producto no encontrado";
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="text-3xl font-bold mb-6">Lista de Servicios</h2>
+      <div className="flex justify-between items-center mb-6">
+        <div className="relative w-64">
+          <Input
+            type="text"
+            placeholder="Buscar servicios..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Filter className="mr-2" size={20} />
+              Filtrar por Estado
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Estados</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setStatusFilter(null)}>Todos</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("Pendiente")}>Pendiente</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("En Proceso")}>En Proceso</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("Completado")}>Completado</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredServices.map((service) => {
+          const inventoryItem = inventories.find((inventory) => inventory.product_id === service.product_id);
+          const productName = inventoryItem ? inventoryItem.products.article : "Producto no encontrado";
+          const storeName = stores.find((store) => store.id === service.store_id)?.name || "Tienda no encontrada";
 
-            // Buscar la tienda asociada al ID
-            const storeName = stores.find((store) => store.id === service.store_id)?.name || "Tienda no encontrada";
-
-            return (
-              <tr key={service.id} className="hover:bg-gray-100">
-                <td className="border px-4 py-2">{service.client}</td>
-                <td className="border px-4 py-2">{service.service_type}</td>
-                <td className="border px-4 py-2">{service.status}</td>
-                <td className="border px-4 py-2">{service.description}</td>
-                <td className="border px-4 py-2">${service.cost.toFixed(2)}</td>
-                <td className="border px-4 py-2">{service.quantity}</td>
-                <td className="border px-4 py-2">{productName}</td>
-                <td className="border px-4 py-2">{storeName}</td>
-                <td className="border px-4 py-2">
-                  <button
-                    onClick={() => generatePDF(service)}
-                    className="bg-green-500 text-white px-3 py-1 rounded-md mr-2"
-                  >
-                    Descargar PDF
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-
-      </table>
+          return (
+            <Card key={service.id} className="hover:shadow-lg transition-shadow duration-300">
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  <span>{service.client}</span>
+                  <Badge variant={service.status === "Completado" ? "default" : "secondary"}>
+                    {service.status}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p><strong>Tipo:</strong> {service.service_type}</p>
+                <p><strong>Descripción:</strong> {service.description}</p>
+                <p><strong>Costo:</strong> ${service.cost.toFixed(2)}</p>
+                <p><strong>Cantidad:</strong> {service.quantity}</p>
+                <p><strong>Producto:</strong> {productName}</p>
+                <p><strong>Tienda:</strong> {storeName}</p>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => generatePDF(service)} variant="outline">
+                  <Download className="mr-2" size={20} />
+                  Descargar PDF
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
 export default ServiceListPage;
+
