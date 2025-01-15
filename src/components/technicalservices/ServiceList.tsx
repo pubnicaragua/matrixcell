@@ -7,7 +7,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Search, Download, Filter } from 'lucide-react';
+import { Search, Download, Filter, Edit } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import EditServiceModal from "./EditServiceModal";
 
 interface Store {
   id: number;
@@ -61,6 +62,8 @@ const ServiceListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,6 +120,18 @@ const ServiceListPage: React.FC = () => {
 
     return searchMatch && statusMatch;
   });
+
+  const handleEditClick = (service: Service) => {
+    setSelectedService(service);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveService = (updatedService: Service) => {
+    setServices(services.map(service => 
+      service.id === updatedService.id ? updatedService : service
+    ));
+    setIsEditModalOpen(false);
+  };
 
   if (loading) return <p>Cargando servicios...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -176,16 +191,27 @@ const ServiceListPage: React.FC = () => {
                 <p><strong>Producto:</strong> {productName}</p>
                 <p><strong>Tienda:</strong> {storeName}</p>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex justify-between">
                 <Button onClick={() => generatePDF(service)} variant="outline">
                   <Download className="mr-2" size={20} />
                   Descargar PDF
+                </Button>
+                <Button onClick={() => handleEditClick(service)} variant="outline">
+                  <Edit className="mr-2" size={20} />
+                  Editar
                 </Button>
               </CardFooter>
             </Card>
           );
         })}
       </div>
+      {isEditModalOpen && (
+        <EditServiceModal
+          service={selectedService}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveService}
+        />
+      )}
     </div>
   );
 };
