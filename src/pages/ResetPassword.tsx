@@ -36,6 +36,8 @@ const CreateNewPassword: React.FC = () => {
       setMessage(response.data.message); // Mensaje del backend
       setNewPassword('');
       setConfirmPassword('');
+
+      navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Hubo un error al actualizar la contraseña. Por favor, intenta de nuevo.');
     }
