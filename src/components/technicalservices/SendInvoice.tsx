@@ -6,12 +6,12 @@ const SendOptions: React.FC = () => {
   const [phone, setPhone] = useState("");
 
   const handleSendEmail = () => {
-    const mailtoLink = `mailto:${email}?subject=Consulta&body=Hola, por favor revisa esto.`;
+    const mailtoLink = `mailto:${email}?subject=Factura&body=Hola, por favor revisa esta factura.`;
     window.open(mailtoLink, "_blank");
   };
 
   const handleSendWhatsApp = () => {
-    const whatsappLink = `https://wa.me/${phone}?text=Hola, por favor revisa esto.`;
+    const whatsappLink = `https://wa.me/${phone}?text=Hola, por favor revisa esta factura.`;
     window.open(whatsappLink, "_blank");
   };
 
