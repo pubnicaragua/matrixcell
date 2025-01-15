@@ -68,7 +68,7 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
     }
   };
 
-
+//
   const handleStoreChange = async (storeId: number) => {
     try {
       const response = await api.get(`/inventories?store_id=${storeId}`);
