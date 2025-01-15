@@ -30,10 +30,27 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
 
 interface DialogContentProps {
   children: React.ReactNode;
+  className?: string; // Añadir la propiedad className
 }
 
 export const DialogContent: React.FC<DialogContentProps> = ({ children }) => (
   <div className="space-y-4">{children}</div>
+);
+
+interface DialogHeaderProps {
+  children: React.ReactNode;
+}
+
+export const DialogHeader: React.FC<DialogHeaderProps> = ({ children }) => (
+  <div className="mb-4">{children}</div>
+);
+
+interface DialogFooterProps {
+  children: React.ReactNode;
+}
+
+export const DialogFooter: React.FC<DialogFooterProps> = ({ children }) => (
+  <div className="mt-6 flex justify-end space-x-2">{children}</div>
 );
 
 interface DialogTitleProps {
@@ -65,3 +82,4 @@ export const DialogTrigger: React.FC<DialogTriggerProps> = ({ children, onClick 
     {children}
   </button>
 );
+
