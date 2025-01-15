@@ -38,7 +38,7 @@ const TechnicalServices: React.FC = () => {
     serviceType: "",
     description: "",
     status: "Pendiente",
-    product_name: "",
+    product_id: 0,
     quantity: 0,
     service_price: 0, // Precio del servicio
   });
@@ -86,7 +86,7 @@ const TechnicalServices: React.FC = () => {
       setSelectedProduct(product);
       setFormData({
         ...formData,
-        product_name: product.products.article, // Nombre del producto
+        product_id: product.product_id, // Nombre del producto
         quantity: 1, // Valor inicial
       });
       setQuantity(1);
@@ -118,7 +118,7 @@ const TechnicalServices: React.FC = () => {
         service_type: formData.serviceType,
         description: formData.description,
         status: formData.status,
-        product_name: formData.product_name, // Nombre del producto
+        product_id: formData.product_id, // Nombre del producto
         quantity, // Cantidad seleccionada
         //service_price: formData.serviceType === "reparación" ? formData.service_price : 0,
         cost: totalCost, // Precio total
@@ -153,7 +153,7 @@ const TechnicalServices: React.FC = () => {
         serviceType: "",
         description: "",
         status: "Pendiente",
-        product_name: "",
+        product_id: 0,
         quantity: 0,
         service_price: 0
       });

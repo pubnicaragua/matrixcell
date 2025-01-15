@@ -9,7 +9,7 @@ export const TechnicalServiceController = {
     async getAllTechnicalServices(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const technicalservices = await BaseService.getAll<TechnicalService>(tableName,['id', 'client','service_type','description','status','cost','store_id','store(name)', 'product_name', 'quantity'],where);
+            const technicalservices = await BaseService.getAll<TechnicalService>(tableName,['id', 'client','service_type','description','status','cost','store_id', 'product_id', 'quantity'],where);
             console.log(technicalservices)
             res.json(technicalservices);
         } catch (error: any) {

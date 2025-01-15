@@ -4,6 +4,7 @@ import ServiceListPage from "../components/technicalservices/ServiceList";
 
 const TechnicalServicesTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState("add-service");
+   const [selectedService, setSelectedService] = useState(null); // Estado para el servicio seleccionado
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
