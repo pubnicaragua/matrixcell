@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TechnicalServices from "../components/technicalservices/Services";
 import ServiceListPage from "../components/technicalservices/ServiceList";
+import SendInvoice from "../components/technicalservices/SendInvoice";
 
 const TechnicalServicesTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState("add-service");
@@ -34,12 +35,23 @@ const TechnicalServicesTabs: React.FC = () => {
         >
           Lista de Servicios
         </button>
+        <button
+          onClick={() => setActiveTab("send-invoice")}
+          className={`px-4 py-2 rounded-lg ${
+            activeTab === "send-invoice"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 hover:bg-gray-300"
+          }`}
+        >
+          Enviar factura
+        </button>
       </div>
 
       {/* Contenido dinámico basado en el tab activo */}
       <div className="bg-white p-6 rounded-lg shadow">
         {activeTab === "add-service" && <TechnicalServices />}
         {activeTab === "service-list" && <ServiceListPage />}
+        {activeTab === "send-invoice" && <SendInvoice />}
       </div>
     </div>
   );
