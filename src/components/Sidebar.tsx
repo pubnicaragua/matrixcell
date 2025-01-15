@@ -97,7 +97,7 @@ export default function Sidebar() {
 
             <Link to="/blockdevice" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaMobileAlt className="h-5 w-5" />
-              <span>Dispositivos</span>
+              <span>Gestionar Dispositivos</span>
             </Link>
 
           </div>
