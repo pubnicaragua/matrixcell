@@ -6,7 +6,7 @@ import { BaseService } from "../services/base.service";
 import { DeviceResource } from "../resources/device.resource";
 import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
-import { generarCodigoDesbloqueo } from "../services/client.service";
+import { generarCedulaEcuatoriana, generarCodigoDesbloqueo } from "../services/client.service";
 import { Client } from "../models/client.model";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
@@ -172,7 +172,7 @@ export const DeviceController = {
                 .from('clients')
                 .select('id, name')
                 .ilike('name', `%${nombresClientes}%`);
-                
+
             if (errorClientes) {
                 res.status(500).json({ error: `Error al obtener IDs de clientes: ${errorClientes.message}` });
             }
@@ -183,7 +183,7 @@ export const DeviceController = {
 
             // Inserta nuevos clientes
             if (nuevosClientes.length > 0) {
-                const nuevosClientesInsertar = nuevosClientes.map(name => ({ name }));
+                const nuevosClientesInsertar = nuevosClientes.map(name => ({ name ,identity_number:generarCedulaEcuatoriana()}));
                 const { data: nuevosClientesData, error: errorInsertClientes } = await supabase
                     .from('clients')
                     .insert(nuevosClientesInsertar)
@@ -354,49 +354,69 @@ export const DeviceController = {
     async unlockRequest(req: Request, res: Response) {
         try {
             const { CODIGO_ID_SUJETO, VOUCHER_PAGO, imei, ip } = req.body;
-
+    
             // Generar código de desbloqueo
             const unlockCode = generarCodigoDesbloqueo();
-
-            // Buscar cliente en la tabla `clients`
-            const { data: cliente, error: errorCliente } = await supabase
-                .from('clients')
-                .select('id')
-                .eq('identity_number', CODIGO_ID_SUJETO)
-                .single();
-
-            if (errorCliente || !cliente) {
-                res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
-            }
-
-            // Buscar dispositivo en la tabla `devices` usando imei o id del cliente
-            const { data: dispositivo, error: errorDispositivo } = await supabase
+    
+            let dispositivo = null;
+            let errorDispositivo = null;
+    
+            // Intentar buscar dispositivo por IMEI
+            const { data: dispositivoPorImei, error: errorPorImei } = await supabase
                 .from('devices')
                 .select('*')
-                .or(`imei.eq.${imei},owner.eq.${cliente?.id}`)
+                .eq('imei', imei)
                 .single();
-
-            if (errorDispositivo || !dispositivo) {
+    
+            if (!errorPorImei && dispositivoPorImei) {
+                dispositivo = dispositivoPorImei;
+            } else {
+                // Si no se encuentra por IMEI, buscar cliente
+                const { data: cliente, error: errorCliente } = await supabase
+                    .from('clients')
+                    .select('id')
+                    .eq('identity_number', CODIGO_ID_SUJETO)
+                    .single();
+    
+                if (errorCliente || !cliente) {
+                     res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
+                }
+    
+                // Buscar dispositivo por cliente
+                const { data: dispositivoPorCliente, error: errorPorCliente } = await supabase
+                    .from('devices')
+                    .select('*')
+                    .or(`imei.eq.${imei},owner.eq.${cliente?.id}`)
+                    .single();
+    
+                if (!errorPorCliente && dispositivoPorCliente) {
+                    dispositivo = dispositivoPorCliente;
+                } else {
+                    errorDispositivo = errorPorCliente;
+                }
+            }
+    
+            if (!dispositivo) {
                 throw new Error('Dispositivo no encontrado.');
             }
-
+    
             // Actualizar el código de desbloqueo en la tabla `devices`
             const { error: errorActualizacion } = await supabase
                 .from('devices')
                 .update({ unlock_code: unlockCode })
                 .eq('id', dispositivo.id);
-
+    
             if (errorActualizacion) {
                 throw new Error('Error actualizando el código de desbloqueo.');
             }
-
+    
             // Crear notificación
             const mensaje = {
                 message: `El cliente con CODIGO_ID_SUJETO: ${CODIGO_ID_SUJETO} y VOUCHER_PAGO: ${VOUCHER_PAGO} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
                 status: 'No Leida',
             };
             await BaseService.create<Notification>('notifications', mensaje);
-
+    
             res.status(200).json({
                 status: 'success',
                 message: 'Solicitud recibida. Nos comunicaremos pronto.',
@@ -404,11 +424,11 @@ export const DeviceController = {
             });
         } catch (error: any) {
             console.error(error);
-
+    
             // Manejo de diferentes tipos de errores
             let statusCode = 500;
             let errorMessage = 'Error interno del servidor.';
-
+    
             if (error.message === 'Cliente no encontrado.') {
                 statusCode = 404;
                 errorMessage = error.message;
@@ -419,10 +439,11 @@ export const DeviceController = {
                 statusCode = 500;
                 errorMessage = error.message;
             }
-
+    
             res.status(statusCode).json({ error: errorMessage });
         }
     },
+    
 
     async unlockValidate(req: Request, res: Response) {
         try {
@@ -468,9 +489,9 @@ export const DeviceController = {
                 .from(tableName)
                 .update({ status: 'Desbloqueado' }) // Cambiar el campo `status` a "Desbloqueado"
                 .eq('unlock_code', code);
-                if (updateError) {
-                    throw new Error("Error al consultar la base de datos por IMEI.");
-                }
+            if (updateError) {
+                throw new Error("Error al consultar la base de datos por IMEI.");
+            }
             // Respuesta exitosa
             res.status(200).json({
                 "status": "success",
