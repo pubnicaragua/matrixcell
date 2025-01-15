@@ -20,6 +20,10 @@ interface InventoryItem {
       id: number;
       name: string;
     };
+    categories: {
+      id: number;
+      name: string;
+    };
     article: string;
     price:number;
     busines_price:number;
@@ -307,6 +311,7 @@ className = "bg-green-500 text-white px-2 py-1 rounded text-sm"
       <tr>
       <th className="px-4 py-2" > ID </th>
         < th className = "px-4 py-2" > Producto </th>
+        < th className = "px-4 py-2" > Categoria </th>
         < th className = "px-4 py-2" > IMEI </th>
         < th className = "px-4 py-2" > Precio del Cliente </th>
         < th className = "px-4 py-2" > Precio del Negocio </th>
@@ -326,6 +331,7 @@ className = "bg-green-500 text-white px-2 py-1 rounded text-sm"
       <tr key= { item.id } >
       <td className="px-4 py-2" > { item.id } </td>
     < td className = "px-4 py-2" > { item.products.article } </td>
+    < td className = "px-4 py-2" > { item.products.categories.name } </td>
     < td className = "px-4 py-2" > { item.imei } </td>
     < td className = "px-4 py-2" > { item.products.price } </td>
     < td className = "px-4 py-2" > { item.products.busines_price } </td>
