@@ -6,6 +6,8 @@ export class TechnicalService{
     status: string;
     cost: number | null;
     store_id: number | null;
+    product_name: string | null;
+    quantity: number | null;
     created_at: Date|null;
     constructor(){
         this.client = null;
@@ -14,6 +16,8 @@ export class TechnicalService{
         this.status = "Pendiente";
         this.cost = null;
         this.store_id = null;
+        this.product_name = null;
+        this.quantity = null;
         this.created_at = null;
     }
 }
