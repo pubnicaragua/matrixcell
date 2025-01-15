@@ -9,7 +9,7 @@ export const BaseService = {
     const auditLog = {
       event,
       table_name: table,
-      user: userId,
+      user_id: userId,
       details,
       timestamp: new Date().toISOString(),
     };
