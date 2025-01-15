@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import DeviceContext from '../context/DeviceContext'; // Ajusta la ruta según tu estructura
 
 const BlockAppScreen = () => {
   const [unlockCode, setUnlockCode] = useState('');
   const [error, setError] = useState('');
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockTimeout, setBlockTimeout] = useState(0);
+// Obtén el contexto
+const deviceContext = useContext(DeviceContext);
+
+if (!deviceContext) {
+  console.error('DeviceContext no está disponible. Asegúrate de envolver la aplicación con DeviceProvider.');
+  return null; // Evita renderizar si el contexto no está disponible
+}
+
+const { imei, ip } = deviceContext; // Ahora puedes acceder de forma segura
 
   const handleUnlock = async () => {
     if (!unlockCode) {
@@ -18,6 +28,7 @@ const BlockAppScreen = () => {
     try {
       const response = await axios.post('https://matrixcell.onrender.com/devices/unlock-validate', {
         code: unlockCode,
+        imei
       });
 
       if (response.status === 200) {

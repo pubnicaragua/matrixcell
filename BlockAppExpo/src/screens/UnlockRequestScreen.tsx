@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import DeviceContext from '../context/DeviceContext'; // Ajusta la ruta según tu estructura
 
 type RootStackParamList = {
   UnlockRequest: undefined;
@@ -21,6 +22,16 @@ const UnlockRequestScreen: React.FC<Props> = ({ navigation }) => {
   const [codigoId, setCodigoId] = useState('');
   const [voucherPago, setVoucherPago] = useState('');
   const [error, setError] = useState('');
+  
+  // Obtén el contexto
+  const deviceContext = useContext(DeviceContext);
+
+  if (!deviceContext) {
+    console.error('DeviceContext no está disponible. Asegúrate de envolver la aplicación con DeviceProvider.');
+    return null; // Evita renderizar si el contexto no está disponible
+  }
+
+  const { imei, ip } = deviceContext; // Ahora puedes acceder de forma segura
 
   const handleSubmit = async () => {
     if (!codigoId || !voucherPago) {
@@ -34,6 +45,8 @@ const UnlockRequestScreen: React.FC<Props> = ({ navigation }) => {
         {
           CODIGO_ID_SUJETO: codigoId,
           VOUCHER_PAGO: voucherPago,
+          imei,
+          ip,
         }
       );
 
@@ -73,6 +86,10 @@ const UnlockRequestScreen: React.FC<Props> = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Enviar Solicitud</Text>
       </TouchableOpacity>
+      <View style={styles.infoContainer}>
+        <Text style={styles.infoText}>IMEI: {imei}</Text>
+        <Text style={styles.infoText}>IP: {ip}</Text>
+      </View>
     </View>
   );
 };
@@ -115,6 +132,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  infoContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  infoText: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 8,
   },
 });
 

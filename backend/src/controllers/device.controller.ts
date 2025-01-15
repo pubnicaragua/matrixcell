@@ -171,8 +171,8 @@ export const DeviceController = {
             const { data: clientesExistentes, error: errorClientes } = await supabase
                 .from('clients')
                 .select('id, name')
-                .in('name', nombresClientes);
-
+                .ilike('name', `%${nombresClientes}%`);
+                
             if (errorClientes) {
                 res.status(500).json({ error: `Error al obtener IDs de clientes: ${errorClientes.message}` });
             }
