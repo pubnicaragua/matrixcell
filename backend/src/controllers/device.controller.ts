@@ -359,40 +359,48 @@ export const DeviceController = {
             const unlockCode = generarCodigoDesbloqueo();
     
             let dispositivo = null;
-            let errorDispositivo = null;
     
-            // Intentar buscar dispositivo por IMEI
-            const { data: dispositivoPorImei, error: errorPorImei } = await supabase
+            // Intentar buscar dispositivo por IP
+            const { data: dispositivoPorIp, error: errorPorIp } = await supabase
                 .from('devices')
                 .select('*')
-                .eq('imei', imei)
+                .eq('ip', ip)
                 .single();
     
-            if (!errorPorImei && dispositivoPorImei) {
-                dispositivo = dispositivoPorImei;
+            if (!errorPorIp && dispositivoPorIp) {
+                dispositivo = dispositivoPorIp;
             } else {
-                // Si no se encuentra por IMEI, buscar cliente
-                const { data: cliente, error: errorCliente } = await supabase
-                    .from('clients')
-                    .select('id')
-                    .eq('identity_number', CODIGO_ID_SUJETO)
-                    .single();
-    
-                if (errorCliente || !cliente) {
-                     res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
-                }
-    
-                // Buscar dispositivo por cliente
-                const { data: dispositivoPorCliente, error: errorPorCliente } = await supabase
+                // Si no se encuentra por IP, intentar buscar por IMEI
+                const { data: dispositivoPorImei, error: errorPorImei } = await supabase
                     .from('devices')
                     .select('*')
-                    .or(`imei.eq.${imei},owner.eq.${cliente?.id}`)
+                    .eq('imei', imei)
                     .single();
     
-                if (!errorPorCliente && dispositivoPorCliente) {
-                    dispositivo = dispositivoPorCliente;
+                if (!errorPorImei && dispositivoPorImei) {
+                    dispositivo = dispositivoPorImei;
                 } else {
-                    errorDispositivo = errorPorCliente;
+                    // Si no se encuentra por IMEI, buscar cliente
+                    const { data: cliente, error: errorCliente } = await supabase
+                        .from('clients')
+                        .select('id')
+                        .eq('identity_number', CODIGO_ID_SUJETO)
+                        .single();
+    
+                    if (errorCliente || !cliente) {
+                         res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
+                    }
+    
+                    // Buscar dispositivo por cliente
+                    const { data: dispositivoPorCliente, error: errorPorCliente } = await supabase
+                        .from('devices')
+                        .select('*')
+                        .or(`owner.eq.${cliente?.id}`)
+                        .single();
+    
+                    if (!errorPorCliente && dispositivoPorCliente) {
+                        dispositivo = dispositivoPorCliente;
+                    }
                 }
             }
     
@@ -443,6 +451,7 @@ export const DeviceController = {
             res.status(statusCode).json({ error: errorMessage });
         }
     },
+    
     
 
     async unlockValidate(req: Request, res: Response) {
