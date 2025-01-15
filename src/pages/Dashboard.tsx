@@ -189,8 +189,8 @@ const Dashboard = () => {
         <h1 className="text-3xl font-semibold text-center text-blue-600 mb-6">Dashboard</h1>
 
         <div>
-            <img src="/assets/qr.jpg" alt="Descripción de la imagen" className="w-32 h-32 object-cover rounded-lg" />
-          </div>
+          <img src="/assets/qr.jpg" alt="Descripción de la imagen" className="w-32 h-32 object-cover rounded-lg" />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-md">
@@ -261,7 +261,7 @@ const Dashboard = () => {
               <p>No hay datos para mostrar.</p>
             )}
           </div>
-          
+
         </div>
 
         <div className="mt-8">
