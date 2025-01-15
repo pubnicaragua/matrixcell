@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import axios from '../axiosConfig';
-import { Client } from '../types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import axios from '../../axiosConfig';
+import { Client } from '../../types';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { Trash2, Edit } from 'lucide-react';
-import Pagination from './Pagination'; // Importar componente reutilizable
+import Pagination from '../Pagination'; // Importar componente reutilizable
 
 interface ClientListProps {
   clients: Client[];

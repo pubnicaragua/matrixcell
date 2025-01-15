@@ -1,7 +1,7 @@
 // Importa los tipos necesarios
 import React, { useState, useEffect } from 'react';
-import axios from '../axiosConfig';  // Importamos Axios
-import { Client } from '../types';
+import axios from '../../axiosConfig';  // Importamos Axios
+import { Client } from '../../types';
 
 interface ClientFormProps {
   clients: Client[];

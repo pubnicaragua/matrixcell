@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Operation, Client } from '../types';
+import { Operation, Client } from '../../types';
 import { addMonths, format, differenceInDays } from 'date-fns';
-import axios from '../axiosConfig';  // Importa Axios
+import axios from '../../axiosConfig';  // Importa Axios
 
 interface OperationFormProps {
     clients: Client[];

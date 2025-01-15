@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';
 import { Client, Operation } from '../types';
-import ClientForm from '../components/ClientForm';
-import OperationForm from '../components/OperationForm';
-import ClientsList from '../components/ClientList';
-import OperationsList from '../components/OperationList';
+import ClientForm from '../components/addclient/ClientForm';
+import OperationForm from '../components/addclient/OperationForm';
+import ClientsList from '../components/addclient/ClientList';
+import OperationsList from '../components/addclient/OperationList';
 import SendInvoiceForm from '../components/SendInvoiceForm';
 import ExportReport from '../components/ExportReport';
 

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import Pagination from './Pagination';
-import { Operation, Client } from '../types';
+import Pagination from '../Pagination';
+import { Operation, Client } from '../../types';
 
 interface OperationListProps {
   operations: Operation[];
