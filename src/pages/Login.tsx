@@ -10,10 +10,29 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  //Manejar login
+  // Función para mostrar mensajes amigables
+  const getErrorMessage = (code: string) => {
+    switch (code) {
+      case 'INVALID_CREDENTIALS':
+        return 'Usuario o contraseña incorrectos. Por favor verifica tus datos.';
+      case 'USER_NOT_FOUND':
+        return 'No se encontró una cuenta asociada con este email.';
+      case 'MISSING_FIELDS':
+        return 'Por favor completa todos los campos.';
+      default:
+        return 'Usuario o contraseña incorrectos. Por favor verifica tus datos.';
+    }
+  };
+
+  // Manejar login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email || !password) {
+      setError(getErrorMessage('MISSING_FIELDS'));
+      return;
+    }
 
     try {
       const response = await api.post('auth/login', {
@@ -32,7 +51,8 @@ const LoginForm = () => {
       // Redirigir o cambiar de vista
       window.location.href = '/dashboard';
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      const errorCode = err.response?.data?.code || 'DEFAULT_ERROR';
+      setError(getErrorMessage(errorCode));
     }
   };
 
@@ -51,7 +71,7 @@ const LoginForm = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                
               />
             </div>
             <div>
@@ -61,7 +81,7 @@ const LoginForm = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
