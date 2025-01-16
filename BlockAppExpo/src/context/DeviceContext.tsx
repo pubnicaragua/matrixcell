@@ -1,36 +1,97 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import DeviceInfo from 'react-native-device-info';
-import { NetworkInfo } from 'react-native-network-info';
+import * as Device from 'expo-device';
+import * as Network from 'expo-network';
+import * as SecureStore from 'expo-secure-store';
+import { Alert } from 'react-native';
 
 interface DeviceContextProps {
-  imei: string;
+  deviceId: string;
+  deviceName: string;
+  osName: string;
   ip: string;
+  imei: string;
+  isBlocked: boolean;
+  blockDevice: () => void;
+  unblockDevice: (code: string) => boolean;
 }
 
-const DeviceContext = createContext<DeviceContextProps | undefined>(undefined);
+export const DeviceContext = createContext<DeviceContextProps | undefined>(undefined);
 
-export const DeviceProvider = ({ children }: { children: ReactNode }) => {
-  const [imei, setImei] = useState<string>(''); // Garantiza que el estado sea siempre string
-  const [ip, setIp] = useState<string>(''); // Garantiza que el estado sea siempre string
+export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [imei, setImei] = useState<string>('No soportado en Expo');
+  const [deviceId, setDeviceId] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [osName, setOsName] = useState('');
+  const [ip, setIp] = useState('');
+  const [isBlocked, setIsBlocked] = useState(true);
 
   useEffect(() => {
     const fetchDeviceInfo = async () => {
       try {
-        const fetchedImei = await DeviceInfo.getUniqueId();
-        const fetchedIp = await NetworkInfo.getIPAddress();
+        // Obtener nombre del dispositivo y SO
+        setDeviceName(Device.modelName || 'Unknown Device');
+        setOsName(Device.osName || 'Unknown OS');
 
-        setImei(fetchedImei || 'Desconocido'); // Maneja null
-        setIp(fetchedIp || 'Desconocido'); // Maneja null
+        // Generar un identificador único para el dispositivo
+        let storedDeviceId = await SecureStore.getItemAsync('device_id');
+        if (!storedDeviceId) {
+          storedDeviceId = `device-${Math.random().toString(36).substring(2, 10)}`;
+          await SecureStore.setItemAsync('device_id', storedDeviceId);
+        }
+        setDeviceId(storedDeviceId);
+
+        // Obtener la dirección IP
+        const ipAddress = await Network.getIpAddressAsync();
+        setIp(ipAddress || 'Desconocida');
       } catch (error) {
-        console.error('Error al obtener información del dispositivo:', error);
+        Alert.alert('Error', 'No se pudo obtener la información del dispositivo.');
+        console.error(error);
       }
     };
 
     fetchDeviceInfo();
   }, []);
 
+  const blockDevice = () => {
+    setIsBlocked(true);
+  };
+
+  const unblockDevice = (code: string) => {
+    if (code === 'Matrixcell2025') {
+      setIsBlocked(false);
+      return true;
+    }
+    return false;
+  };
+
+  // Bloqueo basado en la fecha
+  useEffect(() => {
+    const checkDate = () => {
+      const today = new Date();
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      if (today.getDate() === lastDayOfMonth) {
+        Alert.alert('Bloqueo', 'El dispositivo está bloqueado por fecha de corte.');
+        blockDevice();
+      }
+    };
+
+    const interval = setInterval(checkDate, 86400000); // Revisión diaria
+    return () => clearInterval(interval); // Limpiar intervalos al desmontar el componente
+  }, []);
+
   return (
-    <DeviceContext.Provider value={{ imei, ip }}>
+    <DeviceContext.Provider
+      value={{
+        deviceId,
+        deviceName,
+        osName,
+        ip,
+        imei,
+        isBlocked,
+        blockDevice,
+        unblockDevice,
+      }}
+    >
       {children}
     </DeviceContext.Provider>
   );

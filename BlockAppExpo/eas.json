@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 3.13.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug",
+        "env": {
+          "REACT_NATIVE_IM_MODULE": "true"
+        }
+      }
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk",
+        "distribution": "internal",
+        "env": {
+          "REACT_NATIVE_IM_MODULE": "true"
+        }
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:assembleRelease",
+        "autoIncrement": true,
+        "env": {
+          "REACT_NATIVE_IM_MODULE": "true"
+        }
+      }
+    }
+  }
+}

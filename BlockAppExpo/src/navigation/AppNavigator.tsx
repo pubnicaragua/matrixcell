@@ -1,24 +1,37 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import BlockAppScreen from "../screens/BlockAppScreen";
-import UnlockRequestScreen from "../screens/UnlockRequestScreen";
+import React, { useContext } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BlockAppScreen from '../screens/BlockAppScreen';
+import UnlockRequestScreen from '../screens/UnlockRequestScreen';
+import DeviceContext from '../context/DeviceContext';
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
+  const deviceContext = useContext(DeviceContext);
+
+  if (!deviceContext) {
+    console.error('DeviceContext no está disponible.');
+    return null;
+  }
+
+  const { isBlocked } = deviceContext;
+
   return (
-    <Stack.Navigator initialRouteName="UnlockRequest">
-      <Stack.Screen
-        name="UnlockRequest"
-        component={UnlockRequestScreen}
-        options={{ title: "Solicitud de Desbloqueo" }}
-      />
-      <Stack.Screen
-        name="BlockAppScreen" // Asegúrate de que coincide con el navigate
-        component={BlockAppScreen}
-        options={{ title: "Pantalla de Bloqueo" }}
-      />
-    </Stack.Navigator>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="UnlockRequestScreen">
+        <Stack.Screen
+          name="UnlockRequestScreen"
+          component={UnlockRequestScreen}
+          options={{ title: 'Solicitud de Desbloqueo' }}
+        />
+        <Stack.Screen
+          name="BlockAppScreen"
+          component={BlockAppScreen}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
