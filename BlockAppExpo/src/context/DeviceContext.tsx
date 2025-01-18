@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as Network from 'expo-network';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
+import axios from 'axios';
 
 interface DeviceContextProps {
   deviceId: string;
@@ -18,7 +19,7 @@ interface DeviceContextProps {
 export const DeviceContext = createContext<DeviceContextProps | undefined>(undefined);
 
 export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [imei, setImei] = useState<string>('No soportado en Expo');
+  const [imei] = useState<string>('No soportado en Expo'); // No necesitamos `setImei`
   const [deviceId, setDeviceId] = useState('');
   const [deviceName, setDeviceName] = useState('');
   const [osName, setOsName] = useState('');
@@ -40,7 +41,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
         setDeviceId(storedDeviceId);
 
-        // Obtener la dirección IP
+        // Obtener la dirección IP local
         const ipAddress = await Network.getIpAddressAsync();
         setIp(ipAddress || 'Desconocida');
       } catch (error) {
@@ -50,6 +51,20 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     fetchDeviceInfo();
+  }, []);
+
+  // Obtener la IP pública
+  useEffect(() => {
+    const fetchPublicIP = async () => {
+      try {
+        const response = await axios.get('https://api.ipify.org?format=json');
+        setIp(response.data.ip); // Establece la IP pública
+      } catch (error) {
+        console.error('Error al obtener la IP pública:', error);
+      }
+    };
+
+    fetchPublicIP();
   }, []);
 
   const blockDevice = () => {
@@ -75,8 +90,8 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     };
 
-    const interval = setInterval(checkDate, 86400000); // Revisión diaria
-    return () => clearInterval(interval); // Limpiar intervalos al desmontar el componente
+    const interval = setInterval(checkDate, 86400000); // Verificar diariamente
+    return () => clearInterval(interval); // Limpiar intervalos
   }, []);
 
   return (

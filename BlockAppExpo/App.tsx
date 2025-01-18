@@ -3,7 +3,6 @@ import { StatusBar, Alert, Platform } from 'react-native';
 import AppNavigator from "./src/navigation/AppNavigator";
 import { DeviceProvider } from "./src/context/DeviceContext";
 import { PermissionsAndroid } from 'react-native';
-
 const requestPermissions = async () => {
   if (Platform.OS === 'android') {
     try {
@@ -25,6 +24,7 @@ const requestPermissions = async () => {
     }
   }
 };
+
 
 // Solicitar permisos al iniciar la aplicación
 if (Platform.OS === 'android') {

@@ -15,13 +15,14 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: 'com.dxgabalt.BlockAppExpo', // Agregado para solucionar el error
     },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
-      
+      "newArchEnabled": true,
       package: 'com.dxgabalt.BlockAppExpo',
     },
     web: {

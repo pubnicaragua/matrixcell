@@ -71,6 +71,20 @@ const UnlockRequestScreen: React.FC<Props> = ({ navigation }) => {
     }, [])
   );
 
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'background') {
+        Alert.alert('Bloqueo', 'No puedes salir de la aplicación.');
+      }
+    };
+  
+    AppState.addEventListener('change', handleAppStateChange);
+  
+    return () => {
+      AppState.removeEventListener('change', handleAppStateChange);
+    };
+  }, []);
+
   const handleSubmit = async () => {
     if (!codigoId || !voucherPago) {
       setError('Por favor, complete todos los campos.');

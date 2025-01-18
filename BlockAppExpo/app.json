@@ -20,7 +20,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
+      "newArchEnabled": true,
+      "usesCleartextTraffic": true,
       "package": "com.dxgabalt.BlockAppExpo"
     },
     "web": {
@@ -36,7 +38,6 @@
           }
         }
       ]
-      
     ],
     "extra": {
       "eas": {
@@ -45,4 +46,3 @@
     }
   }
 }
-
