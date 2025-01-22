@@ -1,23 +1,64 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  BackHandler,
+  Platform,
+  AppState,
+  Linking,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import DeviceContext from '../context/DeviceContext'; // Ajusta la ruta según tu estructura
+import { useFocusEffect } from '@react-navigation/native';
+import DeviceContext from '../context/DeviceContext';
 
-const BlockAppScreen = () => {
+type Props = {
+  navigation: any;
+};
+
+const BlockAppScreen: React.FC<Props> = ({ navigation }) => {
   const [unlockCode, setUnlockCode] = useState('');
+  const [emergencyCode, setEmergencyCode] = useState('');
   const [error, setError] = useState('');
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [blockTimeout, setBlockTimeout] = useState(0);
-// Obtén el contexto
-const deviceContext = useContext(DeviceContext);
+  const deviceContext = useContext(DeviceContext);
 
-if (!deviceContext) {
-  console.error('DeviceContext no está disponible. Asegúrate de envolver la aplicación con DeviceProvider.');
-  return null; // Evita renderizar si el contexto no está disponible
-}
+  if (!deviceContext) {
+    console.error('DeviceContext no está disponible.');
+    return null;
+  }
 
-const { imei, ip } = deviceContext; // Ahora puedes acceder de forma segura
+  const { imei, blockDevice, unblockDevice } = deviceContext;
+
+  // Monitorear el estado de la aplicación para evitar minimizar
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState !== 'active') {
+        Alert.alert('Atención', 'No puedes minimizar la aplicación.');
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => subscription.remove();
+  }, []);
+
+  // Bloquear el botón "Atrás"
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert('Atención', 'No puedes salir de la aplicación.');
+        return true;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [])
+  );
 
   const handleUnlock = async () => {
     if (!unlockCode) {
@@ -28,37 +69,49 @@ const { imei, ip } = deviceContext; // Ahora puedes acceder de forma segura
     try {
       const response = await axios.post('https://matrixcell.onrender.com/devices/unlock-validate', {
         code: unlockCode,
-        imei
+        imei,
       });
 
       if (response.status === 200) {
-        console.log('Desbloqueado');
-        
         await AsyncStorage.setItem('isUnlocked', 'true');
-        Alert.alert('Desbloqueado', 'El dispositivo ha sido desbloqueado hasta la próxima fecha de corte.');
+        unblockDevice(unlockCode);
+        Alert.alert('Éxito', 'El dispositivo ha sido desbloqueado.');
+        navigation.navigate('UnlockRequest');
       } else {
-        setError('Código incorrecto. Inténtelo de nuevo en 2 minutos.');
-        setIsBlocked(true);
-        setBlockTimeout(Date.now() + 120000);
+        setError('Código incorrecto. Inténtelo de nuevo.');
       }
     } catch (err) {
       console.error(err);
-      setError('Error al conectar con el servidor. Verifique su conexión.');
+      setError('Error al conectar con el servidor. Inténtelo nuevamente o use el código de emergencia.');
     }
   };
 
-  useEffect(() => {
-    const checkBlockTimeout = () => {
-      if (blockTimeout > Date.now()) {
-        const remainingTime = blockTimeout - Date.now();
-        setTimeout(() => setIsBlocked(false), remainingTime);
-      } else {
-        setIsBlocked(false);
-      }
-    };
+  const handleEmergencyCode = async () => {
+    if (emergencyCode === 'Matrixcell2025') {
+      await AsyncStorage.setItem('isUnlocked', 'true');
+      unblockDevice(emergencyCode);
+      Alert.alert('Emergencia', 'Desbloqueo de emergencia activado.');
+      navigation.navigate('UnlockRequest');
+    } else {
+      setError('Código de emergencia incorrecto.');
+    }
+  };
 
-    checkBlockTimeout();
-  }, [blockTimeout]);
+  const handleCallSupport = () => {
+    const phone = '+593987808614';
+    Linking.openURL(`tel:${phone}`).catch(() =>
+      Alert.alert('Error', 'No se pudo realizar la llamada.')
+    );
+  };
+
+  const handleWhatsAppSupport = () => {
+    const phone = '+593987808614';
+    const message = 'Hola, necesito soporte con mi dispositivo.';
+    const url = `https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(message)}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'No se pudo abrir WhatsApp.')
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -69,67 +122,54 @@ const { imei, ip } = deviceContext; // Ahora puedes acceder de forma segura
         placeholderTextColor="#ccc"
         value={unlockCode}
         onChangeText={setUnlockCode}
-        editable={!isBlocked}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Ingrese el código de emergencia"
+        placeholderTextColor="#ccc"
+        value={emergencyCode}
+        onChangeText={setEmergencyCode}
       />
       {error && <Text style={styles.error}>{error}</Text>}
-      <TouchableOpacity
-        style={[styles.button, isBlocked && styles.buttonDisabled]}
-        onPress={handleUnlock}
-        disabled={isBlocked}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleUnlock}>
         <Text style={styles.buttonText}>Desbloquear</Text>
       </TouchableOpacity>
-      {isBlocked && <Text style={styles.blockMessage}>Espere 2 minutos antes de intentar nuevamente.</Text>}
+      <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergencyCode}>
+        <Text style={styles.buttonText}>Código de Emergencia</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.supportButton} onPress={handleCallSupport}>
+        <Text style={styles.buttonText}>Llamar al Soporte</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.supportButton} onPress={handleWhatsAppSupport}>
+        <Text style={styles.buttonText}>WhatsApp al Soporte</Text>
+      </TouchableOpacity>
+      <View style={styles.deviceInfo}>
+        <Text style={styles.deviceText}>IMEI: {imei}</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#000',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-  },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' },
+  title: { fontSize: 24, color: '#fff', marginBottom: 16 },
   input: {
+    width: '80%',
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 4,
-    width: '80%',
+    backgroundColor: '#333',
+    color: '#fff',
     padding: 10,
     marginBottom: 16,
-    color: '#fff',
-    backgroundColor: '#333',
   },
-  error: {
-    color: 'red',
-    marginBottom: 8,
-  },
-  button: {
-    backgroundColor: '#28a745',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 4,
-  },
-  buttonDisabled: {
-    backgroundColor: '#555',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  blockMessage: {
-    color: 'orange',
-    marginTop: 16,
-  },
+  button: { backgroundColor: '#28a745', padding: 10, borderRadius: 5, marginBottom: 10 },
+  emergencyButton: { backgroundColor: '#dc3545', padding: 10, borderRadius: 5, marginBottom: 10 },
+  supportButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 5, marginBottom: 10 },
+  buttonText: { color: '#fff', textAlign: 'center', fontSize: 16 },
+  error: { color: 'red', textAlign: 'center', marginBottom: 8 },
+  deviceInfo: { marginTop: 20 },
+  deviceText: { color: '#fff', fontSize: 16 },
 });
 
 export default BlockAppScreen;

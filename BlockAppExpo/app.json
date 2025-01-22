@@ -19,13 +19,30 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
+      "newArchEnabled": true,
+      "usesCleartextTraffic": true,
+      "package": "com.dxgabalt.BlockAppExpo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-system-ui",
+        {
+          "androidNavigationBar": {
+            "visible": "lean"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9dcbfa90-1c53-425f-942d-cb4f3cdf4816"
+      }
+    }
   }
 }
