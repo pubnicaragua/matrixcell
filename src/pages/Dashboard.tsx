@@ -163,6 +163,7 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-bold text-center">Dashboard</h1>
+      <p className="text-center text-blue-600"><a href="/apk">Descarga nuestra app</a></p>
 
       {/* QR Code with proper sizing and aspect ratio */}
       <Card className="w-full max-w-xs mx-auto">
