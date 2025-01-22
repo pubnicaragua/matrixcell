@@ -24,6 +24,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute'
+// @ts-ignore
+import DescargarApk from './pages/DescargarApk';
+
 
 const App = () => {
   return (
@@ -206,6 +209,17 @@ const App = () => {
             <PrivateRoute>
               <Layout>
                 <Security />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/apk"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <DescargarApk />
               </Layout>
             </PrivateRoute>
           }
