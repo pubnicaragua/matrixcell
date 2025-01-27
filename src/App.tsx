@@ -247,6 +247,28 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/quote-page"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <QuotePage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/quote-client-page"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <QuoteClientPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
         {/* <Route path="/notifications" element={<Layout><Notifications /></Layout>} /> */}
         {/* <Route path="/invoices" element={<Layout><Invoices /></Layout>} />
         <Route path="/reports" element={<Layout><Reports /></Layout>} />
