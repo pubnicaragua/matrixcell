@@ -1,0 +1,4 @@
+Tus cambios antes del rebase
+
+# Conflicts:
+#	src/components/ExportSicom.tsx

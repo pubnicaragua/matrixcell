@@ -1,0 +1,8 @@
+# pack-refs with: peeled fully-peeled sorted 
+1ed581cffee6a8256c6fdb206a2095fcc90ef0d5 refs/heads/main
+2d1c64f81bc01b0974000c548bd2414938126d68 refs/heads/nueva-rama-limpia
+3a695dc8ce21dc2df2e0f4f276fe707626c0801c refs/heads/nueva-rama-pruebas
+347aebb00e2f291b8b2ee67060269582115e8191 refs/remotes/origin/Actualizaciones
+d188d232f744333816ba89698b51610500991782 refs/remotes/origin/main
+51de5b94c6291f26033ff207e884055bd20d7e24 refs/remotes/origin/nueva-rama-limpia
+1ed581cffee6a8256c6fdb206a2095fcc90ef0d5 refs/remotes/origin/nueva-rama-pruebas
