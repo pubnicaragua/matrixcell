@@ -312,12 +312,11 @@ export const DeviceController = {
                 .single();
 
             if (error) {
-                console.error('Error al actualizar el estado del dispositivo:', error);
-                res.status(500).json({ success: false, message: 'Error al desbloquear el dispositivo en la base de datos.' });
+                throw new Error('Error al actualizar el estado del dispositivo: '+error.message); // Lanzar error
             }
 
             if (!device) {
-                res.status(404).json({ success: false, message: 'Dispositivo no encontrado.' });
+                throw new Error('Dispositivo no encontrado.'); // Lanzar error
             }
 
             // Obtener el push_token del dispositivo desbloqueado
@@ -329,15 +328,10 @@ export const DeviceController = {
                     body: 'Tu dispositivo ha sido desbloqueado. ¡Gracias por realizar el pago!',
                     data: { deviceId: id },
                 };
-
                 try {
                     // await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
-                    console.error('Error enviando notificación push:', notificationError);
-                    res.status(500).json({
-                        success: false,
-                        message: 'El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.'
-                    });
+                    throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.'); // Lanzar error
                 }
             }
 
@@ -388,7 +382,7 @@ export const DeviceController = {
                         .single();
     
                     if (errorCliente || !cliente) {
-                         res.status(404).json({ error: 'Cliente no encontrado.', errorCliente });
+                        throw new Error('Cliente no encontrado.'); // Lanzar error
                     }
     
                     // Buscar dispositivo por cliente
@@ -405,7 +399,7 @@ export const DeviceController = {
             }
     
             if (!dispositivo) {
-                throw new Error('Dispositivo no encontrado.');
+                throw new Error('Dispositivo no encontrado.'); // Lanzar error
             }
     
             // Actualizar el código de desbloqueo en la tabla `devices`
@@ -415,7 +409,7 @@ export const DeviceController = {
                 .eq('id', dispositivo.id);
     
             if (errorActualizacion) {
-                throw new Error('Error actualizando el código de desbloqueo.');
+                throw new Error('Error actualizando el código de desbloqueo.'); // Lanzar error
             }
     
             // Crear notificación
@@ -450,10 +444,7 @@ export const DeviceController = {
     
             res.status(statusCode).json({ error: errorMessage });
         }
-    },
-    
-    
-
+    },   
     async unlockValidate(req: Request, res: Response) {
         try {
             // Validar que se envíe al menos uno de los parámetros necesarios
