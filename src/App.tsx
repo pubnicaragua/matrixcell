@@ -26,6 +26,8 @@ import Dashboard from './pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute'
 // @ts-ignore
 import DescargarApk from './pages/DescargarApk';
+import QuotePage from './pages/QuotePage';
+import QuoteClientPage from './pages/QuoteClientPage';
 
 
 const App = () => {
@@ -110,6 +112,26 @@ const App = () => {
             <PrivateRoute>
               <Layout>
                 <BlockDevice />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/quote"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <QuotePage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/quote-client"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <QuoteClientPage />
               </Layout>
             </PrivateRoute>
           }
