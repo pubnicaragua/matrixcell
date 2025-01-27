@@ -79,36 +79,21 @@ router.get('/', sessionAuth, PaymentPlanController.getAllPaymentPlans);
  *             type: object
  *             required:
  *               - device_id
- *               - months
- *               - weekly_payment
- *               - monthly_payment
- *               - total_cost
+ *               - price
+ *               - downPayment
  *             properties:
  *               device_id:
  *                 type: integer
  *                 nullable: true
  *                 description: ID del dispositivo asociado al plan de pago
- *               months:
- *                 type: integer
- *                 nullable: true
- *                 description: Número de meses del plan
- *               weekly_payment:
+ *               price:
  *                 type: number
  *                 nullable: true
  *                 description: Pago semanal
- *               monthly_payment:
+ *               downPayment:
  *                 type: number
  *                 nullable: true
  *                 description: Pago mensual
- *               total_cost:
- *                 type: number
- *                 nullable: true
- *                 description: Costo total del plan
- *               created_at:
- *                 type: string
- *                 format: date-time
- *                 nullable: true
- *                 description: Fecha de creación del plan
  *     responses:
  *       201:
  *         description: Plan de pago creado correctamente

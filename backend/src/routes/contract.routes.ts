@@ -7,8 +7,8 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Contratos
- *   description: Gestión de contratos
+ *   name: Contratos Firmados
+ *   description: Gestión de contratos firmados
  */
 
 /**
@@ -17,10 +17,10 @@ const router = express.Router();
  *   get:
  *     summary: Obtener todos los contratos
  *     description: Recupera una lista completa de todos los contratos registrados.
- *     tags: [Contratos]
+ *     tags: [Contratos Firmados]
  *     responses:
  *       200:
- *         description: Lista de contratos
+ *         description: Lista de contratos firmados
  *         content:
  *           application/json:
  *             schema:
@@ -58,6 +58,8 @@ const router = express.Router();
  *                     nullable: true
  *       401:
  *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  *     security:
  *       - Bearer: []
  */
@@ -69,7 +71,7 @@ router.get('/', sessionAuth, ContractController.getAllContracts);
  *   get:
  *     summary: Obtener un contrato por ID
  *     description: Recupera un contrato específico según el ID proporcionado.
- *     tags: [Contratos]
+ *     tags: [Contratos Firmados]
  *     parameters:
  *       - in: path
  *         name: id
@@ -117,6 +119,8 @@ router.get('/', sessionAuth, ContractController.getAllContracts);
  *         description: No autorizado
  *       404:
  *         description: Contrato no encontrado
+ *       500:
+ *         description: Error interno del servidor
  *     security:
  *       - Bearer: []
  */
@@ -127,8 +131,8 @@ router.get('/:id', sessionAuth, ContractController.getContract);
  * /contracts:
  *   post:
  *     summary: Crear un nuevo contrato
- *     description: Registra un nuevo contrato con los datos proporcionados.
- *     tags: [Contratos]
+ *     description: Crea un nuevo contrato con los datos proporcionados.
+ *     tags: [Contratos Firmados]
  *     requestBody:
  *       required: true
  *       content:
@@ -142,15 +146,13 @@ router.get('/:id', sessionAuth, ContractController.getContract);
  *             properties:
  *               device_id:
  *                 type: integer
- *                 nullable: true
- *                 description: ID del dispositivo asociado
+ *                 description: ID del dispositivo asociado al contrato
  *               payment_plan_id:
  *                 type: integer
- *                 nullable: true
- *                 description: ID del plan de pago asociado
+ *                 description: ID del plan de pago
  *               downPayment:
  *                 type: number
- *                 description: Pago inicial realizado
+ *                 description: Monto de pago inicial
  *     responses:
  *       201:
  *         description: Contrato creado correctamente
@@ -169,7 +171,7 @@ router.post('/', sessionAuth, ContractController.createContract);
  *   delete:
  *     summary: Eliminar un contrato
  *     description: Elimina un contrato existente según el ID proporcionado.
- *     tags: [Contratos]
+ *     tags: [Contratos Firmados]
  *     parameters:
  *       - in: path
  *         name: id
@@ -184,6 +186,8 @@ router.post('/', sessionAuth, ContractController.createContract);
  *         description: No autorizado
  *       404:
  *         description: Contrato no encontrado
+ *       500:
+ *         description: Error interno del servidor
  *     security:
  *       - Bearer: []
  */

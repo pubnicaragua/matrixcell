@@ -8,7 +8,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Pagos
- *   description: Gestión de pagos
+ *   description: Gestión de pagos realizados
  */
 
 /**
@@ -72,27 +72,16 @@ router.get('/', sessionAuth, PaymentController.getAllPayments);
  *             type: object
  *             required:
  *               - contract_id
- *               - payment_date
  *               - amount
  *             properties:
  *               contract_id:
  *                 type: integer
  *                 nullable: true
  *                 description: ID del contrato asociado al pago
- *               payment_date:
- *                 type: string
- *                 format: date-time
- *                 nullable: true
- *                 description: Fecha en que se realizó el pago
  *               amount:
  *                 type: number
  *                 nullable: true
  *                 description: Monto pagado
- *               created_at:
- *                 type: string
- *                 format: date-time
- *                 nullable: true
- *                 description: Fecha de creación del registro
  *     responses:
  *       201:
  *         description: Pago creado correctamente
