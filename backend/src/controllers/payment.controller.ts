@@ -8,7 +8,7 @@ export const PaymentController = {
     async getAllPayments(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const payments = await BaseService.getAll<Payment>(tableName,['id', 'operation_id', 'client_id','payment_date','amount_paid','payment_method','receipt_number','created_at','updated_at'],where);
+            const payments = await BaseService.getAll<Payment>(tableName,['id', 'contract_id', 'payment_date','amount','created_at'],where);
             res.json(PaymentResource.formatPayments(payments));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -19,7 +19,11 @@ export const PaymentController = {
         try {
             validatePayment(req.body); // Validar los datos
             const { userId } = req;
-            const payment = await BaseService.create<Payment>(tableName, req.body, userId);
+            const paymentData: Payment = new Payment();
+            paymentData.amount= req.body.amount;
+            paymentData.contract_id = req.body.contract_id;
+            paymentData.payment_date= new Date();
+            const payment = await BaseService.create<Payment>(tableName, paymentData, userId);
             res.status(201).json(PaymentResource.formatPayment(payment));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
