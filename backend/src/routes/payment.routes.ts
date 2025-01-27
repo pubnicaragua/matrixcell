@@ -21,6 +21,35 @@ const router = express.Router();
  *     responses:
  *       200:
  *         description: Lista de pagos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     nullable: true
+ *                     description: ID único del pago
+ *                   contract_id:
+ *                     type: integer
+ *                     nullable: true
+ *                     description: ID del contrato asociado al pago
+ *                   payment_date:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                     description: Fecha en que se realizó el pago
+ *                   amount:
+ *                     type: number
+ *                     nullable: true
+ *                     description: Monto pagado
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                     description: Fecha de creación del registro
  *       401:
  *         description: No autorizado
  *     security:
@@ -42,35 +71,28 @@ router.get('/', sessionAuth, PaymentController.getAllPayments);
  *           schema:
  *             type: object
  *             required:
- *               - operation_id
- *               - client_id
+ *               - contract_id
  *               - payment_date
- *               - amount_paid
- *               - payment_method
+ *               - amount
  *             properties:
- *               created_at:
- *                 type: string
- *                 format: date-time
- *                 description: Fecha de creación del pago
- *               operation_id:
+ *               contract_id:
  *                 type: integer
- *                 description: ID de la operación asociada al pago
- *               client_id:
- *                 type: integer
- *                 description: ID del cliente que realiza el pago
+ *                 nullable: true
+ *                 description: ID del contrato asociado al pago
  *               payment_date:
  *                 type: string
  *                 format: date-time
- *                 description: Fecha en la que se realizó el pago
- *               amount_paid:
+ *                 nullable: true
+ *                 description: Fecha en que se realizó el pago
+ *               amount:
  *                 type: number
+ *                 nullable: true
  *                 description: Monto pagado
- *               payment_method:
+ *               created_at:
  *                 type: string
- *                 description: Método de pago utilizado
- *               receipt_number:
- *                 type: string
- *                 description: Número de recibo del pago
+ *                 format: date-time
+ *                 nullable: true
+ *                 description: Fecha de creación del registro
  *     responses:
  *       201:
  *         description: Pago creado correctamente
@@ -104,29 +126,24 @@ router.post('/', sessionAuth, PaymentController.createPayment);
  *           schema:
  *             type: object
  *             properties:
- *               created_at:
- *                 type: string
- *                 format: date-time
- *                 description: Fecha de creación del pago
- *               operation_id:
+ *               contract_id:
  *                 type: integer
- *                 description: ID de la operación asociada al pago
- *               client_id:
- *                 type: integer
- *                 description: ID del cliente que realiza el pago
+ *                 nullable: true
+ *                 description: ID del contrato asociado al pago
  *               payment_date:
  *                 type: string
  *                 format: date-time
- *                 description: Fecha en la que se realizó el pago
- *               amount_paid:
+ *                 nullable: true
+ *                 description: Fecha en que se realizó el pago
+ *               amount:
  *                 type: number
+ *                 nullable: true
  *                 description: Monto pagado
- *               payment_method:
+ *               created_at:
  *                 type: string
- *                 description: Método de pago utilizado
- *               receipt_number:
- *                 type: string
- *                 description: Número de recibo del pago
+ *                 format: date-time
+ *                 nullable: true
+ *                 description: Fecha de creación del registro
  *     responses:
  *       200:
  *         description: Pago actualizado correctamente
