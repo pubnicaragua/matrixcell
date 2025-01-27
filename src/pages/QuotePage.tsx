@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-
+//comentario
 interface Device {
   brand: string;
   model: string;
