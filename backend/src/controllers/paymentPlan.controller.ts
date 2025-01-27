@@ -4,7 +4,7 @@ import { BaseService } from "../services/base.service";
 import { validatePaymentPlan } from "../requests/paymentPlan.request";
 const tableName = 'payment_plans'; // Nombre de la tabla en la base de datos
 
-export const PaymentPlanPlanController = {
+export const PaymentPlanController = {
 async getAllPaymentPlans(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
@@ -73,11 +73,11 @@ async getAllPaymentPlans(req: Request, res: Response) {
             }
     
             // Devolver la respuesta
-            return res.status(200).json(savedPlans);
+             res.status(200).json(savedPlans);
         } catch (error: any) {
             // Manejo de errores
             console.error("Error al crear el plan de pagos:", error);
-            return res.status(400).json({
+             res.status(400).json({
                 message: error.message,
             });
         }

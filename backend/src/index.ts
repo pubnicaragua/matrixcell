@@ -20,6 +20,8 @@ import paymentRoutes from './routes/payment.routes'; // Importar rutas de client
 import statusRoutes from './routes/status.routes'; // Importar rutas de clientes
 import inventoryRoutes from './routes/inventory.routes'; // Importar rutas de clientes
 import productRoutes from './routes/product.routes'; // Importar rutas de clientes
+import paymentPlanRoutes from './routes/paymentPlan.routes'; // Importar rutas de clientes
+import contractRoutes from './routes/contract.routes'; // Importar rutas de clientes
 import { ClientController } from './controllers/client.controller'; // Importar controlador de clientes
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -53,7 +55,9 @@ app.use('/device_logs', deviceLogRoute)
 app.use('/audit_logs', auditLogRoute)
 app.use('/notifications', notificationRoute)
 app.use('/operations', operationRoutes)
-app.use('/paiments', paymentRoutes)
+app.use('/payments', paymentRoutes)
+app.use('/payment-plans', paymentPlanRoutes)
+app.use('/contracts', contractRoutes)
 app.use('/status', statusRoutes)
 app.use('/clients', clientRoutes); // Registrar rutas de clientes
 app.use('/inventories', inventoryRoutes);

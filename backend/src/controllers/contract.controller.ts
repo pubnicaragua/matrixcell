@@ -54,7 +54,7 @@ export const ContractController = {
             });
         }
     },
-    async getAllStores(req: Request, res: Response) {
+    async getAllContracts(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
             const contracts = await BaseService.getAll<Contract>(tableName, ['id', 'payment_plans(months,weekly_payment,monthly_payment,total_cost),payments(payment_date,amount)', 'down_payment', 'next_payment_date', 'next_payment_amount', 'payment_progress', 'status'], where);
