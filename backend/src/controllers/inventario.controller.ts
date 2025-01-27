@@ -147,7 +147,8 @@ export const InventoryController = {
                 .eq('store_id', origen_store);
 
             if (updateSourceError) {
-                res.status(500).json({ error: 'Error al actualizar stock de origen' });
+                throw new Error('Error al actualizar stock de origen');
+
             }
             // Verificar y actualizar o insertar stock en la store destino
             const { data: destStock } = await supabase
@@ -168,7 +169,7 @@ export const InventoryController = {
                     .eq('store_id', destino_store);
 
                 if (updateDestError) {
-                    res.status(500).json({ error: 'Error al actualizar stock de destino' });
+                    throw new Error('Error al actualizar stock de destino: '+updateDestError.message);
                 }
             } else {
                 const { error: insertDestError } = await supabase
@@ -181,7 +182,7 @@ export const InventoryController = {
                     });
 
                 if (insertDestError) {
-                    res.status(500).json({ error: 'Error al insertar stock en destino' });
+                    throw new Error('Error al insertar stock en destino: '+insertDestError.message);
                 }
             }
 
@@ -196,7 +197,7 @@ export const InventoryController = {
                 });
 
             if (movementError) {
-                res.status(500).json({ error: movementError.message });
+                throw new Error(movementError.message);
             }
 
             // Responder con éxito
@@ -213,7 +214,7 @@ export const InventoryController = {
         try {
             // Verificar que la cantidad a editar sea válida
             if (cantidad <= 0) {
-                res.status(400).json({ error: 'La cantidad debe ser mayor a cero' });
+                throw new Error('La cantidad debe ser mayor a cero');
             }
 
             // Verificar si el producto existe en el inventario de la tienda
@@ -225,11 +226,11 @@ export const InventoryController = {
                 .single();
 
             if (stockError) {
-                res.status(500).json({ error: 'Error al verificar el stock' });
+                throw new Error( 'Error al verificar el stock: '+stockError.message);
             }
 
             if (!currentStock) {
-                res.status(404).json({ error: 'Producto no encontrado en la tienda' });
+                throw new Error( 'Producto no encontrado en la tienda');
             }
 
             // Actualizar el stock en la tienda
@@ -244,7 +245,7 @@ export const InventoryController = {
                 .eq('store_id', store_id);
 
             if (updateError) {
-                res.status(500).json({ error: 'Error al actualizar el stock' });
+                throw new Error( 'Error al actualizar el stock: '+updateError.message);
             }
             // Responder con éxito
             res.status(200).json({ message: 'Stock editado correctamente' });

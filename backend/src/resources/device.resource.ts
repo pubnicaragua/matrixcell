@@ -7,6 +7,9 @@ export const DeviceResource = {
             imei: device.imei,
             status: device.status,
             owner: device.owner,
+            brand: device.brand, 
+            model: device.model, 
+            price: device.price, 
             store_id: device.store_id,
             cliente: device.cliente,
             unlock_code: device.unlock_code
