@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { TerminoPago } from "../../pages/types"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Progress } from "../../components/ui/progress"
+import axios from "../../axiosConfig"
 
 export function ModalProgresoPago({
   termino,
@@ -14,6 +15,8 @@ export function ModalProgresoPago({
   onRealizarPago: (termino: TerminoPago) => void
 }) {
   const [fechaActual] = useState(new Date())
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const calcularTiempoRestante = () => {
     return termino.pagosPendientes
@@ -26,16 +29,32 @@ export function ModalProgresoPago({
   }
 
   const calcularPorcentajeProgreso = () => {
-    const montoTotal = termino.costoTotal
-    const montoInicial = termino.dispositivo.deposito
-    const montoPagado = (termino.plazo - termino.pagosPendientes) * termino.pagoMensual + montoInicial
-    return (montoPagado / montoTotal) * 100
-  }
+    const montoTotal = termino.costoTotal;
+    const montoInicial = termino.deposito; // Accede a `deposito` desde `termino`
+    const montoPagado = (termino.plazo - termino.pagosPendientes) * termino.pagoMensual + montoInicial;
+    return (montoPagado / montoTotal) * 100;
+  };
 
   const calcularMontoPagado = () => {
-    const montoInicial = termino.dispositivo.deposito
-    const montoPagado = (termino.plazo - termino.pagosPendientes) * termino.pagoMensual + montoInicial
-    return montoPagado
+    const montoInicial = termino.deposito; // Accede a `deposito` desde `termino`
+    const montoPagado = (termino.plazo - termino.pagosPendientes) * termino.pagoMensual + montoInicial;
+    return montoPagado;
+  };
+  
+
+  const handleRealizarPago = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await axios.post(`/contracts/${termino.id}/payments`, {
+        amount: termino.pagoMensual,
+      })
+      onRealizarPago(termino)
+    } catch (err) {
+      setError("Error al realizar el pago. Por favor, intente de nuevo.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const tiempoRestante = calcularTiempoRestante()
@@ -64,18 +83,21 @@ export function ModalProgresoPago({
               aria-label={`Progreso de pago: ${porcentajeProgreso.toFixed(0)}%`}
             />
             <div className="flex justify-between text-sm text-gray-500 mt-1">
-              <p>Depósito inicial: ${termino.dispositivo.deposito.toFixed(2)}</p>
+              <p>Depósito inicial: ${termino.deposito.toFixed(2)}</p> {/* Muestra `deposito` */}
               <p>{porcentajeProgreso.toFixed(0)}% completado</p>
             </div>
             <p className="text-right text-sm text-gray-500 mt-1">
               Monto pagado: ${montoPagado.toFixed(2)} de ${termino.costoTotal.toFixed(2)}
             </p>
           </div>
+          {error && <p className="text-red-500 mt-2">{error}</p>}
           <div className="flex justify-end space-x-2 mt-4">
             <Button onClick={onCerrar} variant="outline">
               Cerrar
             </Button>
-            <Button onClick={() => onRealizarPago(termino)}>Realizar Pago</Button>
+            <Button onClick={handleRealizarPago} disabled={loading}>
+              {loading ? "Procesando..." : "Realizar Pago"}
+            </Button>
           </div>
         </CardContent>
       </Card>

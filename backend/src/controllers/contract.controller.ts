@@ -14,9 +14,9 @@ export const ContractController = {
             validateContract(req.body);
             // Obtener el plan de pago
             const { data: paymentPlan, error: errorPorImei } = await supabase
-                .from('payment_plan')
+                .from('payment_plans')
                 .select('*')
-                .eq('payment_plan_id', req.body.payment_plan_id)
+                .eq('id', req.body.payment_plan_id)
                 .single();
 
             if (!paymentPlan) {
@@ -54,6 +54,7 @@ export const ContractController = {
             });
         }
     },
+
     async getAllContracts(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros

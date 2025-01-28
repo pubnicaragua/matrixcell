@@ -8,7 +8,7 @@ export const PaymentPlanController = {
 async getAllPaymentPlans(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const paymentplans = await BaseService.getAll<PaymentPlan>(tableName,['id', 'contract_id', 'paymentplan_date','amount','created_at'],where);
+            const paymentplans = await BaseService.getAll<PaymentPlan>(tableName,['id', 'device_id', 'months', 'weekly_payment', 'monthly_payment', 'total_cost', 'created_at'],where);
             res.json(paymentplans);
         } catch (error: any) {
             res.status(500).json({ message: error.message });

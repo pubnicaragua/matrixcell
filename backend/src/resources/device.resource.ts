@@ -12,7 +12,10 @@ export const DeviceResource = {
             price: device.price, 
             store_id: device.store_id,
             cliente: device.cliente,
-            unlock_code: device.unlock_code
+            unlock_code: device.unlock_code,
+            marca: device.marca,
+            modelo: device.modelo,
+            price: device.price,
         };
     },
 
