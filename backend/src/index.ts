@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors'; // Importar cors
 import dotenv from 'dotenv'; // Importar dotenv
 import bodyParser from 'body-parser';
+import { WebSocketServer } from 'ws';  // Importar WebSocketServer de 'ws'
 // Importar rutas
 import authRoutes from './routes/auth.routes';
 import usuarioRoutes from './routes/usuario.routes';
@@ -33,6 +34,37 @@ import { sessionAuth } from './middlewares/supabaseMidleware';
 dotenv.config();
 const app = express();
 const { port, allowedOrigin } = config;
+
+//Websocket
+const wss = new WebSocketServer({ noServer: true });
+export const activeConnections: Set<any> = new Set<any>();
+
+// Manejar conexiones WebSocket
+// El código para manejar las conexiones WebSocket
+wss.on('connection', (ws) => {
+  console.log('Nuevo cliente conectado');
+  
+  // Agregar la conexión a la lista de conexiones activas
+  activeConnections.add(ws);
+
+  ws.on('message', (message) => {
+    console.log('Mensaje recibido:', message);
+    // Responder al cliente
+    ws.send(`Servidor recibió: ${message}`);
+  });
+
+  ws.on('close', () => {
+    console.log('Cliente desconectado');
+    // Eliminar la conexión de la lista cuando el cliente se desconecte
+    activeConnections.delete(ws);
+  });
+
+  // Enviar mensaje inicial
+  ws.send('Bienvenido al servidor WebSocket!');
+});
+
+
+
 // Middleware global
 app.use(cors({ origin: '*' }));
 app.use(express.json());
@@ -97,7 +129,18 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(specs)
 );
+
+
+
 // Iniciar el servidor
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
+});
+
+// Configurar WebSocket para usar el mismo puerto
+server.on('upgrade', (request, socket, head) => {
+  // Redirigir la solicitud upgrade a WebSocket
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
 });

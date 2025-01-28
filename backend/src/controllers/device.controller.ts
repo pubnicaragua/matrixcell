@@ -8,6 +8,7 @@ import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
 import { generarCedulaEcuatoriana, generarCodigoDesbloqueo } from "../services/client.service";
 import { Client } from "../models/client.model";
+import { activeConnections } from "..";
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -15,7 +16,8 @@ export const DeviceController = {
     async getAllDevices(req: Request, res: Response) {
         try {
             const where = { ...req.query };
-            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status', 'unlock_code', 'marca', 'modelo', 'price'], where);
+            //const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'brand', 'model', 'price', 'status', 'unlock_code'], where);
+            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id',  'status', 'unlock_code'], where);
 
             // Asegurarse de que `formatDevice` pueda manejar un arreglo de dispositivos
             res.json(devices.map(device => DeviceResource.formatDevice(device)));
@@ -65,7 +67,10 @@ export const DeviceController = {
                     throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.');
                 }
             }
-
+ // Emitir mensaje a todos los clientes conectados sobre la actualización
+         activeConnections.forEach((ws: WebSocket) => {
+            ws.send(`Dispositivo con ID ${id} actualizado: ${device.status}`);
+          });
             res.json(DeviceResource.formatDevice(device));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
