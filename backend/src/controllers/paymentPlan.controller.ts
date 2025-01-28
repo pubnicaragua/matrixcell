@@ -15,8 +15,6 @@ async getAllPaymentPlans(req: Request, res: Response) {
         }
     },
 
-
-
     async updatePaymentPlan(req: Request, res: Response) {
         try {
             const { id } = req.params;

@@ -10,41 +10,40 @@ export const ContractController = {
 
     async createContract(req: Request, res: Response) {
         try {
-            // Validar y transformar los datos de entrada
-            validateContract(req.body);
-            // Obtener el plan de pago
-            const { data: paymentPlan, error: errorPorImei } = await supabase
-                .from('payment_plans')
-                .select('*')
-                .eq('id', req.body.payment_plan_id)
+            // Obtener los datos directamente del cuerpo de la solicitud
+            const {
+                device_id,
+                payment_plan_id,
+                down_payment,
+                next_payment_date,
+                next_payment_amount,
+                payment_progress,
+                status,
+                created_at,
+            } = req.body;
+    
+            
+    
+            // Crear el contrato en la base de datos
+            const { data: contract, error } = await supabase
+                .from('contracts')
+                .insert({
+                    device_id,
+                    payment_plan_id,
+                    down_payment,
+                    next_payment_date,
+                    next_payment_amount,
+                    payment_progress,
+                    status,
+                    created_at
+                })
                 .single();
-
-            if (!paymentPlan) {
-                throw new Error('Payment plan not found'); // Lanzar error
+    
+            if (error) {
+                throw new Error(error.message);
             }
-
-            // Preparar los datos del contrato
-            // Crear una nueva instancia de Contract con todos los campos necesarios
-            const contractData: Contract = new Contract();
-
-            // Asignar los valores validados
-            contractData.device_id = req.body.device_id;
-            contractData.payment_plan_id = req.body.payment_plan_id;
-            contractData.down_payment = req.body.down_payment;
-
-            // Asignar los valores calculados
-            contractData.status = 'ACTIVE';
-            contractData.created_at = new Date();
-            contractData.next_payment_date = calculateNextPaymentDate();
-            contractData.next_payment_amount = paymentPlan.monthly_payment;
-            contractData.payment_progress = paymentPlan.total_cost
-                ? (req.body.down_payment / paymentPlan.total_cost) * 100
-                : 0;
-
-            // Crear el contrato usando BaseService
-            const { userId } = req;
-            const contract = await BaseService.create<Contract>(tableName, contractData, userId);
-
+    
+            // Responder con el contrato creado
             res.status(201).json(contract);
         } catch (error: any) {
             console.error('Error creating contract:', error);
@@ -53,8 +52,7 @@ export const ContractController = {
                 error: process.env.NODE_ENV === 'development' ? error : undefined
             });
         }
-    },
-
+    },    
     async getAllContracts(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros

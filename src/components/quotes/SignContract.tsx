@@ -1,125 +1,122 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../../axiosConfig";
 
-interface SignContractProps {
-  deviceId: number;
-  monthlyPayment: number;
+interface PaymentPlan {
+  id: number;
+  device_id: number | null;
+  created_at: string;
+  months: number | null;
+  weekly_payment: 100 ;
+  monthly_payment: number | null;
+  total_cost: number | null;
 }
 
-const SignContract: React.FC<SignContractProps> = ({
-  deviceId,
-  monthlyPayment,
-}) => {
-  const [downPayment, setDownPayment] = useState<number | "">("");
-  const [nextPaymentDate, setNextPaymentDate] = useState<string | null>(null);
-  const [isContractSigned, setIsContractSigned] = useState(false);
-  const [paymentPlanId, setPaymentPlanId] = useState<number | null>(null);
+interface Contract {
+  id: number;
+  payment_plan_id: number;
+  device_id: number | null;
+  down_payment: number | null;
+  next_payment_date: string | null;
+  next_payment_amount: number | null;
+  payment_progress: number | null;
+  status: string | null;
+}
 
-  const calculateNextPaymentDate = () => {
-    const currentDate = new Date();
-    currentDate.setMonth(currentDate.getMonth() + 1); // Sumar un mes
-    return currentDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
-  };
-
-  const fetchLastPaymentPlan = async () => {
-    try {
-      const response = await axios.get("/payment-plans", {
-        params: {
-          device_id: deviceId,
-        },
-      });
-  
-      if (response.data && response.data.length > 0) {
-        // Ordenar los planes por fecha de creación si el backend no los devuelve ordenados
-        const sortedPlans = response.data.sort(
-          (a: { created_at: string }, b: { created_at: string }) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-  
-        const lastPlan = sortedPlans[0]; // Obtener el más reciente
-        setPaymentPlanId(lastPlan.id);
-      } else {
-        alert("No se encontró ningún plan de pago para este dispositivo.");
-      }
-    } catch (error) {
-      console.error("Error al obtener el último plan de pago:", error);
-    }
-  };
-  
-
-  const handleSignContract = async () => {
-    if (!downPayment || downPayment < 0) {
-      alert("Por favor, ingrese un depósito inicial válido.");
-      return;
-    }
-
-    if (!paymentPlanId) {
-      alert("No se encontró un plan de pago válido.");
-      return;
-    }
-
-    const nextPayment = monthlyPayment - downPayment;
-    const nextPaymentDate = calculateNextPaymentDate();
-
-    try {
-      await axios.post("/contracts", {
-        device_id: deviceId,
-        payment_plan_id: paymentPlanId, // Usa el ID del plan de pago obtenido
-        down_payment: downPayment,
-        next_payment_date: nextPaymentDate,
-        next_payment_amount: nextPayment,
-        payment_progress: 0,
-        status: "activo",
-      });
-
-      alert("Contrato firmado exitosamente.");
-      setIsContractSigned(true);
-      setNextPaymentDate(nextPaymentDate);
-    } catch (error) {
-      console.error("Error al firmar el contrato:", error);
-      alert("Hubo un error al firmar el contrato.");
-    }
-  };
+const PaymentPlanContracts = () => {
+  const [latestPaymentPlan, setLatestPaymentPlan] = useState<PaymentPlan | null>(null);
+  const [contractResponse, setContractResponse] = useState<Contract | null>(null);
+  const [downPayment, setDownPayment] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchLastPaymentPlan();
-  }, [deviceId]);
+    // Fetch the most recent payment plan
+    const fetchLatestPaymentPlan = async () => {
+      try {
+        const paymentPlansResponse = await axios.get<PaymentPlan[]>("/payment-plans");
+        const paymentPlans = paymentPlansResponse.data;
+
+        if (paymentPlans.length > 0) {
+          const latestPlan = paymentPlans[paymentPlans.length - 1]; // Get the most recent record
+          setLatestPaymentPlan(latestPlan);
+        }
+      } catch (error) {
+        console.error("Error fetching payment plans:", error);
+      }
+    };
+
+    fetchLatestPaymentPlan();
+  }, []);
+
+  const handleCreateContract = async () => {
+    if (!latestPaymentPlan) {
+      console.error("No payment plan available to create a contract.");
+      return;
+    }
+
+    try {
+      // Calculate next payment date (current month + 1)
+      const nextPaymentDate = new Date();
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+
+      // Create contract
+      const response = await axios.post<Contract>("/contracts", {
+        payment_plan_id: latestPaymentPlan.id,
+        device_id: latestPaymentPlan.device_id,
+        down_payment: downPayment,
+        next_payment_date: nextPaymentDate.toISOString(),
+        next_payment_amount: latestPaymentPlan.monthly_payment,
+        payment_progress: 0,
+        status: "",
+      });
+
+      setContractResponse(response.data);
+    } catch (error) {
+      console.error("Error creating contract:", error);
+    }
+  };
 
   return (
-    <div className="p-4 border rounded">
-      <h2 className="font-bold mb-4">Firmar Contrato</h2>
-      {!isContractSigned ? (
+    <div>
+      <h1>Payment Plans & Contracts</h1>
+      {latestPaymentPlan ? (
         <div>
-          <div className="mb-4">
-            <label className="block font-bold mb-2" htmlFor="downPayment">
-              Depósito Inicial ($):
-            </label>
+          <p>
+            <strong>Latest Payment Plan:</strong>
+          </p>
+          <p>ID: {latestPaymentPlan.id}</p>
+          <p>Device ID: {latestPaymentPlan.device_id}</p>
+          <div>
+            <label htmlFor="downPayment">Depósito Inicial:</label>
             <input
-              type="number"
               id="downPayment"
-              value={downPayment}
-              onChange={(e) => setDownPayment(parseFloat(e.target.value))}
-              className="border p-2 rounded w-full"
+              type="number"
+              value={downPayment || ""}
+              onChange={(e) => setDownPayment(Number(e.target.value))}
+              className="border rounded p-2 ml-2"
               placeholder="Ingrese el depósito inicial"
             />
           </div>
-
           <button
-            onClick={handleSignContract}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={handleCreateContract}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
           >
-            Firmar Contrato
+            Crear Contrato
           </button>
         </div>
       ) : (
-        <div className="p-4 bg-green-100 rounded">
-          <h3 className="font-bold text-green-700">Contrato firmado exitosamente</h3>
-          <p>Próxima Fecha de Pago: {nextPaymentDate}</p>
-          <p>Monto del Próximo Pago: ${monthlyPayment.toFixed(2)}</p>
+        <p>Loading payment plan...</p>
+      )}
+      {contractResponse ? (
+        <div className="mt-4">
+          <h3>Contrato Creado</h3>
+          <p>ID del Contrato: {contractResponse.id}</p>
+          <p>Fecha del Próximo Pago: {contractResponse.next_payment_date}</p>
+          <p>Monto del Próximo Pago: {contractResponse.next_payment_amount}</p>
         </div>
+      ) : (
+        <p>Loading contract...</p>
       )}
     </div>
   );
 };
 
-export default SignContract;
+export default PaymentPlanContracts;
