@@ -62,12 +62,7 @@ export const DeviceController = {
                     const pushToken = device.imei !== null ? device.imei : '';
                     // await sendPushNotification([pushToken], message);
                 } catch (notificationError) {
-                    console.error('Error enviando notificación push:', notificationError);
-                    res.status(500).json({
-                        success: false,
-                        message: 'El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.',
-                    });
-                    return;
+                    throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.');
                 }
             }
 
@@ -106,7 +101,7 @@ export const DeviceController = {
 
             // Valida que el archivo tenga datos
             if (sheetData.length === 0) {
-                res.status(400).json({ error: 'El archivo está vacío.' });
+                throw new Error('El archivo está vacío.');
             }
 
             // Procesar cada fila (se espera que tenga las columnas "imei" y "action")
@@ -183,14 +178,14 @@ export const DeviceController = {
 
             // Inserta nuevos clientes
             if (nuevosClientes.length > 0) {
-                const nuevosClientesInsertar = nuevosClientes.map(name => ({ name ,identity_number:generarCedulaEcuatoriana()}));
+                const nuevosClientesInsertar = nuevosClientes.map(name => ({ name, identity_number: generarCedulaEcuatoriana() }));
                 const { data: nuevosClientesData, error: errorInsertClientes } = await supabase
                     .from('clients')
                     .insert(nuevosClientesInsertar)
                     .select();
 
                 if (errorInsertClientes) {
-                    res.status(500).json({ error: `Error al insertar nuevos clientes: ${errorInsertClientes.message}` });
+                    throw new Error(`Error al insertar nuevos clientes: ${errorInsertClientes.message}`);
                 }
 
                 // Agrega los nuevos clientes al mapa de IDs
@@ -223,12 +218,11 @@ export const DeviceController = {
             // Inserción masiva de dispositivos
             const { error: errorInsert } = await supabase.from('devices').insert(devicesToInsert);
             if (errorInsert) {
-                res.status(500).json({ error: `Error al insertar dispositivos: ${errorInsert.message}` });
+                throw new Error(`Error al insertar dispositivos: ${errorInsert.message}`);
             }
 
             res.status(200).json({ message: 'Dispositivos insertados exitosamente.' });
         } catch (error: any) {
-            console.error('Error al insertar dispositivos:', error);
             res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
         }
     },
@@ -237,7 +231,7 @@ export const DeviceController = {
         const { id } = req.params;
 
         if (!id) {
-            res.status(400).json({ success: false, message: 'El ID del dispositivo es requerido.' });
+            throw new Error('El ID del dispositivo es requerido.');
         }
 
         try {
@@ -250,12 +244,11 @@ export const DeviceController = {
                 .single();
 
             if (error) {
-                console.error('Error al actualizar el estado del dispositivo:', error);
-                res.status(500).json({ success: false, message: 'Error al bloquear el dispositivo en la base de datos.' });
+                throw new Error('Error al bloquear el dispositivo en la base de datos.');
             }
 
             if (!device) {
-                res.status(404).json({ success: false, message: 'Dispositivo no encontrado.' });
+                throw new Error('Dispositivo no encontrado.');
             }
 
             // Obtener el push_token del dispositivo bloqueado
@@ -312,7 +305,7 @@ export const DeviceController = {
                 .single();
 
             if (error) {
-                throw new Error('Error al actualizar el estado del dispositivo: '+error.message); // Lanzar error
+                throw new Error('Error al actualizar el estado del dispositivo: ' + error.message); // Lanzar error
             }
 
             if (!device) {
@@ -348,19 +341,19 @@ export const DeviceController = {
     async unlockRequest(req: Request, res: Response) {
         try {
             const { CODIGO_ID_SUJETO, VOUCHER_PAGO, imei, ip } = req.body;
-    
+
             // Generar código de desbloqueo
             const unlockCode = generarCodigoDesbloqueo();
-    
+
             let dispositivo = null;
-    
+
             // Intentar buscar dispositivo por IP
             const { data: dispositivoPorIp, error: errorPorIp } = await supabase
                 .from('devices')
                 .select('*')
                 .eq('ip', ip)
                 .single();
-    
+
             if (!errorPorIp && dispositivoPorIp) {
                 dispositivo = dispositivoPorIp;
             } else {
@@ -370,7 +363,7 @@ export const DeviceController = {
                     .select('*')
                     .eq('imei', imei)
                     .single();
-    
+
                 if (!errorPorImei && dispositivoPorImei) {
                     dispositivo = dispositivoPorImei;
                 } else {
@@ -380,45 +373,45 @@ export const DeviceController = {
                         .select('id')
                         .eq('identity_number', CODIGO_ID_SUJETO)
                         .single();
-    
+
                     if (errorCliente || !cliente) {
                         throw new Error('Cliente no encontrado.'); // Lanzar error
                     }
-    
+
                     // Buscar dispositivo por cliente
                     const { data: dispositivoPorCliente, error: errorPorCliente } = await supabase
                         .from('devices')
                         .select('*')
                         .or(`owner.eq.${cliente?.id}`)
                         .single();
-    
+
                     if (!errorPorCliente && dispositivoPorCliente) {
                         dispositivo = dispositivoPorCliente;
                     }
                 }
             }
-    
+
             if (!dispositivo) {
                 throw new Error('Dispositivo no encontrado.'); // Lanzar error
             }
-    
+
             // Actualizar el código de desbloqueo en la tabla `devices`
             const { error: errorActualizacion } = await supabase
                 .from('devices')
                 .update({ unlock_code: unlockCode })
                 .eq('id', dispositivo.id);
-    
+
             if (errorActualizacion) {
                 throw new Error('Error actualizando el código de desbloqueo.'); // Lanzar error
             }
-    
+
             // Crear notificación
             const mensaje = {
                 message: `El cliente con CODIGO_ID_SUJETO: ${CODIGO_ID_SUJETO} y VOUCHER_PAGO: ${VOUCHER_PAGO} está solicitando el desbloqueo de su dispositivo con IMEI: ${imei} e IP: ${ip}`,
                 status: 'No Leida',
             };
             await BaseService.create<Notification>('notifications', mensaje);
-    
+
             res.status(200).json({
                 status: 'success',
                 message: 'Solicitud recibida. Nos comunicaremos pronto.',
@@ -426,11 +419,11 @@ export const DeviceController = {
             });
         } catch (error: any) {
             console.error(error);
-    
+
             // Manejo de diferentes tipos de errores
             let statusCode = 500;
             let errorMessage = 'Error interno del servidor.';
-    
+
             if (error.message === 'Cliente no encontrado.') {
                 statusCode = 404;
                 errorMessage = error.message;
@@ -441,10 +434,10 @@ export const DeviceController = {
                 statusCode = 500;
                 errorMessage = error.message;
             }
-    
+
             res.status(statusCode).json({ error: errorMessage });
         }
-    },   
+    },
     async unlockValidate(req: Request, res: Response) {
         try {
             // Validar que se envíe al menos uno de los parámetros necesarios

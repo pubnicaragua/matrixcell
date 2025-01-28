@@ -7,6 +7,9 @@ const deviceSchema = Joi.object({
     imei: Joi.string().required(),
     status :  Joi.string().required(),
     owner: Joi.string().required(),
+    brand:Joi.string().required(),
+    model:Joi.string().required(),
+    price: Joi.number().required()
 });
 
 export const validateDevice = (device: Device) => {
