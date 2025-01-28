@@ -7,6 +7,9 @@ export class Device{
     created_at: Date|null;
     cliente?: string |null;
     unlock_code?: string |null;
+    marca?: string |null;
+    modelo?: string |null;
+    price?: number |null;
 
     constructor(){
         this.owner = null;
@@ -15,5 +18,8 @@ export class Device{
         this.store_id = null;
         this.created_at = null;
         this.unlock_code=null;
+        this.marca=null;
+        this.modelo=null;
+        this.price=null;
     }
 }
