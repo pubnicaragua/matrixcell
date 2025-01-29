@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card"
 import { PlusCircle, X } from "lucide-react"
 
+// Define the Device interface
 interface Device {
   id: number
   marca: string
