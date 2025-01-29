@@ -3,7 +3,7 @@ import { Button } from "../components/ui/button";
 
 const DownloadApkPage = () => {
   // Ruta al archivo APK dentro de src/files
-  const apkUrl = '/files/application-1a0bbc54-84cf-4d09-862f-b931c6bf44ee.apk';
+  const apkUrl = '/files/composeApp-debug.apk';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 font-sans">
