@@ -170,7 +170,7 @@ const Dashboard = () => {
         <CardContent className="p-6">
           <div className="relative aspect-square">
             <img
-              src="/assets/qr.jpg"
+              src="/assets/newqr.jpg"
               alt="QR Code"
               className="absolute inset-0 w-full h-full object-contain rounded-lg"
             />
