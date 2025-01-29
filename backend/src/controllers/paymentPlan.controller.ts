@@ -2,6 +2,7 @@ import { Request,Response } from "express";
 import { PaymentPlan } from "../models/paymentPlan.model";
 import { BaseService } from "../services/base.service";
 import { validatePaymentPlan } from "../requests/paymentPlan.request";
+import supabase from "../config/supabaseClient";
 const tableName = 'payment_plans'; // Nombre de la tabla en la base de datos
 
 export const PaymentPlanController = {
@@ -38,49 +39,43 @@ async getAllPaymentPlans(req: Request, res: Response) {
             res.status(400).json({ message: error.message });
         }
     },
-    async createPaymentPlan(req: Request, res: Response) {
+    async createPaymentPlan(req: Request, res: Response): Promise<void> {
         try {
-            const { price, downPaymentPlan, device_id } = req.body;
-            validatePaymentPlan(req.body); // Validar los datos
-            // Calcular saldo restante
-            const remainingBalance = price - downPaymentPlan;
-            // Configuración de los planes de pago
-            const plans = [3, 6]; // Plazos en meses
-            const interestRate = 0.05; // 5% de interés mensual
-           const paymentPlanRecords = plans.map((months) => {
-                const totalCost = remainingBalance * (1 + interestRate * months); // Costo total con interés
-                const monthlyPayment = totalCost / months; // Pago mensual
-                const weeklyPayment = monthlyPayment / 4.33; // Pago semanal (aproximado)
+            const {
+                device_id,
+                months,
+                weekly_payment,
+                monthly_payment,
+                total_cost,
+            } = req.body;
     
-                const paymentPlan = new PaymentPlan();
-                paymentPlan.device_id = device_id;
-                paymentPlan.months = months;
-                paymentPlan.weekly_payment = parseFloat(weeklyPayment.toFixed(2));
-                paymentPlan.monthly_payment = parseFloat(monthlyPayment.toFixed(2));
-                paymentPlan.total_cost = parseFloat(totalCost.toFixed(2));
-                paymentPlan.created_at = new Date();
+            const { data: paymentPlan, error } = await supabase
+                .from("payment_plans")
+                .insert([
+                    {
+                        device_id,
+                        months,
+                        weekly_payment,
+                        monthly_payment,
+                        total_cost,
+                    },
+                ])
+                .select()
+                .single();
     
-                return paymentPlan;
-            });
-    
-            // Guardar cada registro individualmente en la base de datos
-            const savedPlans = [];
-            for (const plan of paymentPlanRecords) {
-                const savedPlan = await BaseService.create<PaymentPlan>("payment_plans", plan);
-                savedPlans.push(savedPlan);
+            if (error) {
+                console.error("Error de Supabase:", error);
+                res.status(400).json({ message: error.message });
+                return;
             }
     
-            // Devolver la respuesta
-             res.status(200).json(savedPlans);
+            console.log("Plan de pago creado:", paymentPlan);
+            res.status(201).json(paymentPlan);
         } catch (error: any) {
-            // Manejo de errores
-            console.error("Error al crear el plan de pagos:", error);
-             res.status(400).json({
-                message: error.message,
-            });
+            console.error("Error interno:", error);
+            res.status(500).json({ message: "Error interno del servidor" });
         }
     }
-    
     
     
 }
