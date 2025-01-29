@@ -27,7 +27,7 @@ import PrivateRoute from './components/PrivateRoute'
 // @ts-ignore
 import DescargarApk from './pages/DescargarApk';
 import QuotePage from './pages/QuotePage';
-import QuoteClientPage from './pages/QuoteClientPage';
+// import QuoteClientPage from './pages/QuoteClientPage';
 
 
 const App = () => {
@@ -125,7 +125,7 @@ const App = () => {
             </PrivateRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/quote-client"
           element={
             <PrivateRoute>
@@ -134,7 +134,7 @@ const App = () => {
               </Layout>
             </PrivateRoute>
           }
-        />
+        /> */}
 
         <Route
           path="/addclient"
@@ -257,7 +257,7 @@ const App = () => {
           }
         />
 
-        <Route
+        {/* <Route
           path="/quote-client-page"
           element={
             <PrivateRoute>
@@ -266,7 +266,7 @@ const App = () => {
               </Layout>
             </PrivateRoute>
           }
-        />
+        /> */}
 
         {/* <Route path="/notifications" element={<Layout><Notifications /></Layout>} /> */}
         {/* <Route path="/invoices" element={<Layout><Invoices /></Layout>} />

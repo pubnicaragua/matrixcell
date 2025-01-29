@@ -5,7 +5,7 @@ import { validateContract } from "../requests/contract.request";
 import { calculateNextPaymentDate } from "../services/contract.service";
 import supabase from "../config/supabaseClient";
 
-const tableName = 'contract'; // Nombre de la tabla en la base de datos
+const tableName = 'contracts'; // Nombre de la tabla en la base de datos
 export const ContractController = {
 
     async createContract(req: Request, res: Response) {
@@ -20,10 +20,11 @@ export const ContractController = {
                 payment_progress,
                 status,
                 created_at,
+                nombre_cliente
             } = req.body;
-    
-            
-    
+
+
+
             // Crear el contrato en la base de datos
             const { data: contract, error } = await supabase
                 .from('contracts')
@@ -35,15 +36,17 @@ export const ContractController = {
                     next_payment_amount,
                     payment_progress,
                     status,
-                    created_at
+                    created_at,
+                    nombre_cliente
                 })
                 .single();
-    
+
             if (error) {
                 throw new Error(error.message);
             }
-    
+
             // Responder con el contrato creado
+            console.log(contract);
             res.status(201).json(contract);
         } catch (error: any) {
             console.error('Error creating contract:', error);
@@ -52,20 +55,53 @@ export const ContractController = {
                 error: process.env.NODE_ENV === 'development' ? error : undefined
             });
         }
-    },    
+    },
     async getAllContracts(req: Request, res: Response) {
         try {
-            const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const contracts = await BaseService.getAll<Contract>(tableName, ['id', 'payment_plans(months,weekly_payment,monthly_payment,total_cost),payments(payment_date,amount)', 'down_payment', 'next_payment_date', 'next_payment_amount', 'payment_progress', 'status'], where);
-            res.json(contracts);
+            const where = { ...req.query } // Convert query parameters to filters
+
+            const { data: contracts, error } = await supabase
+                .from(tableName)
+                .select(`
+              id,
+              payment_plans (
+                months,
+                weekly_payment,
+                monthly_payment,
+                total_cost
+              ),
+              payments (
+                payment_date,
+                amount
+              ),
+              down_payment,
+              next_payment_date,
+              next_payment_amount,
+              payment_progress,
+              status,
+              nombre_cliente,
+              devices (
+                marca,
+                modelo,
+                price
+              )
+            `)
+                .match(where)
+
+            if (error) {
+                throw new Error(error.message)
+            }
+
+            console.log(contracts)
+            res.json(contracts)
         } catch (error: any) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ message: error.message })
         }
     },
     async getContract(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const contract = await BaseService.getAll<Contract>(tableName, ['id', 'payment_plans(months,weekly_payment,monthly_payment,total_cost),payments(payment_date,amount)', 'down_payment', 'next_payment_date', 'next_payment_amount', 'payment_progress', 'status'], { id });
+            const contract = await BaseService.getAll<Contract>(tableName, ['id', 'payment_plans(months,weekly_payment,monthly_payment,total_cost),payments(payment_date,amount)', 'down_payment', 'next_payment_date', 'next_payment_amount', 'payment_progress', 'status', 'nombre_cliente'], { id });
             res.json(contract);
         } catch (error: any) {
             res.status(500).json({ message: error.message });

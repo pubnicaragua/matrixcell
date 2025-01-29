@@ -6,6 +6,7 @@ export class PaymentPlan{
     monthly_payment:number|null;
     total_cost:number|null;
     created_at:Date|string|null;
+    
     constructor(){
         this.device_id = null;
         this.months = null;
