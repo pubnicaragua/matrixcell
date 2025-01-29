@@ -18,7 +18,7 @@ export const DeviceController = {
         try {
             const where = { ...req.query };
             //const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'brand', 'model', 'price', 'status', 'unlock_code'], where);
-            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id',  'status', 'unlock_code', 'marca', 'modelo', 'price'], where);
+            const devices = await BaseService.getAll<Device>(tableName, ['id', 'created_at', 'imei', 'owner', 'store_id', 'status', 'unlock_code', 'marca', 'modelo', 'price'], where);
 
             // Asegurarse de que `formatDevice` pueda manejar un arreglo de dispositivos
             res.json(devices.map(device => DeviceResource.formatDevice(device)));
@@ -48,7 +48,7 @@ export const DeviceController = {
 
             if (device.status === 'Desbloqueado') {
                 const unlockCode = generarCodigoDesbloqueo();
-                
+
                 const { error: errorActualizacion } = await supabase
                     .from('devices')
                     .update({ unlock_code: unlockCode })
@@ -306,7 +306,7 @@ export const DeviceController = {
             // Actualizar el estado del dispositivo a "desbloqueado"
             const { data: device, error } = await supabase
                 .from('devices')
-                .update({ status: 'Desbloqueado',unlock_code:'' })
+                .update({ status: 'Desbloqueado', unlock_code: '' })
                 .eq('id', id)
                 .select('imei')
                 .single();
@@ -329,7 +329,12 @@ export const DeviceController = {
                     data: { deviceId: id },
                 };
                 try {
-                    // await sendPushNotification([pushToken], message);
+                    // Emitir evento de desbloqueo usando Socket.IO
+                    io.to(`device_${device.imei}`).emit('device-unblocked', {
+                        blocked: false,
+                        deviceId: id,
+                        unlockCode: unlockCode
+                    });
                 } catch (notificationError) {
                     throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.'); // Lanzar error
                 }
