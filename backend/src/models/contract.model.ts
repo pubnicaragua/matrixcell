@@ -3,7 +3,7 @@ export class Contract{
     device_id: number|null;
     payment_plan_id: number|null;
     down_payment: number|null;
-    next_payment_date: number|null;
+    next_payment_date: string|null;
     next_payment_amount: number|null;
     payment_progress: number|null;
     status: string|null;
