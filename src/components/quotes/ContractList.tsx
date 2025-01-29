@@ -10,6 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../../components/ui/badge"
 import * as XLSX from "xlsx"
 import ContactActions from "./ContractActions"
+import { Progress } from "../../components/ui/progress"
+import PaymentProgressModal from "./PaymentProgressModal"
+import PDFVoucher from "./PDFVoucher"
 
 interface Contract {
   id: number
@@ -17,8 +20,10 @@ interface Contract {
   payment_plan_id: number
   down_payment: number | null
   next_payment_amount: number | null
+  next_payment_date: string
   payment_progress: number | null
   status: string | null
+  nombre_cliente: string | null
   devices: {
     marca: string
     modelo: string
@@ -31,28 +36,15 @@ interface Contract {
   }
 }
 
-const generateExcel = (contract: Contract) => {
-  const workbook = XLSX.utils.book_new()
-  const worksheet = XLSX.utils.json_to_sheet([
-    {
-      ID: contract.id,
-      Dispositivo: `${contract.devices.marca} ${contract.devices.modelo}`,
-      "Pago Inicial": contract.down_payment,
-      "Pago Semanal": contract.payment_plans.weekly_payment,
-      "Pago Mensual": contract.payment_plans.monthly_payment,
-      "Costo Total (+12%)": contract.payment_plans.total_cost ? contract.payment_plans.total_cost * 1.12 : 0,
-      Estado: contract.status,
-      "Progreso de Pago": `${contract.payment_progress}%`,
-    },
-  ])
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Detalles del Contrato")
-  XLSX.writeFile(workbook, `Contrato_${contract.id}.xlsx`)
+const generatePDF = (contract: Contract) => {
+  PDFVoucher.generate(contract)
 }
 
 const ContractList: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchContracts = async () => {
@@ -82,6 +74,11 @@ const ContractList: React.FC = () => {
     }
   }
 
+  const handleOpenModal = (contract: Contract) => {
+    setSelectedContract(contract)
+    setIsModalOpen(true)
+  }
+
   if (isLoading) {
     return (
       <Card className="w-full">
@@ -103,6 +100,7 @@ const ContractList: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Cliente</TableHead>
                 <TableHead>Dispositivo</TableHead>
                 <TableHead>Pago Inicial</TableHead>
                 <TableHead>Pago Semanal</TableHead>
@@ -115,6 +113,15 @@ const ContractList: React.FC = () => {
             <TableBody>
               {contracts.map((contract) => (
                 <TableRow key={contract.id}>
+                  {/* Nueva columna para mostrar el cliente */}
+                  <TableCell>
+                    {contract.nombre_cliente ? (
+                      <span>{contract.nombre_cliente}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Cliente no asignado</span>
+                    )}
+                  </TableCell>
+
                   <TableCell>
                     <div>
                       <div className="font-medium">{contract.devices.marca}</div>
@@ -125,23 +132,19 @@ const ContractList: React.FC = () => {
                   <TableCell>${contract.payment_plans.weekly_payment?.toFixed(2) || "N/A"}</TableCell>
                   <TableCell>${contract.payment_plans.monthly_payment?.toFixed(2) || "N/A"}</TableCell>
                   <TableCell>
-                    ${(contract.payment_plans.total_cost ? contract.payment_plans.total_cost * 1.12 : 0).toFixed(2)}
+                    ${(contract.payment_plans.total_cost ? contract.payment_plans.total_cost : 0).toFixed(2)}
                   </TableCell>
                   <TableCell>{getStatusBadge(contract.status)}</TableCell>
                   <TableCell>
                     <div className="space-y-2">
                       <div className="space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => alert(`Ver progreso del contrato ID: ${contract.id}`)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(contract)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Progreso
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => generateExcel(contract)}>
+                        <Button variant="outline" size="sm" onClick={() => generatePDF(contract)}>
                           <FileText className="mr-2 h-4 w-4" />
-                          Generar Excel
+                          Generar PDF
                         </Button>
                       </div>
                       <ContactActions contractId={contract.id} />
@@ -155,6 +158,9 @@ const ContractList: React.FC = () => {
           <p className="text-center py-4 text-muted-foreground">No hay contratos disponibles.</p>
         )}
       </CardContent>
+      {selectedContract && (
+        <PaymentProgressModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} contract={selectedContract} />
+      )}
     </Card>
   )
 }
