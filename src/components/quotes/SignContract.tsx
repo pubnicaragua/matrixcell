@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState } from "react"
 import axios from "../../axiosConfig"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
 import { Input } from "../../components/ui/input"
@@ -28,19 +29,23 @@ interface ContractSummary {
   next_payment_amount: number | null
   payment_progress: number | null
   status: string
+  nombre_cliente: string
 }
 
 interface SignContractProps {
   deviceId: number
   monthlyPayment: number
   onContractSigned: () => void
+  marca: string
+  modelo: string
 }
 
-const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
+const SignContract: React.FC<SignContractProps> = ({ deviceId, monthlyPayment, onContractSigned, marca, modelo }) => {
   const [latestPaymentPlan, setLatestPaymentPlan] = useState<PaymentPlan | null>(null)
   const [downPayment, setDownPayment] = useState<number | null>(null)
   const [contractSummary, setContractSummary] = useState<ContractSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [nombreCliente, setNombreCliente] = useState("")
 
   useEffect(() => {
     const fetchLatestPaymentPlan = async () => {
@@ -51,6 +56,8 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
         if (paymentPlans.length > 0) {
           const latestPlan = paymentPlans[paymentPlans.length - 1]
           setLatestPaymentPlan(latestPlan)
+          console.log("Payment Plan ID:", latestPlan.id)
+          console.log("Device ID:", latestPlan.device_id)
         }
       } catch (error) {
         console.error("Error fetching payment plans:", error)
@@ -63,7 +70,7 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
   }, [])
 
   const handleGenerateSummary = () => {
-    if (!latestPaymentPlan || !downPayment) {
+    if (!latestPaymentPlan || !downPayment || !nombreCliente) {
       console.error("Missing required information to generate contract summary.")
       return
     }
@@ -82,6 +89,7 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
       next_payment_amount: latestPaymentPlan.monthly_payment,
       payment_progress: paymentProgress,
       status: "ACTIVE",
+      nombre_cliente: nombreCliente,
     }
 
     setContractSummary(summary)
@@ -89,16 +97,13 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
 
   const handleCreateContract = async () => {
     try {
-      await axios.post("/contracts", contractSummary);
-      alert("Contrato creado exitosamente");
-      onContractSigned(); // Se ejecuta cuando el contrato se firma
+      await axios.post("/contracts", contractSummary)
+      alert("Contrato creado exitosamente")
+      onContractSigned()
     } catch (error) {
-      console.error("Error creando contrato:", error);
+      console.error("Error creando contrato:", error)
     }
-  };
-
-
-
+  }
 
   if (isLoading) {
     return (
@@ -124,12 +129,10 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium">ID</TableCell>
-                    <TableCell>{latestPaymentPlan.id}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">ID del Dispositivo</TableCell>
-                    <TableCell>{latestPaymentPlan.device_id}</TableCell>
+                    <TableCell className="font-medium">Dispositivo</TableCell>
+                    <TableCell>
+                      {marca} - {modelo}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Costo Total</TableCell>
@@ -137,6 +140,16 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
                   </TableRow>
                 </TableBody>
               </Table>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nombreCliente">Nombre del Cliente</Label>
+              <Input
+                id="nombreCliente"
+                type="text"
+                value={nombreCliente}
+                onChange={(e) => setNombreCliente(e.target.value)}
+                placeholder="Ingrese el nombre del cliente"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="downPayment">Depósito Inicial</Label>
@@ -153,7 +166,7 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
             </div>
             <Button onClick={handleGenerateSummary} className="w-full">
               <FileText className="mr-2 h-4 w-4" />
-              Generar Resumen del Contrato
+              Generar Resumen del Carrito
             </Button>
           </>
         ) : (
@@ -162,18 +175,20 @@ const SignContract: React.FC<SignContractProps> = ({ onContractSigned }) => {
         {contractSummary && (
           <Card>
             <CardHeader>
-              <CardTitle>Resumen del Contrato</CardTitle>
+              <CardTitle>Resumen del Carrito</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium">ID del Plan de Pago</TableCell>
-                    <TableCell>{contractSummary.payment_plan_id}</TableCell>
+                    <TableCell className="font-medium">Nombre del Cliente</TableCell>
+                    <TableCell>{contractSummary.nombre_cliente}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">ID del Dispositivo</TableCell>
-                    <TableCell>{contractSummary.device_id}</TableCell>
+                    <TableCell className="font-medium">Dispositivo</TableCell>
+                    <TableCell>
+                      {marca} - {modelo}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Depósito Inicial</TableCell>

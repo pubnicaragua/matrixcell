@@ -20,6 +20,7 @@ export const ContractController = {
                 payment_progress,
                 status,
                 created_at,
+                nombre_cliente
             } = req.body;
 
 
@@ -35,7 +36,8 @@ export const ContractController = {
                     next_payment_amount,
                     payment_progress,
                     status,
-                    created_at
+                    created_at,
+                    nombre_cliente
                 })
                 .single();
 
