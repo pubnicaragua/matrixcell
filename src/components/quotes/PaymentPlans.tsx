@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import axios from "../../axiosConfig"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
 import { Calendar, DollarSign, Clock, CreditCard } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
@@ -12,10 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 interface PaymentPlanProps {
   deviceId: number
   price: number
+  marca: string
+  modelo: string
   onSavePlan: (plan: { id: number; monthlyPayment: number }) => void
 }
 
-const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, onSavePlan }) => {
+const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, modelo, onSavePlan }) => {
   const [selectedMonths, setSelectedMonths] = useState<number | null>(null)
   const [paymentDetails, setPaymentDetails] = useState({
     weekly: 200,
@@ -115,6 +117,18 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, onSavePlan }
                 </TableHeader>
                 <TableBody>
                   <TableRow>
+                    <TableCell>Dispositivo</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline">
+                        {marca} - {modelo}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Precio Base</TableCell>
+                    <TableCell className="text-right font-medium">${price.toFixed(2)}</TableCell>
+                  </TableRow>
+                  <TableRow>
                     <TableCell>Plazo</TableCell>
                     <TableCell className="text-right">
                       <Badge variant="secondary">{selectedMonths} meses</Badge>
@@ -143,7 +157,7 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, onSavePlan }
         <CardFooter>
           <Button onClick={savePaymentPlan} className="w-full" size="lg">
             <DollarSign className="h-4 w-4 mr-2" />
-            Guardar Plan
+            Seleccionar Plan
           </Button>
         </CardFooter>
       )}

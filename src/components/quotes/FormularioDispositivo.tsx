@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card"
 import { PlusCircle, X } from "lucide-react"
 
 interface Device {
@@ -18,7 +18,7 @@ interface Device {
 }
 
 interface FormularioDispositivoProps {
-  onDeviceSelect: (device: { id: number; price: number }) => void
+  onDeviceSelect: (device: { id: number; price: number; marca: string; modelo: string }) => void
 }
 
 const DeviceSelector: React.FC<FormularioDispositivoProps> = ({ onDeviceSelect }) => {
@@ -46,7 +46,7 @@ const DeviceSelector: React.FC<FormularioDispositivoProps> = ({ onDeviceSelect }
   const handleSelectDevice = (id: string) => {
     const device = devices.find((d) => d.id === Number.parseInt(id))
     if (device) {
-      onDeviceSelect({ id: device.id, price: device.price })
+      onDeviceSelect({ id: device.id, price: device.price, marca: device.marca, modelo: device.modelo })
       setSelectedDeviceId(device.id)
     }
   }
@@ -92,11 +92,11 @@ const DeviceSelector: React.FC<FormularioDispositivoProps> = ({ onDeviceSelect }
           <SelectContent>
             {devices.map((device) => (
               <SelectItem key={device.id} value={device.id.toString()}>
-                {device.marca ? device.marca : 'Verificar Marca' } - {device.modelo} ({device.price ? `$${device.price}` : "Verificar precio"})
+                {device.marca ? device.marca : "Verificar Marca"} - {device.modelo} (
+                {device.price ? `$${device.price}` : "Verificar precio"})
               </SelectItem>
             ))}
           </SelectContent>
-
         </Select>
 
         {!selectedDeviceId && (

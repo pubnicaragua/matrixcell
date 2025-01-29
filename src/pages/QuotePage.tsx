@@ -21,10 +21,15 @@ const steps = [
 const QuoteClientPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("create-quote")
   const [currentStep, setCurrentStep] = useState(0)
-  const [selectedDevice, setSelectedDevice] = useState<{ id: number; price: number } | null>(null)
+  const [selectedDevice, setSelectedDevice] = useState<{
+    id: number
+    price: number
+    marca: string
+    modelo: string
+  } | null>(null)
   const [paymentPlan, setPaymentPlan] = useState<{ id: number; monthlyPayment: number } | null>(null)
 
-  const handleDeviceSelect = (device: { id: number; price: number }) => {
+  const handleDeviceSelect = (device: { id: number; price: number; marca: string; modelo: string }) => {
     setSelectedDevice(device)
     setCurrentStep(1)
   }
@@ -48,7 +53,13 @@ const QuoteClientPage: React.FC = () => {
       case 1:
         return (
           selectedDevice && (
-            <PaymentPlan deviceId={selectedDevice.id} price={selectedDevice.price} onSavePlan={handleSavePlan} />
+            <PaymentPlan
+              deviceId={selectedDevice.id}
+              price={selectedDevice.price}
+              marca={selectedDevice.marca}
+              modelo={selectedDevice.modelo}
+              onSavePlan={handleSavePlan}
+            />
           )
         )
       case 2:
@@ -86,8 +97,9 @@ const QuoteClientPage: React.FC = () => {
                   {steps.map((step, index) => (
                     <li key={step.id} className="flex w-full items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full lg:h-12 lg:w-12 shrink-0 ${index <= currentStep ? "bg-blue-100" : "bg-gray-100"
-                          }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full lg:h-12 lg:w-12 shrink-0 ${
+                          index <= currentStep ? "bg-blue-100" : "bg-gray-100"
+                        }`}
                       >
                         {index < currentStep ? (
                           <Check className="w-5 h-5 text-blue-600" />
