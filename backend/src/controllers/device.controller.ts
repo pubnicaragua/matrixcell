@@ -8,7 +8,8 @@ import supabase from "../config/supabaseClient";
 import * as XLSX from 'xlsx';
 import { generarCedulaEcuatoriana, generarCodigoDesbloqueo } from "../services/client.service";
 import { Client } from "../models/client.model";
-import { activeConnections } from "..";
+import { io } from "..";
+
 
 const tableName = 'devices'; // Nombre de la tabla en la base de datos
 export const DeviceController = {
@@ -41,36 +42,37 @@ export const DeviceController = {
     async updateDevice(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            validateDevice(req.body); // Validar los datos
+            validateDevice(req.body);
             const { userId } = req;
             const device = await BaseService.update<Device>(tableName, parseInt(id), req.body, userId);
 
-            const unlockCode = generarCodigoDesbloqueo();
-
-
             if (device.status === 'Desbloqueado') {
-                const message = {
-                    body: unlockCode + ' ',
-                    data: { deviceId: id },
-                };
-
-                try {
-                    const pushToken = device.imei !== null ? device.imei : '';
-                    const { error: errorActualizacion } = await supabase
+                const unlockCode = generarCodigoDesbloqueo();
+                
+                const { error: errorActualizacion } = await supabase
                     .from('devices')
                     .update({ unlock_code: unlockCode })
                     .eq('id', id);
-    
+
                 if (errorActualizacion) {
-                    throw new Error('Error actualizando el código de desbloqueo.'); // Lanzar error
-                }                } catch (notificationError) {
-                    throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.');
+                    throw new Error('Error actualizando el código de desbloqueo.');
                 }
+
+                // Emitir evento de desbloqueo usando Socket.IO
+                io.to(`device_${device.imei}`).emit('device-unblocked', {
+                    blocked: false,
+                    deviceId: id,
+                    unlockCode: unlockCode
+                });
+            } else if (device.status === 'Bloqueado') {
+                // Emitir evento de bloqueo usando Socket.IO
+                io.to(`device_${device.imei}`).emit('device-blocked', {
+                    blocked: true,
+                    deviceId: id,
+                    reason: 'Dispositivo bloqueado por actualización'
+                });
             }
- // Emitir mensaje a todos los clientes conectados sobre la actualización
-         activeConnections.forEach((ws: WebSocket) => {
-            ws.send(`Dispositivo con ID ${device.imei} actualizado: ${device.status}`);
-          });
+
             res.json(DeviceResource.formatDevice(device));
         } catch (error: any) {
             res.status(400).json({ message: error.message });

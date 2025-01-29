@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",
+    "@types/socket.io": "^3.0.2",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "cron": "^3.2.1",
@@ -29,6 +30,7 @@
     "nodemailer": "^6.9.16",
     "pdfkit": "^0.15.1",
     "pdfkit-table": "^0.1.99",
+    "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "underscore": "^1.13.6",
