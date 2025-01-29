@@ -37,6 +37,8 @@ export const Alert: React.FC<AlertProps> = ({ title, description, type, onClose 
       )}
     </motion.div>
   );
+
+  
 };
 
 export default Alert;
