@@ -5,9 +5,11 @@ import { useEffect, useState } from "react"
 import axios from "../../axiosConfig"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
-import { Loader2, Eye } from "lucide-react"
+import { Loader2, Eye, FileText } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Badge } from "../../components/ui/badge"
+import * as XLSX from "xlsx"
+import ContactActions from "./ContractActions"
 
 interface Contract {
   id: number
@@ -27,6 +29,25 @@ interface Contract {
     monthly_payment: number | null
     total_cost: number | null
   }
+}
+
+const generateExcel = (contract: Contract) => {
+  const workbook = XLSX.utils.book_new()
+  const worksheet = XLSX.utils.json_to_sheet([
+    {
+      ID: contract.id,
+      Dispositivo: `${contract.devices.marca} ${contract.devices.modelo}`,
+      "Pago Inicial": contract.down_payment,
+      "Pago Semanal": contract.payment_plans.weekly_payment,
+      "Pago Mensual": contract.payment_plans.monthly_payment,
+      "Costo Total (+12%)": contract.payment_plans.total_cost ? contract.payment_plans.total_cost * 1.12 : 0,
+      Estado: contract.status,
+      "Progreso de Pago": `${contract.payment_progress}%`,
+    },
+  ])
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Detalles del Contrato")
+  XLSX.writeFile(workbook, `Contrato_${contract.id}.xlsx`)
 }
 
 const ContractList: React.FC = () => {
@@ -108,14 +129,23 @@ const ContractList: React.FC = () => {
                   </TableCell>
                   <TableCell>{getStatusBadge(contract.status)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => alert(`Ver progreso del contrato ID: ${contract.id}`)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver Progreso
-                    </Button>
+                    <div className="space-y-2">
+                      <div className="space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => alert(`Ver progreso del contrato ID: ${contract.id}`)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver Progreso
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => generateExcel(contract)}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Generar Excel
+                        </Button>
+                      </div>
+                      <ContactActions contractId={contract.id} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
