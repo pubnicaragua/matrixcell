@@ -45,31 +45,31 @@ export const DeviceController = {
             const { userId } = req;
             const device = await BaseService.update<Device>(tableName, parseInt(id), req.body, userId);
 
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            const length = 10; // Define la longitud de la cadena aleatoria
-            let result = '';
+            const unlockCode = generarCodigoDesbloqueo();
 
-            for (let i = 0; i < length; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                result += characters[randomIndex];
-            }
 
             if (device.status === 'Desbloqueado') {
                 const message = {
-                    body: result + ' ',
+                    body: unlockCode + ' ',
                     data: { deviceId: id },
                 };
 
                 try {
                     const pushToken = device.imei !== null ? device.imei : '';
-                    // await sendPushNotification([pushToken], message);
-                } catch (notificationError) {
+                    const { error: errorActualizacion } = await supabase
+                    .from('devices')
+                    .update({ unlock_code: unlockCode })
+                    .eq('id', id);
+    
+                if (errorActualizacion) {
+                    throw new Error('Error actualizando el código de desbloqueo.'); // Lanzar error
+                }                } catch (notificationError) {
                     throw new Error('El dispositivo fue desbloqueado, pero no se pudo enviar la notificación.');
                 }
             }
  // Emitir mensaje a todos los clientes conectados sobre la actualización
          activeConnections.forEach((ws: WebSocket) => {
-            ws.send(`Dispositivo con ID ${id} actualizado: ${device.status}`);
+            ws.send(`Dispositivo con ID ${device.imei} actualizado: ${device.status}`);
           });
             res.json(DeviceResource.formatDevice(device));
         } catch (error: any) {
@@ -304,7 +304,7 @@ export const DeviceController = {
             // Actualizar el estado del dispositivo a "desbloqueado"
             const { data: device, error } = await supabase
                 .from('devices')
-                .update({ status: 'Desbloqueado' })
+                .update({ status: 'Desbloqueado',unlock_code:'' })
                 .eq('id', id)
                 .select('imei')
                 .single();
