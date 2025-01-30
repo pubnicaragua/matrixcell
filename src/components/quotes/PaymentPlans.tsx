@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "../../components/ui/button"
 import { Calendar, DollarSign, Clock, CreditCard } from "lucide-react"
 import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 
 interface PaymentPlanProps {
@@ -135,13 +136,36 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Pago Semanal</TableCell>
-                    <TableCell className="text-right font-medium">${paymentDetails.weekly.toFixed(2)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Pago Mensual</TableCell>
-                    <TableCell className="text-right font-medium">${paymentDetails.monthly.toFixed(2)}</TableCell>
-                  </TableRow>
+  <TableCell>Pago Semanal</TableCell>
+  <TableCell className="text-right">
+    <Input
+      type="number"
+      step="0.01"
+      value={paymentDetails.weekly.toFixed(2)}  // Mostrar siempre con dos decimales
+      onChange={(e) => {
+        const value = parseFloat(e.target.value) || 0;
+        setPaymentDetails({ ...paymentDetails, weekly: value });
+      }}
+      className="text-right"
+    />
+  </TableCell>
+</TableRow>
+
+<TableRow>
+  <TableCell>Pago Mensual</TableCell>
+  <TableCell className="text-right">
+    <Input
+      type="number"
+      step="0.01"
+      value={paymentDetails.monthly.toFixed(2)}  // Mostrar siempre con dos decimales
+      onChange={(e) => {
+        const value = parseFloat(e.target.value) || 0;
+        setPaymentDetails({ ...paymentDetails, monthly: value });
+      }}
+      className="text-right"
+    />
+  </TableCell>
+</TableRow>
                   <TableRow>
                     <TableCell>Costo Total (IVA incluido)</TableCell>
                     <TableCell className="text-right font-bold">${paymentDetails.total.toFixed(2)}</TableCell>
