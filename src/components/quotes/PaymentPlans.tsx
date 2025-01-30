@@ -25,9 +25,10 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
     monthly: 0,
     total: 0,
   })
+  const [taxPercentage, setTaxPercentage] = useState<number>(12)
 
   const calculatePaymentPlan = (months: number) => {
-    const totalCost = price * 1.12 // Precio + IVA (12%)
+    const totalCost = price * (1 + taxPercentage / 100)
     const monthlyPayment = totalCost / months
     const weeklyPayment = monthlyPayment / 4 // Aproximado a 4 semanas por mes
 
@@ -100,6 +101,32 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
           ))}
         </div>
 
+        <div className="mb-4">
+          <label htmlFor="taxPercentage" className="block text-sm font-medium text-gray-700">
+            Porcentaje de impuesto
+          </label>
+          <div className="mt-1 relative rounded-md shadow-sm">
+            <Input
+              type="number"
+              name="taxPercentage"
+              id="taxPercentage"
+              className="block w-full pr-12 sm:text-sm border-gray-300 rounded-md"
+              placeholder="12"
+              value={taxPercentage}
+              onChange={(e) => {
+                const value = Number.parseFloat(e.target.value) || 0
+                setTaxPercentage(value)
+                if (selectedMonths) {
+                  calculatePaymentPlan(selectedMonths)
+                }
+              }}
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <span className="text-gray-500 sm:text-sm">%</span>
+            </div>
+          </div>
+        </div>
+
         {selectedMonths && (
           <Card>
             <CardHeader>
@@ -136,39 +163,40 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
                     </TableCell>
                   </TableRow>
                   <TableRow>
-  <TableCell>Pago Semanal</TableCell>
-  <TableCell className="text-right">
-    <Input
-      type="number"
-      step="0.01"
-      value={paymentDetails.weekly.toFixed(2)}  // Mostrar siempre con dos decimales
-      onChange={(e) => {
-        const value = parseFloat(e.target.value) || 0;
-        setPaymentDetails({ ...paymentDetails, weekly: value });
-      }}
-      className="text-right"
-    />
-  </TableCell>
-</TableRow>
-
-<TableRow>
-  <TableCell>Pago Mensual</TableCell>
-  <TableCell className="text-right">
-    <Input
-      type="number"
-      step="0.01"
-      value={paymentDetails.monthly.toFixed(2)}  // Mostrar siempre con dos decimales
-      onChange={(e) => {
-        const value = parseFloat(e.target.value) || 0;
-        setPaymentDetails({ ...paymentDetails, monthly: value });
-      }}
-      className="text-right"
-    />
-  </TableCell>
-</TableRow>
+                    <TableCell>Pago Semanal</TableCell>
+                    <TableCell className="text-right">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={paymentDetails.weekly.toFixed(2)} // Mostrar siempre con dos decimales
+                        onChange={(e) => {
+                          const value = Number.parseFloat(e.target.value) || 0
+                          setPaymentDetails({ ...paymentDetails, weekly: value })
+                        }}
+                        className="text-right"
+                      />
+                    </TableCell>
+                  </TableRow>
                   <TableRow>
-                    <TableCell>Costo Total (IVA incluido)</TableCell>
-                    <TableCell className="text-right font-bold">${paymentDetails.total.toFixed(2)}</TableCell>
+                    <TableCell>Pago Mensual</TableCell>
+                    <TableCell className="text-right">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={paymentDetails.monthly.toFixed(2)} // Mostrar siempre con dos decimales
+                        onChange={(e) => {
+                          const value = Number.parseFloat(e.target.value) || 0
+                          setPaymentDetails({ ...paymentDetails, monthly: value })
+                        }}
+                        className="text-right"
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Costo Total (Impuesto incluido)</TableCell>
+                    <TableCell className="text-right font-bold">
+                      ${paymentDetails.total.toFixed(2)} (Impuesto: {taxPercentage}%)
+                    </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
