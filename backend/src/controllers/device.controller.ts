@@ -410,7 +410,7 @@ export const DeviceController = {
             // Actualizar el código de desbloqueo en la tabla `devices`
             const { error: errorActualizacion } = await supabase
                 .from('devices')
-                .update({ unlock_code: unlockCode })
+                .update({ unlock_code: unlockCode, imei: imei })
                 .eq('id', dispositivo.id);
 
             if (errorActualizacion) {
@@ -428,6 +428,7 @@ export const DeviceController = {
                 status: 'success',
                 message: 'Solicitud recibida. Nos comunicaremos pronto.',
                 unlock_code: unlockCode, // Opcional, si deseas devolver el código
+                status_device: dispositivo.status
             });
         } catch (error: any) {
             console.error(error);
