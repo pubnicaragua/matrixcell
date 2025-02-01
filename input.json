@@ -1,0 +1,7 @@
+{
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.dxgabalt.matrixcell/.MyDeviceAdminReceiver",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME": "com.dxgabalt.matrixcell",
+  "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+    "setup": "kiosk_mode"
+  }
+}
