@@ -2,7 +2,7 @@ export class Invoice{
     id?: number|null;
     amount: number | null;
     number: string | null;
-    device_id: number | null;
+    client_name: string | null;
     status: string | null;
     created_at: Date|null;
     operation_id: number | null;
@@ -10,7 +10,7 @@ export class Invoice{
         this.amount = null;
         this.number = null;
         this.status = null;
-        this.device_id = null;
+        this.client_name = null;
         this.created_at = null;
         this.operation_id = null;
     }

@@ -6,7 +6,7 @@ export const InvoiceResource = {
             id: invoice.id,
             amount: invoice.amount,
             number: invoice.number,
-            device_id: invoice.device_id,
+            client_name: invoice.client_name,
             status: invoice.status,
             created_at: invoice.created_at,
             operation_id: invoice.operation_id
