@@ -13,6 +13,7 @@ export const OperationController = {
                 'operation_number', 
                 'operation_value', 
                 'due_date', 
+                'prox_due_date',
                 'amount_due', 
                 'amount_paid', 
                 'days_overdue', 
