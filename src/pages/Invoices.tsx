@@ -6,7 +6,7 @@ interface Invoice {
   id: number;
   amount: number | null;
   number: string;
-  device_id: string;
+  client_name: string;
   status: string;
   created_at: string;
 }
@@ -64,7 +64,7 @@ const InvoicesView = () => {
       filteredInvoices.map((invoice) => ({
         'Número': invoice.number,
         'Monto': invoice.amount !== null ? `$${invoice.amount.toFixed(2)}` : 'N/A',
-        'ID del Dispositivo': invoice.device_id,
+        'Nombre del cliente': invoice.client_name,
         'Estado': invoice.status,
         'Fecha de Creación': new Date(invoice.created_at).toLocaleString(),
       }))
@@ -107,7 +107,7 @@ const InvoicesView = () => {
               <tr className="bg-gray-100 border-b">
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Número</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Monto</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">ID del Dispositivo</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Nombre del cliente</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Fecha de Creación</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Acciones</th>
@@ -120,7 +120,7 @@ const InvoicesView = () => {
                   <td className="px-6 py-4 text-sm text-gray-800">
                     {invoice.amount !== null ? `$${invoice.amount.toFixed(2)}` : 'N/A'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">{invoice.device_id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-800">{invoice.client_name}</td>
                   <td className="px-6 py-4 text-sm text-gray-800">{invoice.status}</td>
                   <td className="px-6 py-4 text-sm text-gray-800">
                     {new Date(invoice.created_at).toLocaleString()}
