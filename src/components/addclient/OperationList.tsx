@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Pagination from '../Pagination';
 import { Operation, Client } from '../../types';
+import axios from '../../axiosConfig';
 
 interface OperationListProps {
   operations: Operation[];
@@ -33,7 +34,29 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
       return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase());
     });
   }, [operations, searchTerm]);
-  
+
+  const createInvoice = async (operation: Operation) => {
+    try {
+      const client = clients.find(c => c.id === operation.client_id);
+      if (!client) {
+        alert('Cliente no encontrado.');
+        return;
+      }
+
+      const invoiceData = {
+        amount: operation.amount_due,
+        client_name: client.name,
+        operation_id: operation.id,
+      };
+
+      await axios.post('/invoices', invoiceData);
+      alert('Factura generada correctamente.');
+    } catch (error) {
+      alert('Error al crear la factura.');
+      console.error(error);
+    }
+  };
+
 
   const paginatedOperations = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -45,6 +68,12 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Reiniciar a la primera página
   };
+
+  const handleGeneratePdf = async (operation: Operation) => {
+    await createInvoice(operation);
+    generatePdf(operation.client_id);
+  };
+
 
   const generatePdf = (clientId: number) => {
     const client = clients.find(client => client.id === clientId);
@@ -140,7 +169,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
                 Eliminar
               </button>
               <button
-                onClick={() => generatePdf(operation.client_id)}
+                onClick={() => handleGeneratePdf(operation)}
                 className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Generar PDF
