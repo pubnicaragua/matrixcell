@@ -14,7 +14,8 @@ export const ClientResource = {
             grant_date: client.grant_date,
             deadline: client.deadline,
             debt_type: client.debt_type,
-            created_at: client.created_at
+            created_at: client.created_at,
+            email: client.email
         };
     },
 
