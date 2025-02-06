@@ -88,7 +88,7 @@ const ExportEquifax: React.FC = () => {
 
     const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
     const valVencido = valOperacion - valAVencer;
-    
+
     function getLastDayOfCurrentMonth() {
       const today = new Date(); // Fecha actual del sistema
       const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1); // Primer día del próximo mes
@@ -97,7 +97,7 @@ const ExportEquifax: React.FC = () => {
     }
 
     const FEC_CORTE_SALDO = getLastDayOfCurrentMonth();
-console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
+    console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
 
     return {
       ...client,
@@ -107,7 +107,7 @@ console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
       FEC_CORTE_SALDO: getLastDayOfCurrentMonth(),
       FRECUENCIA_PAGO: paymentFrequency,
-      PLAZO_EN_MESES:` ${creditTerm} meses`,
+      PLAZO_EN_MESES: ` ${creditTerm} meses`,
       FECHA_DE_VENCIMIENTO: firstDueDate.toISOString().split("T")[0],
       FECHA_SIG_VENCIMIENTO: finalDueDate.toISOString().split("T")[0],
     };
@@ -225,17 +225,71 @@ console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
           Exportar a Excel
         </button>
         <button onClick={handleSend} style={{ marginLeft: "10px" }} disabled={isLoading}>
-          {isLoading ?(
+          {isLoading ? (
             <>
-            "Enviando..." 
-            <Loader />
+              "Enviando..."
+              <Loader />
             </>
-             
-             ): "Enviar Consolidado"}
+
+          ) : "Enviar Consolidado"}
         </button>
+      </div>
+
+      <div style={{ marginTop: "20px", padding: "10px", backgroundColor: "#f3f4f6", borderRadius: "5px" }}>
+        <h3 style={{ fontWeight: "bold", marginBottom: "10px" }}>¿Cómo cargar los archivos?</h3>
+        <p>
+          Asegúrese de cargar los siguientes archivos en formato <strong>.xlsx</strong>:
+        </p>
+        <ul style={{ listStyleType: "disc", paddingLeft: "20px" }}>
+          <li>
+            <strong>Formato_para_Equifax.xlsx</strong>: Este archivo debe contener las siguientes columnas:
+            <ul style={{ listStyleType: "circle", paddingLeft: "20px" }}>
+              {[
+                "COD_TIPO_ID",
+                "CODIGO_ID_SUJETO",
+                "NOMBRE_SUJETO",
+                "DIRECCION",
+                "CIUDAD",
+                "TELEFONO",
+                "FEC_CORTE_SALDO",
+                "TIPO_DEUDOR",
+                "FECHA_CONCESION",
+                "VAL_OPERACION",
+                "VAL_A_VENCER",
+                "VAL_VENCIDO",
+                "VA_DEM_JUDICIAL",
+                "VAL_CART_CASTIGADA",
+                "NUM_DIAS_VENCIDOS",
+                "FECHA_DE_VENCIMIENTO",
+                "DEUDA_REFINANCIADA",
+                "FECHA_SIG_VENCIMIENTO",
+                "PLAZO_EN_MESES",
+                "VALOR_MENSUAL",
+              ].map((col) => (
+                <li key={col}>{col}</li>
+              ))}
+            </ul>
+          </li>
+          <li>
+            <strong>Valores_y_Pagos_Mensuales.xlsx</strong>: Este archivo debe contener las siguientes columnas:
+            <ul style={{ listStyleType: "circle", paddingLeft: "20px" }}>
+              {[
+                "COD_TIPO_ID",
+                "CODIGO_ID_SUJETO",
+                "NOMBRE_SUJETO",
+                "VALOR A PAGAR",
+                "VALOR MENSUAL",
+                "PLAZO DEL CREDITO",
+              ].map((col) => (
+                <li key={col}>{col}</li>
+              ))}
+            </ul>
+          </li>
+        </ul>
+        <p>Ambos archivos son necesarios para procesar correctamente el reporte.</p>
       </div>
     </div>
   );
 };
 
-export default ExportEquifax;
+export default ExportEquifax;
