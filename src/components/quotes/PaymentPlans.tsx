@@ -25,7 +25,7 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
     monthly: 0,
     total: 0,
   })
-  const [taxPercentage, setTaxPercentage] = useState<number>(12)
+  const [taxPercentage, setTaxPercentage] = useState<number>(0)
 
   const calculatePaymentPlan = (months: number) => {
     const totalCost = price * (1 + taxPercentage / 100)
@@ -112,6 +112,7 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
               id="taxPercentage"
               className="block w-full pr-12 sm:text-sm border-gray-300 rounded-md"
               placeholder="12"
+              min={0}
               value={taxPercentage}
               onChange={(e) => {
                 const value = Number.parseFloat(e.target.value) || 0
