@@ -8,8 +8,10 @@ const Settings = () => {
   const [settings, setSettings] = useState({
     theme: "light",
     notifications: true,
-    apiKey: "1234-5678-ABCD",
+    apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcnlyemNwY2praHVuZmhmem1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNTM2ODEsImV4cCI6MjA1MDgyOTY4MX0.UPQKYkIdATVRxPQyXtklOzrXSR_touHP9WoKq_oJQWY",
   });
+
+  const [showApiKey, setShowApiKey] = useState(false); // Estado para mostrar/ocultar la clave API
 
   const handleThemeToggle = () => {
     setSettings((prev) => ({
@@ -23,6 +25,11 @@ const Settings = () => {
       ...prev,
       notifications: !prev.notifications,
     }));
+  };
+
+  const handleCopyApiKey = () => {
+    navigator.clipboard.writeText(settings.apiKey);
+    alert("Clave API copiada al portapapeles.");
   };
 
   const handleSave = () => {
@@ -57,13 +64,21 @@ const Settings = () => {
 
         <div className="space-y-2">
           <Label htmlFor="api-key" className="text-lg">Clave API</Label>
-          <Input
-            id="api-key"
-            type="text"
-            value={settings.apiKey}
-            readOnly
-            className="w-full"
-          />
+          <div className="flex items-center space-x-2">
+            <Input
+              id="api-key"
+              type="text"
+              value={showApiKey ? settings.apiKey : "****************"}
+              readOnly
+              className="w-full"
+            />
+            <Button onClick={() => setShowApiKey(!showApiKey)} variant="outline">
+              {showApiKey ? "Ocultar" : "Mostrar"}
+            </Button>
+            <Button onClick={handleCopyApiKey} variant="outline">
+              Copiar
+            </Button>
+          </div>
         </div>
 
         <Button onClick={handleSave} className="w-full">
@@ -75,4 +90,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
