@@ -112,10 +112,14 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
     };
 
 
-    // Calcular el valor vencido
+    // Cambia el efecto para calcular el valor vencido
     useEffect(() => {
-        setCalculatedAmountPaid(operationValue - amountDue);
-    }, [operationValue, amountDue]);
+        if (selectedOperation) {
+            // Suma el abono (amountDue) al valor vencido inicial desde la base de datos
+            setCalculatedAmountPaid(selectedOperation.amount_paid + amountDue);
+        }
+    }, [amountDue, selectedOperation]);
+
 
     // Calcular los días vencidos dinámicamente
     useEffect(() => {
