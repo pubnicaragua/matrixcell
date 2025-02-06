@@ -71,6 +71,7 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
+              <InfoItem label="Correo" value={client.email} />
                 <InfoItem label="Teléfono" value={client.phone} />
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
                 <InfoItem label="Ciudad" value={client.city} />

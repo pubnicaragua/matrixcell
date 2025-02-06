@@ -13,6 +13,7 @@ interface ClientFormProps {
 
 const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchClientsAndOperations, setSelectedClient }) => {
   const [name, setName] = useState(selectedClient?.name || '');
+  const [email, setEmail] = useState(selectedClient?.email || ''); 
   const [phone, setPhone] = useState(selectedClient?.phone || '');
   const [address, setAddress] = useState(selectedClient?.address || '');
   const [city, setCity] = useState(selectedClient?.city || '');
@@ -35,6 +36,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
     setGrantDate('');
     setDebtType('');
     setDeadline(0);
+    setEmail('');
     setSelectedClient(null); // Limpiar cliente seleccionado
   };
 
@@ -58,6 +60,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
       grant_date: grantDate,
       debt_type: debtType,
       deadline: deadline,
+      email
     };
 
     try {
@@ -97,6 +100,11 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Correo</label>
+          <input id="email" value={email} onChange={(e) =>setEmail(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>

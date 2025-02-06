@@ -27,6 +27,11 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     return client ? client.phone : 'Desconocido';
   };
 
+  const getClientEmail = (clientId : number) => {
+    const client = clients.find(client => client.id === clientId );
+    return client ? client.email : 'Desconocido';
+  }
+
   const filteredOperations = useMemo(() => {
     return operations.filter(operation => {
       const operationNumber = operation.operation_number ? operation.operation_number.toLowerCase() : '';
@@ -153,6 +158,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
               <p><strong>Deuda Refinanciada:</strong> {operation.refinanced_debt}</p>
               <p><strong>Acción Judicial:</strong> {operation.judicial_action}</p>
               <p><strong>Cliente:</strong> {getClientName(operation.client_id)}</p>
+              <p><strong>Email:</strong> {getClientEmail(operation.client_id)}</p>
             </div>
 
             <div className="mt-4 flex justify-between space-x-2">
