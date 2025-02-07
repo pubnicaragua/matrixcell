@@ -40,7 +40,7 @@ export interface Operation {
   operation_value: number;
   due_date: string;
   prox_due_date: string;
-  amount_due: 0;
+  amount_due: number;
   amount_paid: number;
   days_overdue: number;
   cart_value: number;
