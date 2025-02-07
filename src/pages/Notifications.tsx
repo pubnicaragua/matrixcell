@@ -18,23 +18,18 @@ const NotificationsView = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const token = localStorage.getItem('token');  // Obtener el token de localStorage
       try {
-        const response = await api.get('/notifications', {
-          headers: {
-            Authorization: `Bearer ${token}`  // Agregar token en los headers
-          }
-        });
-        setNotifications(response.data); 
+        const response = await api.get('/notifications');
+        console.log(response.data)
+        setNotifications(response.data);
       } catch (err: any) {
         setError(err.message || 'Error al obtener las notificaciones');
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     fetchNotifications();
-}, []);
+  }, []);
 
 
   const handleMarkAsRead = async (id: string) => {
