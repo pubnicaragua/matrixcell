@@ -22,7 +22,7 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
     const [operationValue, setOperationValue] = useState(selectedOperation?.operation_value || 0);
     const [dueDate, setDueDate] = useState(selectedOperation?.due_date || '');
     const [proxDueDate, setProxDueDate] = useState(selectedOperation?.prox_due_date || '');
-    const [amountDue, setAmountDue] = useState(selectedOperation?.amount_due || 0);
+    const [amountDue, setAmountDue] = useState(0); // Inicializar con 0
     const [amountPaid, setAmountPaid] = useState(selectedOperation?.amount_paid || 0);
     const [daysOverdue, setDaysOverdue] = useState(selectedOperation?.days_overdue || 0);
     const [cartValue, setCartValue] = useState(selectedOperation?.cart_value || 0);
@@ -30,6 +30,7 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
     const [judicialAction, setJudicialAction] = useState(selectedOperation?.judicial_action || '');
     const [clientId, setClientId] = useState(selectedOperation?.client_id || '');
 
+    
     // Estados para los valores del cliente seleccionado
     const [deadline, setDeadline] = useState<number>(0);
     const [grantDate, setGrantDate] = useState<string>('');
@@ -111,14 +112,16 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
         setClientId('');
     };
 
-
+    
     // Cambia el efecto para calcular el valor vencido
     useEffect(() => {
         if (selectedOperation) {
             // Suma el abono (amountDue) al valor vencido inicial desde la base de datos
-            setCalculatedAmountPaid(selectedOperation.amount_paid + amountDue);
+            setCalculatedAmountPaid(selectedOperation.amount_paid - amountDue);
+        } else {
+            setCalculatedAmountPaid(operationValue - amountDue)
         }
-    }, [amountDue, selectedOperation]);
+    }, [operationValue, amountDue, selectedOperation]);
 
 
     // Calcular los días vencidos dinámicamente
