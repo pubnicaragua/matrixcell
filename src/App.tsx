@@ -22,6 +22,7 @@ import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 import Dashboard from "./pages/Dashboard"
 import PrivateRoute from "./components/PrivateRoute"
+import Capacitacion from './pages/Capacitacion'
 // @ts-ignore
 import DescargarApk from "./pages/DescargarApk"
 import QuotePage from "./pages/QuotePage"
@@ -243,6 +244,17 @@ const App = () => {
               <PrivateRoute>
                 <Layout>
                   <QuotePage />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/capacitacion"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Capacitacion />
                 </Layout>
               </PrivateRoute>
             }
