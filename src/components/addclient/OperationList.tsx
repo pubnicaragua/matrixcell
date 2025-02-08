@@ -62,7 +62,6 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     }
   };
 
-
   const paginatedOperations = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -78,7 +77,6 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     await createInvoice(operation);
     generatePdf(operation.client_id);
   };
-
 
   const generatePdf = (clientId: number) => {
     const client = clients.find(client => client.id === clientId);
@@ -104,7 +102,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     ]);
 
     autoTable(doc, {
-      head: [['Número', 'Valor', 'Fecha Venc.', 'Próx. Venc.', 'Monto por Vencer', 'Monto Pagado', 'Días Vencidos', 'Valor Castigado', 'Deuda Refinanciada', 'Acción Judicial']],
+      head: [['Número', 'Valor', 'Fecha Venc.', 'Próx. Venc.', 'Monto Pagado', 'Monto por Vencer', 'Días Vencidos', 'Valor Castigado', 'Deuda Refinanciada', 'Acción Judicial']],
       body: tableData,
       startY: 30,
       styles: { fontSize: 10 },
