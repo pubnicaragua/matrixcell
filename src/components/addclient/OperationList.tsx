@@ -27,8 +27,8 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     return client ? client.phone : 'Desconocido';
   };
 
-  const getClientEmail = (clientId : number) => {
-    const client = clients.find(client => client.id === clientId );
+  const getClientEmail = (clientId: number) => {
+    const client = clients.find(client => client.id === clientId);
     return client ? client.email : 'Desconocido';
   }
 
@@ -128,9 +128,15 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     window.open(whatsappUrl, '_blank');
   };
 
+  const allOperations = operations;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Lista de Operaciones</h2>
+
+      <div className='py-2'>
+        <h2>Total de operaciones por cliente: {allOperations.length}</h2>
+      </div>
 
       <input
         type="text"
@@ -141,6 +147,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
       />
 
       <div className="grid lg:grid-cols-2 gap-6">
+
         {paginatedOperations.map((operation) => (
           <div
             key={operation.id}
