@@ -158,8 +158,8 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
               <p><strong>Valor:</strong> {operation.operation_value}</p>
               <p><strong>Fecha de Vencimiento:</strong> {operation.due_date}</p>
               <p><strong>Próximo Vencimiento:</strong> {operation.prox_due_date}</p>
-              <p><strong>Monto por Vencer:</strong> {operation.amount_due}</p>
-              <p><strong>Monto Pagado:</strong> {operation.amount_paid}</p>
+              <p><strong>Monto Pagado: </strong> {operation.amount_due}</p>
+              <p><strong>Monto por Vencer:</strong> {operation.amount_paid}</p>
               <p><strong>Días Vencidos:</strong> {operation.days_overdue}</p>
               <p><strong>Valor Castigado:</strong> {operation.cart_value}</p>
               <p><strong>Deuda Refinanciada:</strong> {operation.refinanced_debt}</p>

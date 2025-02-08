@@ -27,10 +27,12 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
     const [daysOverdue, setDaysOverdue] = useState(selectedOperation?.days_overdue || 0);
     const [cartValue, setCartValue] = useState(selectedOperation?.cart_value || 0);
     const [refinancedDebt, setRefinancedDebt] = useState(selectedOperation?.refinanced_debt || 0);
-    const [judicialAction, setJudicialAction] = useState(selectedOperation?.judicial_action || '');
+    const [judicialAction, setJudicialAction] = useState(selectedOperation?.judicial_action || 'No');
     const [clientId, setClientId] = useState(selectedOperation?.client_id || '');
+    const [debt, setDebt] = useState<number>(0);
+    const [newDebt, setNewDebt] = useState<Number>(0);
 
-    
+
     // Estados para los valores del cliente seleccionado
     const [deadline, setDeadline] = useState<number>(0);
     const [grantDate, setGrantDate] = useState<string>('');
@@ -48,9 +50,12 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
             const lastClient = clients[clients.length - 1]; // Último cliente
             if (lastClient && lastClient.id) {
                 setClientId(lastClient.id.toString());
+
+                setCalculatedAmountPaid(operationValue - amountDue)
+                setDebt(operationValue - amountDue)
             }
         }
-    }, [isNewClientAdded, clients]);
+    }, [isNewClientAdded, clients, amountDue, operationValue]);
 
     useEffect(() => {
         if (clientId) {
@@ -111,19 +116,29 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
         setJudicialAction('');
         setClientId('');
     };
-    
+
+    // Actualiza amountPaid dinámicamente según el valor a vencer
+    useEffect(() => {
+        setAmountPaid((prev) => prev + amountDue);
+    }, [amountDue]);
+
+    // Calcular la deuda
+    useEffect(() => {
+        setDebt(operationValue - calculatedAmountPaid);
+    }, [operationValue, calculatedAmountPaid]);
+
+
     useEffect(() => {
         if (selectedOperation) {
             // Si el valor vencido desde la base de datos es 0, calcula operation_value - amountDue
-            const updatedAmountPaid = selectedOperation.amount_paid === 0 
-                ? operationValue - amountDue 
+            const updatedAmountPaid = selectedOperation.amount_paid === 0
+                ? operationValue - amountDue
                 : selectedOperation.amount_paid - amountDue;
             setCalculatedAmountPaid(updatedAmountPaid);
         } else {
             setCalculatedAmountPaid(operationValue - amountDue);
         }
     }, [operationValue, amountDue, selectedOperation]);
-    
 
 
     // Calcular los días vencidos dinámicamente
@@ -159,7 +174,7 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
             operation_value: operationValue,
             due_date: dueDate,
             prox_due_date: proxDueDate,
-            amount_due: amountDue,
+            amount_due: selectedOperation ? debt : amountDue,
             amount_paid: calculatedAmountPaid,
             days_overdue: daysOverdue,
             cart_value: cartValue,
@@ -190,10 +205,6 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
         }
     };
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-    };
-
     return (
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
@@ -213,7 +224,19 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
                 </div>
 
                 <div className="flex flex-col">
-                    <label htmlFor="operation_value" className="text-sm font-medium text-gray-700">Valor de Operación</label>
+                    <label htmlFor="amount_due" className="text-sm font-medium text-gray-700">Abono</label>
+                    <input
+                        id="amount_due"
+                        type="number"
+
+                        onChange={(e) => setAmountDue(Number(e.target.value))}
+                        required
+                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div className="flex flex-col">
+                    <label htmlFor="operation_value" className="text-sm font-medium text-gray-700">Valor de Operación (Crédito del cliente)</label>
                     <input
                         id="operation_value"
                         type="number"
@@ -224,50 +247,26 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
                     />
                 </div>
 
+                {/* Deuda */}
                 <div className="flex flex-col">
-                    <label htmlFor="due_date" className="text-sm font-medium text-gray-700">Fecha de Vencimiento</label>
+                    <label htmlFor="debt" className="text-sm font-medium text-gray-700">Valor a vencer (Deuda)</label>
                     <input
-                        id="due_date"
-                        type="date"
-                        value={calculatedDueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                        required
+                        id="debt"
+                        type="text"
+                        value={calculatedAmountPaid}
+                        onChange={(e) => setDebt(Number(e.target.value))} // Permite editar el campo
                         className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
 
                 <div className="flex flex-col">
-                    <label htmlFor="prox_due_date" className="text-sm font-medium text-gray-700">Fecha de Siguiente Vencimiento</label>
-                    <input
-                        id="prox_due_date"
-                        type="date"
-                        value={calculatedProxDueDate}
-                        onChange={(e) => setProxDueDate(e.target.value)}
-                        required
-                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-
-                <div className="flex flex-col">
-                    <label htmlFor="amount_due" className="text-sm font-medium text-gray-700">Valor a Vencer</label>
-                    <input
-                        id="amount_due"
-                        type="number"
-                        value={amountDue}
-                        onChange={(e) => setAmountDue(Number(e.target.value))}
-                        required
-                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-
-                <div className="flex flex-col">
-                    <label htmlFor="amount_paid" className="text-sm font-medium text-gray-700">Valor Vencido</label>
+                    <label htmlFor="amount_paid" className="text-sm font-medium text-gray-700">Valor Vencido (Cantidad que ha abonado el cliente)</label>
                     <input
                         id="amount_paid"
-                        type="text"
-                        value={formatCurrency(calculatedAmountPaid)}
-                        readOnly
-                        className="mt-2 p-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
+                        type="number"
+                        value={debt.toFixed(2)}
+                        onChange={(e) => setCalculatedAmountPaid(Number(e.target.value))}
+                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
 
@@ -277,7 +276,6 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
                         id="days_overdue"
                         type="number"
                         value={daysOverdue}
-                        readOnly
                         className="mt-2 p-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
                     />
                 </div>
@@ -343,12 +341,35 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
                 </div>
 
                 <div className="flex flex-col">
+                    <label htmlFor="due_date" className="text-sm font-medium text-gray-700">Fecha de Vencimiento</label>
+                    <input
+                        id="due_date"
+                        type="date"
+                        value={calculatedDueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        required
+                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div className="flex flex-col">
+                    <label htmlFor="prox_due_date" className="text-sm font-medium text-gray-700">Fecha de Siguiente Vencimiento</label>
+                    <input
+                        id="prox_due_date"
+                        type="date"
+                        value={calculatedProxDueDate}
+                        onChange={(e) => setProxDueDate(e.target.value)}
+                        required
+                        className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div className="flex flex-col">
                     <label htmlFor="deadline" className="text-sm font-medium text-gray-700">Plazo (Meses)</label>
                     <input
                         id="deadline"
                         type="number"
                         value={deadline}
-                        readOnly
                         className="mt-2 p-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
                     />
                 </div>
@@ -359,7 +380,6 @@ const OperationForm: React.FC<OperationFormProps & { isNewClientAdded: boolean; 
                         id="grant_date"
                         type="date"
                         value={grantDate}
-                        readOnly
                         className="mt-2 p-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
                     />
                 </div>
