@@ -18,6 +18,7 @@ import {
   FaTimes,
   FaMobileAlt,
   FaDesktop,
+  FaBook, // Añadido import para el icono de Manual de Usuario
 } from "react-icons/fa"
 import api from "../axiosConfig"
 
@@ -97,10 +98,10 @@ export default function Sidebar() {
               <span>Gestionar Dispositivos</span>
             </Link>
 
-            <Link to="/devices-page" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            {/* <Link to="/devices-page" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaDesktop className="h-5 w-5" />
               <span>Gestionar TV y Laptops</span>
-            </Link>
+            </Link> */}
 
             <Link to="/quote-page" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaFileInvoiceDollar className="h-5 w-5" />
@@ -145,6 +146,14 @@ export default function Sidebar() {
             <Link to="/security" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
               <FaLock className="h-5 w-5" />
               <span>Seguridad</span>
+            </Link>
+          </div>
+
+          <div className="pt-4">
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">Manual de Usuario</p>
+            <Link to="/capacitacion" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+              <FaBook className="h-5 w-5" />
+              <span>Como usar los modulos</span>
             </Link>
           </div>
         </nav>

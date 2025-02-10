@@ -11,6 +11,7 @@ export class Client {
     grant_date:  string | Date | null;
     debt_type: string | null; // Probablemente sea 'string' en vez de 'Date'
     deadline: number | null; // plazo
+    email: string | null;
 
     constructor() {
         this.identity_number = null;
@@ -24,5 +25,7 @@ export class Client {
         this.deadline = 0;
         this.grant_date = null
         this.created_at = null;
+        this.email = null;
+        this.id = null;
     }
 }

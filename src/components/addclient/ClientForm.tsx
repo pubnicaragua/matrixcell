@@ -13,6 +13,7 @@ interface ClientFormProps {
 
 const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchClientsAndOperations, setSelectedClient }) => {
   const [name, setName] = useState(selectedClient?.name || '');
+  const [email, setEmail] = useState(selectedClient?.email || ''); 
   const [phone, setPhone] = useState(selectedClient?.phone || '');
   const [address, setAddress] = useState(selectedClient?.address || '');
   const [city, setCity] = useState(selectedClient?.city || '');
@@ -35,6 +36,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
     setGrantDate('');
     setDebtType('');
     setDeadline(0);
+    setEmail('');
     setSelectedClient(null); // Limpiar cliente seleccionado
   };
 
@@ -58,6 +60,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
       grant_date: grantDate,
       debt_type: debtType,
       deadline: deadline,
+      email
     };
 
     try {
@@ -96,42 +99,47 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
-          <input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Correo</label>
+          <input id="email" value={email} onChange={(e) =>setEmail(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Teléfono</label>
-          <input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="address" className="block text-sm font-medium text-gray-700">Dirección</label>
-          <input id="address" value={address} onChange={(e) => setAddress(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-gray-700">Ciudad</label>
-          <input id="city" value={city} onChange={(e) => setCity(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="identity_number" className="block text-sm font-medium text-gray-700">Número de Identidad</label>
-          <input id="identity_number" value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="identity_number" value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="identity_type" className="block text-sm font-medium text-gray-700">Tipo de Identidad</label>
-          <input id="identity_type" placeholder='Solo Cédula' value={identityType} onChange={(e) => setIdentityType(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="identity_type" placeholder='Solo Cédula' value={identityType} onChange={(e) => setIdentityType(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">Fecha de Corte</label>
-          <input id="due_date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="due_date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div>
           <label htmlFor="grant_date" className="block text-sm font-medium text-gray-700">Tipo de Deudor</label>
-          <input id="debt_type" type="text" value={debtType} onChange={(e) => setDebtType(e.target.value)} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="debt_type" type="text" value={debtType} onChange={(e) => setDebtType(e.target.value)} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
 
         <div className="flex flex-col">
@@ -141,7 +149,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
             type="date"
             value={grantDate}
             onChange={(e) => setGrantDate(e.target.value)}
-            required
+          
             className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -149,7 +157,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
 
         <div>
           <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">Plazo (Meses)</label>
-          <input id="deadline" type="number" value={deadline} onChange={(e) => setDeadline(Number(e.target.value))} required className="mt-1 p-2 w-full border rounded-lg" />
+          <input id="deadline" type="number" value={deadline} onChange={(e) => setDeadline(Number(e.target.value))} className="mt-1 p-2 w-full border rounded-lg" />
         </div>
       </div>
 

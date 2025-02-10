@@ -32,13 +32,15 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
     }
   };
 
+  const allClients = clients;
+
   const filteredClients = useMemo(() => {
     return clients.filter(client =>
       (client.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (client.identity_number?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
   }, [clients, searchTerm]);
-  
+
 
   const paginatedClients = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -55,6 +57,11 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
     <div className="container mx-auto px-4 py-8">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Lista de Clientes</h2>
 
+      <div className='py-2'>
+        <h2>Total de clientes: {allClients.length}</h2>
+      </div>
+
+
       <input
         type="text"
         placeholder="Buscar por nombre o número de cédula"
@@ -64,6 +71,7 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
         {paginatedClients.map((client) => (
           <Card key={client.id} className="overflow-hidden transition-shadow duration-300 ease-in-out hover:shadow-lg">
             <CardHeader>
@@ -71,6 +79,7 @@ const ClientsList: React.FC<ClientListProps> = ({ clients, setSelectedClient, fe
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
+                <InfoItem label="Correo" value={client.email} />
                 <InfoItem label="Teléfono" value={client.phone} />
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
                 <InfoItem label="Ciudad" value={client.city} />

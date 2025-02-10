@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Pagination from '../Pagination';
 import { Operation, Client } from '../../types';
+import axios from '../../axiosConfig';
 
 interface OperationListProps {
   operations: Operation[];
@@ -26,6 +27,11 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     return client ? client.phone : 'Desconocido';
   };
 
+  const getClientEmail = (clientId: number) => {
+    const client = clients.find(client => client.id === clientId);
+    return client ? client.email : 'Desconocido';
+  }
+
   const filteredOperations = useMemo(() => {
     return operations.filter(operation => {
       const operationNumber = operation.operation_number ? operation.operation_number.toLowerCase() : '';
@@ -33,7 +39,28 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
       return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase());
     });
   }, [operations, searchTerm]);
-  
+
+  const createInvoice = async (operation: Operation) => {
+    try {
+      const client = clients.find(c => c.id === operation.client_id);
+      if (!client) {
+        alert('Cliente no encontrado.');
+        return;
+      }
+
+      const invoiceData = {
+        amount: operation.amount_due,
+        client_name: client.name,
+        operation_id: operation.id,
+      };
+
+      await axios.post('/invoices', invoiceData);
+      alert('Factura generada correctamente.');
+    } catch (error) {
+      alert('Error al crear la factura.');
+      console.error(error);
+    }
+  };
 
   const paginatedOperations = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -44,6 +71,11 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Reiniciar a la primera página
+  };
+
+  const handleGeneratePdf = async (operation: Operation) => {
+    await createInvoice(operation);
+    generatePdf(operation.client_id);
   };
 
   const generatePdf = (clientId: number) => {
@@ -70,7 +102,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     ]);
 
     autoTable(doc, {
-      head: [['Número', 'Valor', 'Fecha Venc.', 'Próx. Venc.', 'Monto por Vencer', 'Monto Pagado', 'Días Vencidos', 'Valor Castigado', 'Deuda Refinanciada', 'Acción Judicial']],
+      head: [['Número', 'Valor', 'Fecha Venc.', 'Próx. Venc.', 'Monto Pagado', 'Monto por Vencer', 'Días Vencidos', 'Valor Castigado', 'Deuda Refinanciada', 'Acción Judicial']],
       body: tableData,
       startY: 30,
       styles: { fontSize: 10 },
@@ -94,9 +126,15 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
     window.open(whatsappUrl, '_blank');
   };
 
+  const allOperations = operations;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Lista de Operaciones</h2>
+
+      <div className='py-2'>
+        <h2>Total de operaciones por cliente: {allOperations.length}</h2>
+      </div>
 
       <input
         type="text"
@@ -107,6 +145,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
       />
 
       <div className="grid lg:grid-cols-2 gap-6">
+
         {paginatedOperations.map((operation) => (
           <div
             key={operation.id}
@@ -117,13 +156,14 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
               <p><strong>Valor:</strong> {operation.operation_value}</p>
               <p><strong>Fecha de Vencimiento:</strong> {operation.due_date}</p>
               <p><strong>Próximo Vencimiento:</strong> {operation.prox_due_date}</p>
-              <p><strong>Monto por Vencer:</strong> {operation.amount_due}</p>
-              <p><strong>Monto Pagado:</strong> {operation.amount_paid}</p>
+              <p><strong>Monto Pagado: </strong> {operation.amount_due}</p>
+              <p><strong>Monto por Vencer:</strong> {operation.amount_paid}</p>
               <p><strong>Días Vencidos:</strong> {operation.days_overdue}</p>
               <p><strong>Valor Castigado:</strong> {operation.cart_value}</p>
               <p><strong>Deuda Refinanciada:</strong> {operation.refinanced_debt}</p>
               <p><strong>Acción Judicial:</strong> {operation.judicial_action}</p>
               <p><strong>Cliente:</strong> {getClientName(operation.client_id)}</p>
+              <p><strong>Email:</strong> {getClientEmail(operation.client_id)}</p>
             </div>
 
             <div className="mt-4 flex justify-between space-x-2">
@@ -140,7 +180,7 @@ const OperationList: React.FC<OperationListProps> = ({ operations, clients, setS
                 Eliminar
               </button>
               <button
-                onClick={() => generatePdf(operation.client_id)}
+                onClick={() => handleGeneratePdf(operation)}
                 className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Generar PDF

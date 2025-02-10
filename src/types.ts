@@ -31,6 +31,7 @@ export interface Client {
   grant_date: string; //fecha de concesión
   debt_type: string; //tipo de deudor
   deadline: number; //plazo
+  email: string;
 }
 
 export interface Operation {
