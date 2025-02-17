@@ -118,7 +118,7 @@ const ClientsList: React.FC<ClientListProps> = ({
                     className="flex items-center"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Eliminar
+                    Enviar a papelera
                   </Button>
                 </>
               )}
