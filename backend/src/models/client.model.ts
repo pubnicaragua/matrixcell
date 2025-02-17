@@ -12,6 +12,7 @@ export class Client {
     debt_type: string | null; // Probablemente sea 'string' en vez de 'Date'
     deadline: number | null; // plazo
     email: string | null;
+    deleted: boolean;
 
     constructor() {
         this.identity_number = null;
@@ -27,5 +28,6 @@ export class Client {
         this.created_at = null;
         this.email = null;
         this.id = null;
+        this.deleted = false;
     }
 }
