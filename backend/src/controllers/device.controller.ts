@@ -460,11 +460,11 @@ export const DeviceController = {
             if (imei) {
                 const { data, error } = await supabase
                     .from(tableName)
-                    .select('clients(identity_number,operations(prox_due_date))')
+                    .select('*')
                     .eq('imei', imei);
 
                 if (error) {
-                    throw new Error("Error al consultar la base de datos por IMEI.");
+                    throw new Error("Error al consultar la base de datos por IMEI."+error.message);
                 }
 
                 // Si se encuentran resultados, usar estos datos
@@ -481,7 +481,7 @@ export const DeviceController = {
                     .eq('unlock_code', code);
 
                 if (error) {
-                    throw new Error("Error al consultar la base de datos por código.");
+                    throw new Error("Error al consultar la base de datos por código."+error.message);
                 }
 
                 // Validar si no se encontraron resultados
@@ -496,7 +496,9 @@ export const DeviceController = {
                 .update({ status: 'Desbloqueado' }) // Cambiar el campo `status` a "Desbloqueado"
                 .eq('unlock_code', code);
             if (updateError) {
-                throw new Error("Error al consultar la base de datos por IMEI.");
+                console.log('update error',updateError.message);
+                
+                throw new Error("Error al consultar la base de datos por IMEI. "+updateError.message);
             }
             // Respuesta exitosa
             res.status(200).json({

@@ -1,0 +1,14 @@
+#1 de Firmante:
+
+Certificate #1:
+Propietario: C=ec, ST=Esmeraldas, L=Quininde, O=Matrixcel, OU=Ti, CN=Matrixcel
+Emisor: C=ec, ST=Esmeraldas, L=Quininde, O=Matrixcel, OU=Ti, CN=Matrixcel
+Número de serie: 1
+Válido desde: Mon Feb 10 18:16:34 ECT 2025 hasta: Fri Feb 04 18:16:34 ECT 2050
+Huellas digitales del certificado:
+	 SHA1: AF:72:1C:5B:1B:E1:7B:97:36:2A:9E:DB:48:65:E1:CE:EA:43:90:BA
+	 SHA256: 03:BC:13:94:3D:EF:AD:3C:B2:13:C3:9B:B0:4B:AA:05:64:99:FA:C7:42:01:6C:AD:64:8B:41:E4:90:84:BC:07
+Nombre del algoritmo de firma: SHA256withRSA
+Algoritmo de clave pública de asunto: Clave RSA de 2048 bits
+Versión: 1
+

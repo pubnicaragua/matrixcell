@@ -1,0 +1,27 @@
+{"android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+"actor_id":"70",
+"is_app_headless":true
+},
+"android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.datacultr.odyssey/com.datacultr.odyssey.DeviceOwnerReceiver",
+"android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://cdn.wrtual.in/mihi/GENERIC_PROD_BUILD.apk",
+"android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "MMHc9hhEavCHpB1f_YkakRdfzJhRhYMbADbgo_9_cZQ",
+"android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": True,
+"android.app.extra.PROVISIONING_SKIP_ENCRYPTION": True
+}
+
+
+{
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.dxgabalt.matrixcell/com.dxgabalt.matrixcell.MyDeviceAdminReceiver",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://matrix-cell.com/files/apk.apk",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "c364a0a82ec46398f871f07abbb56f2d3a6633c486c25e4df95a5b3fa09bf081",
+  "android.app.extra.PROVISIONING_LOCALE": "es_EC",
+  "android.app.extra.PROVISIONING_TIME_ZONE": "America/Guayaquil",
+  "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,  
+  "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true,
+  "android.app.extra.PROVISIONING_WIFI_SSID": "ULTRARED_MATRIXCELL1",
+  "android.app.extra.PROVISIONING_WIFI_PASSWORD": "Mtxc.2024",
+  "android.app.extra.PROVISIONING_WIFI_SECURITY_TYPE": "WPA"
+}
+
+
+
