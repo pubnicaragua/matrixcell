@@ -15,7 +15,8 @@ export const ClientResource = {
             deadline: client.deadline,
             debt_type: client.debt_type,
             created_at: client.created_at,
-            email: client.email
+            email: client.email,
+            deleted: client.deleted
         };
     },
 

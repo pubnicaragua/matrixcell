@@ -60,7 +60,8 @@ const ClientForm: React.FC<ClientFormProps> = ({ clients, selectedClient, fetchC
       grant_date: grantDate,
       debt_type: debtType,
       deadline: deadline,
-      email
+      email, 
+      deleted: false
     };
 
     try {
