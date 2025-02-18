@@ -46,7 +46,9 @@ const LoginForm = () => {
       localStorage.setItem('perfil', JSON.stringify(response.data.usuario));
       localStorage.setItem('usuario', JSON.stringify(response.data.user));
       localStorage.setItem('permisos', JSON.stringify(response.data.permissions));
+
       console.log(response.data);
+      console.log(response.data.usuario);
       alert('Inicio de sesión exitoso!');
 
       // Redirigir o cambiar de vista
