@@ -13,6 +13,7 @@ export class Client {
     deadline: number | null; // plazo
     email: string | null;
     deleted: boolean;
+    store_id: number | null;
 
     constructor() {
         this.identity_number = null;
@@ -29,5 +30,6 @@ export class Client {
         this.email = null;
         this.id = null;
         this.deleted = false;
+        this.store_id = null;
     }
 }
