@@ -12,6 +12,7 @@ interface Perfil {
   name: string;
   email: string;
   rol: string;
+  store: string;
   permisos: string[];
 }
 
@@ -38,6 +39,7 @@ const Profile = () => {
           name: parsedPerfil?.name || 'Usuario desconocido',
           email: parsedUsuario?.email || 'Sin email',
           rol: parsedPerfil?.roles?.name || 'Sin rol',
+          store: parsedPerfil?.store?.name || 'Sin tienda',
           permisos: Array.isArray(parsedPermisos) ? parsedPermisos : [],
         });
 
@@ -132,6 +134,10 @@ const Profile = () => {
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Rol:</span>
                   <span className="text-gray-600">{perfilData.rol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Tienda:</span>
+                  <span className="text-gray-600">{perfilData.store}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Permisos:</span>
