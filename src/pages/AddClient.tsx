@@ -9,10 +9,11 @@ import OperationForm from "../components/addclient/OperationForm"
 import ClientsList from "../components/addclient/ClientList"
 import OperationsList from "../components/addclient/OperationList"
 import SendInvoiceForm from "../components/SendInvoiceForm"
-import ExportReport from "../components/ExportReport"
+import ExportReport from "../components/addclient/ExportReport"
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([])
+  const [stores, setStores] = useState<{ id: number; name: string }[]>([]);
   const [operations, setOperations] = useState<Operation[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null)
@@ -21,19 +22,36 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState("add-client")
   const [isNewClientAdded, setIsNewClientAdded] = useState(false)
   const [isEditingClient, setIsEditingClient] = useState(false)
-
   const [email, setEmail] = useState("")
+  const [storeInfo, setStoreInfo] = useState<{ id: string; name: string }>({ id: "", name: "" })
 
   useEffect(() => {
     fetchClientsAndOperations()
   }, [])
 
+  useEffect(() => {
+    // Get store information from localStorage
+    const perfil = localStorage.getItem("perfil")
+    if (perfil) {
+      try {
+        const parsedPerfil = JSON.parse(perfil)
+        setStoreInfo({
+          id: parsedPerfil?.store_id || "",
+          name: parsedPerfil?.store?.name || "Sin tienda",
+        })
+      } catch (error) {
+        console.error("Error al obtener información de la tienda:", error)
+      }
+    }
+  }, [])
+
   const fetchClientsAndOperations = async () => {
     try {
       setLoading(true)
-      const [clientsResponse, operationsResponse] = await Promise.all([api.get("/clients"), api.get("/operations")])
+      const [clientsResponse, operationsResponse, storesResponse] = await Promise.all([api.get("/clients"), api.get("/operations"), api.get("/stores")])
       setClients(clientsResponse.data)
       setOperations(operationsResponse.data)
+      setStores(storesResponse.data)
     } catch (err: any) {
       setError(err.message || "Error fetching data")
     } finally {
@@ -120,6 +138,11 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl text-center font-bold mb-4">Clientes y Operaciones</h1>
+      <div className="text-center mb-4">
+        <p className="text-gray-600">
+          Tienda: <span className="font-semibold">{storeInfo.name}</span> (ID: {storeInfo.id})
+        </p>
+      </div>
 
       <div className="mb-4 flex flex-wrap justify-center gap-2">
         <button
@@ -152,7 +175,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         >
           Enviar por E-mail
         </button>
-        <ExportReport clients={clients} operations={operations} />
+        <ExportReport clients={clients} operations={operations} stores={stores} />
       </div>
 
       {activeTab === "send-invoice" && <SendInvoiceForm />}
@@ -178,6 +201,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
       {activeTab === "client-list" && (
         <ClientsList
           clients={clients}
+          stores={stores}
           setSelectedClient={(client) => handleSetSelectedClient(client, true)}
           fetchClientsAndOperations={fetchClientsAndOperations}
           softDeleteClient={softDeleteClient}
@@ -188,6 +212,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         <OperationsList
           operations={operations}
           clients={clients}
+          stores={stores}
           setSelectedOperation={handleSetSelectedOperation}
           deleteOperation={deleteOperation}
         />

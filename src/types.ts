@@ -1,12 +1,5 @@
 // types.ts
 
-interface ClientListProps {
-  clients: Client[]
-  setSelectedClient: (client: Client | null) => void
-  setActiveTab: (tab: string) => void // Asegúrate de incluir esto
-  fetchClientsAndOperations: () => Promise<void>
-}
-
 export interface Invoice {
   status: string
   created_at: string
@@ -33,6 +26,15 @@ export interface Client {
   deadline: number //plazo
   email: string
   deleted: boolean
+  store_id: number
+  store?: {
+    name: string
+  }
+}
+
+export interface Store {
+  id?: number,
+  name: string
 }
 
 export interface Operation {
@@ -68,5 +70,34 @@ export interface Dataset {
 export interface ChartData {
   labels: string[]
   datasets: Dataset[]
+}
+
+export interface ClientListProps {
+  clients: Client[]
+  stores: Store[]
+  setSelectedClient: (client: Client | null, isEditing?: boolean) => void
+  fetchClientsAndOperations: () => Promise<void>
+  softDeleteClient: (id: number) => Promise<void>
+  restoreClient: (id: number) => Promise<void>
+}
+
+export interface OperationListProps {
+  operations: Operation[]
+  clients: Client[]
+  stores: Store[]
+  setSelectedOperation: (operation: Operation) => void
+  deleteOperation: (id: number) => void
+}
+
+export interface SendInvoiceFormProps {
+  email: string
+  setEmail: (email: string) => void
+  handleSendEmail: () => void
+}
+
+export interface ExportReportProps {
+  clients: Client[]
+  operations: Operation[]
+  stores: Store[]
 }
 

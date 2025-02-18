@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo } from "react"
-import type { Client } from "../../types"
+import { useState, useMemo, useEffect } from "react"
+import type { Client, Store } from "../../types"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
 import { Trash2, Edit, RefreshCw } from "lucide-react"
@@ -12,6 +12,7 @@ import { Label } from "../../components/ui/label"
 
 interface ClientListProps {
   clients: Client[]
+  stores: Store[]
   setSelectedClient: (client: Client | null) => void
   fetchClientsAndOperations: () => Promise<void>
   softDeleteClient: (id: number) => Promise<void>
@@ -20,6 +21,7 @@ interface ClientListProps {
 
 const ClientsList: React.FC<ClientListProps> = ({
   clients,
+  stores,
   setSelectedClient,
   fetchClientsAndOperations,
   softDeleteClient,
@@ -30,20 +32,50 @@ const ClientsList: React.FC<ClientListProps> = ({
   const [showDeleted, setShowDeleted] = useState(false)
   const itemsPerPage = 6
 
+  const [userRole, setUserRole] = useState<number>(0);
+  const [userStore, setUserStore] = useState<number | null>(null);
+
+  useEffect(() => {
+    const perfil = localStorage.getItem("perfil");
+    if (perfil) {
+      const parsedPerfil = JSON.parse(perfil);
+      setUserRole(parsedPerfil.rol_id || 0);
+      setUserStore(parsedPerfil.store_id || null);
+    }
+  }, []);
+
   const filteredClients = useMemo(() => {
-    return clients.filter(
-      (client) =>
-        ((client.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-          (client.identity_number?.toLowerCase() || "").includes(searchTerm.toLowerCase())) &&
-        (showDeleted ? client.deleted : !client.deleted),
-    )
-  }, [clients, searchTerm, showDeleted])
+    return clients
+      .filter(client => {
+        // ✅ Si es admin, ve todos los clientes
+        if (userRole === 1) return true;
+        // ✅ Si no es admin, solo ve los clientes de su tienda asignada
+        return client.store_id === userStore;
+      })
+      .filter(client => {
+        // ✅ Filtra por nombre o número de identificación
+        return (
+          (client.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+          (client.identity_number?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+        );
+      })
+      .filter(client => {
+        // ✅ Filtra clientes eliminados o no eliminados según `showDeleted`
+        return showDeleted ? client.deleted : !client.deleted;
+      });
+  }, [clients, userRole, userStore, searchTerm, showDeleted]);
+
 
   const paginatedClients = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return filteredClients.slice(startIndex, endIndex)
   }, [filteredClients, currentPage])
+
+  const getStoreName = (storeId: number) => {
+    const store = stores.find((store) => store.id === storeId);
+    return store ? store.name : 'Desconocido';
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -94,6 +126,7 @@ const ClientsList: React.FC<ClientListProps> = ({
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
                 <InfoItem label="Ciudad" value={client.city} />
                 <InfoItem label="Plazo" value={client.deadline ? `${client.deadline} meses` : "No hay plazo"} />
+                <InfoItem label="Tienda" value={getStoreName(client.store_id)} />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
