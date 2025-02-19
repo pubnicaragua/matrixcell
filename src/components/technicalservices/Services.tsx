@@ -123,7 +123,7 @@ const TechnicalServices: React.FC = () => {
         //service_price: formData.serviceType === "reparación" ? formData.service_price : 0,
         cost: totalCost, // Precio total
         store_id: selectedStore,
-      }); //
+      });
 
       // Calcular el nuevo stock restante
       const updatedStock = selectedProduct.stock - quantity;

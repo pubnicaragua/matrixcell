@@ -13,6 +13,7 @@ export const TechnicalServiceController = {
             console.log(technicalservices)
             res.json(technicalservices);
         } catch (error: any) {
+            console.log(error)
             res.status(500).json({ message: error.message });
         }
     },
@@ -22,8 +23,10 @@ export const TechnicalServiceController = {
             validateTechnicalService(req.body); // Validar los datos
             const { userId } = req;
             const technicalservice = await BaseService.create<TechnicalService>(tableName, req.body, userId);
+            console.log(technicalservice)
             res.status(201).json(TechnicalServiceResource.formatTechnicalService(technicalservice));
         } catch (error: any) {
+            console.log(error)
             res.status(400).json({ message: error.message });
         }
     },
