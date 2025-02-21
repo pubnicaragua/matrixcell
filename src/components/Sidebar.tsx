@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { LoginModal } from "./LoginModal"
 import {
   FaHome,
   FaFileInvoiceDollar,
@@ -17,13 +18,14 @@ import {
   FaBars,
   FaTimes,
   FaMobileAlt,
-  FaDesktop,
-  FaBook, // Añadido import para el icono de Manual de Usuario
+  FaBook,
 } from "react-icons/fa"
 import api from "../axiosConfig"
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [targetRoute, setTargetRoute] = useState("")
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -40,6 +42,16 @@ export default function Sidebar() {
     setIsOpen(!isOpen)
   }
 
+  const handleLinkClick = (route: string) => {
+    setTargetRoute(route)
+    setIsLoginModalOpen(true)
+  }
+
+  const handleLoginSuccess = () => {
+    setIsLoginModalOpen(false)
+    navigate(targetRoute)
+  }
+
   return (
     <aside className="h-screen relative">
       {/* Botón para desplegar el menú */}
@@ -49,9 +61,8 @@ export default function Sidebar() {
 
       {/* Menú lateral */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 h-full w-64 flex-shrink-0 flex flex-col overflow-auto bg-green-600 text-white transition-transform duration-300 transform ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative`}
+        className={`fixed inset-y-0 left-0 z-40 h-full w-64 flex-shrink-0 flex flex-col overflow-auto bg-green-600 text-white transition-transform duration-300 transform ${isOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 md:relative`}
       >
         <div className="p-4 mt-10 md:mt-0">
           <h2 className="text-xl font-bold">MatrixCell Admin</h2>
@@ -63,74 +74,108 @@ export default function Sidebar() {
             <span>Dashboard</span>
           </Link>
 
-          <Link to="/invoices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+          <button
+            onClick={() => handleLinkClick("/invoices")}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+          >
             <FaFileInvoiceDollar className="h-5 w-5" />
             <span>Facturas</span>
-          </Link>
+          </button>
 
-          <Link to="/notifications" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+          <button
+            onClick={() => handleLinkClick("/notifications")}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+          >
             <FaBell className="h-5 w-5" />
             <span>Notificaciones</span>
-          </Link>
+          </button>
 
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">Gestión</p>
-            <Link to="/users" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+
+            <button
+              onClick={() => handleLinkClick("/users")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaUsers className="h-5 w-5" />
               <span>Usuarios</span>
-            </Link>
-            <Link to="/stores" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            </button>
+
+            <button
+              onClick={() => handleLinkClick("/stores")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaLock className="h-5 w-5" />
               <span>Tiendas</span>
-            </Link>
-            <Link to="/addclient" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            </button>
+
+            <button
+              onClick={() => handleLinkClick("/addclient")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaUsersCog className="h-5 w-5" />
               <span>Clientes</span>
-            </Link>
+            </button>
 
-            <Link to="/technicalservices" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <button
+              onClick={() => handleLinkClick("/technicalservices")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaTools className="h-5 w-5" />
               <span>Servicios Técnicos</span>
-            </Link>
+            </button>
 
-            <Link to="/blockdevice" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <button
+              onClick={() => handleLinkClick("/blockdevice")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaMobileAlt className="h-5 w-5" />
               <span>Gestionar Dispositivos</span>
-            </Link>
+            </button>
 
-            {/* <Link to="/devices-page" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
-              <FaDesktop className="h-5 w-5" />
-              <span>Gestionar TV y Laptops</span>
-            </Link> */}
-
-            <Link to="/quote-page" className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+            <button
+              onClick={() => handleLinkClick("/quote-page")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaFileInvoiceDollar className="h-5 w-5" />
               <span>Financiamiento</span>
-            </Link>
+            </button>
           </div>
 
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">Reportes</p>
-            <Link to="/reports" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+
+            <button
+              onClick={() => handleLinkClick("/reports")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaChartLine className="h-5 w-5" />
               <span>Reportes Financieros</span>
-            </Link>
+            </button>
           </div>
 
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">Consolidado Equifax</p>
-            <Link to="/exportsicom" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+
+            <button
+              onClick={() => handleLinkClick("/exportsicom")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaChartLine className="h-5 w-5" />
               <span>Consolidado Equifax</span>
-            </Link>
+            </button>
           </div>
 
           <div className="pt-4">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-green-200">Inventario</p>
-            <Link to="/inventory" className="mt-1 flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700">
+
+            <button
+              onClick={() => handleLinkClick("/inventory")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-green-700 w-full text-left"
+            >
               <FaChartLine className="h-5 w-5" />
               <span>Añadir Inventario</span>
-            </Link>
+            </button>
           </div>
 
           <div className="pt-4">
@@ -168,6 +213,13 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </aside>
   )
 }

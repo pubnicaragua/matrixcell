@@ -43,19 +43,27 @@ const Users = () => {
     store_id: "",
     password: "",
   })
-
   const [isEditing, setIsEditing] = useState(false)
+  const [userRole, setUserRole] = useState<number>(0)
 
   useEffect(() => {
     fetchUsers()
     fetchStores()
+    getUserRole()
   }, [])
+
+  const getUserRole = () => {
+    const perfil = localStorage.getItem("perfil")
+    if (perfil) {
+      const parsedPerfil = JSON.parse(perfil)
+      setUserRole(parsedPerfil.rol_id || 0)
+    }
+  }
 
   const fetchUsers = async () => {
     try {
       const response = await api.get("/usuarios")
       setUsers(response.data)
-      console.log("Usuarios obtenidos:", response.data)
     } catch (error) {
       console.error("Error fetching users:", error)
     }
@@ -65,7 +73,6 @@ const Users = () => {
     try {
       const response = await api.get("/stores")
       setStores(response.data)
-      console.log("Tiendas obtenidas:", response.data)
     } catch (error) {
       console.error("Error fetching stores:", error)
     }
@@ -78,6 +85,10 @@ const Users = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (userRole !== 1) {
+      alert("No tienes permisos para realizar esta acción.")
+      return
+    }
     try {
       const payload = {
         name: formData.name,
@@ -86,8 +97,6 @@ const Users = () => {
         store_id: Number.parseInt(formData.store_id),
         ...(isEditing ? {} : { password: formData.password }),
       }
-
-      console.log("Payload enviado:", payload)
 
       if (isEditing) {
         await api.put(`/usuarios/${formData.id}`, payload)
@@ -104,6 +113,10 @@ const Users = () => {
   }
 
   const handleEdit = (user: User) => {
+    if (userRole !== 1) {
+      alert("No tienes permisos para editar usuarios.")
+      return
+    }
     setFormData({
       id: user.id,
       name: user.perfil?.name || "",
@@ -116,6 +129,10 @@ const Users = () => {
   }
 
   const handleDelete = async (id: string) => {
+    if (userRole !== 1) {
+      alert("No tienes permisos para eliminar usuarios.")
+      return
+    }
     try {
       await api.delete(`/usuarios/${id}`)
       alert("Usuario eliminado exitosamente.")
@@ -134,86 +151,88 @@ const Users = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Gestión de Usuarios</h1>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <h2 className="text-2xl font-semibold text-gray-800">{isEditing ? "Editar Usuario" : "Crear Usuario"}</h2>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nombre</Label>
-              <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            {!isEditing && (
+      {userRole === 1 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-2xl font-semibold text-gray-800">{isEditing ? "Editar Usuario" : "Crear Usuario"}</h2>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="name">Nombre</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   required
                 />
               </div>
-            )}
 
-            <div>
-              <Label htmlFor="rol_id">Rol</Label>
-              <Select
-                name="rol_id"
-                value={formData.rol_id}
-                onValueChange={(value) => handleInputChange({ target: { name: "rol_id", value } } as any)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Admin</SelectItem>
-                  <SelectItem value="2">Reportes</SelectItem>
-                  <SelectItem value="3">Bodega</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {!isEditing && (
+                <div>
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              )}
 
-            <div>
-              <Label htmlFor="store_id">Tienda</Label>
-              <Select
-                name="store_id"
-                value={formData.store_id}
-                onValueChange={(value) => handleInputChange({ target: { name: "store_id", value } } as any)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione una tienda" />
-                </SelectTrigger>
-                <SelectContent>
-                  {stores.map((store) => (
-                    <SelectItem key={store.id} value={store.id.toString()}>
-                      {store.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <Label htmlFor="rol_id">Rol</Label>
+                <Select
+                  name="rol_id"
+                  value={formData.rol_id}
+                  onValueChange={(value) => handleInputChange({ target: { name: "rol_id", value } } as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Admin</SelectItem>
+                    <SelectItem value="2">Reportes</SelectItem>
+                    <SelectItem value="3">Bodega</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Button type="submit" className="w-full">
-              {isEditing ? "Actualizar Usuario" : "Crear Usuario"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div>
+                <Label htmlFor="store_id">Tienda</Label>
+                <Select
+                  name="store_id"
+                  value={formData.store_id}
+                  onValueChange={(value) => handleInputChange({ target: { name: "store_id", value } } as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione una tienda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id.toString()}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button type="submit" className="w-full">
+                {isEditing ? "Actualizar Usuario" : "Crear Usuario"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
@@ -224,7 +243,7 @@ const Users = () => {
               <th className="px-6 py-2 text-left">Rol</th>
               <th className="px-6 py-2 text-left">Tienda</th>
               <th className="px-6 py-2 text-left">Permisos</th>
-              <th className="px-6 py-2 text-left">Acciones</th>
+              {userRole === 1 && <th className="px-6 py-2 text-left">Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -237,19 +256,26 @@ const Users = () => {
                 <td className="px-6 py-4">
                   {user.perfil?.permisos ? user.perfil.permisos.join(", ") : "Sin permisos"}
                 </td>
-                <td className="px-6 py-4 space-x-2">
-                  <Button onClick={() => handleEdit(user)} variant="outline">
-                    Editar
-                  </Button>
-                  <Button onClick={() => handleDelete(user.id)} variant="destructive">
-                    Eliminar
-                  </Button>
-                </td>
+                {userRole === 1 && (
+                  <td className="px-6 py-4 space-x-2">
+                    <Button onClick={() => handleEdit(user)} variant="outline">
+                      Editar
+                    </Button>
+                    <Button onClick={() => handleDelete(user.id)} variant="destructive">
+                      Eliminar
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {userRole !== 1 && (
+        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          <p>Necesitas permisos de administrador para gestionar usuarios.</p>
+        </div>
+      )}
     </div>
   )
 }

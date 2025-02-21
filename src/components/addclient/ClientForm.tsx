@@ -31,7 +31,6 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [city, setCity] = useState(selectedClient?.city || "")
   const [identityNumber, setIdentityNumber] = useState(selectedClient?.identity_number || "")
   const [identityType, setIdentityType] = useState(selectedClient?.identity_type || "Cédula")
-  const [dueDate, setDueDate] = useState(selectedClient?.due_date || "")
   const [grantDate, setGrantDate] = useState(selectedClient?.grant_date || "")
   const [debtType, setDebtType] = useState(selectedClient?.debt_type || "")
   const [deadline, setDeadline] = useState(selectedClient?.deadline || 0)
@@ -39,6 +38,23 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [stores, setStores] = useState<Store[]>([])
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
+
+
+  // Agregar estos estados para manejar errores después de los estados existentes
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+
+  const getLastDayOfMonth = () => {
+    const today = new Date()
+    // Obtener el último día del mes actual
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    return lastDay.toISOString().split("T")[0] // Returns YYYY-MM-DD format
+  }
+
+  const [calculatedDueDate, setCalculatedDueDate] = useState(getLastDayOfMonth())
+
+  useEffect(() => {
+    setCalculatedDueDate(getLastDayOfMonth())
+  }, []) // Se ejecuta solo al montar el componente
 
   useEffect(() => {
     // Obtener información del usuario del localStorage
@@ -77,7 +93,6 @@ const ClientForm: React.FC<ClientFormProps> = ({
     setCity("")
     setIdentityNumber("")
     setIdentityType("Cédula")
-    setDueDate("")
     setGrantDate("")
     setDebtType("")
     setDeadline(0)
@@ -88,18 +103,74 @@ const ClientForm: React.FC<ClientFormProps> = ({
     setSelectedClient(null)
   }
 
+  // Agregar estas funciones de validación antes del handleSubmit
+  const validateEmail = (email: string) => {
+    if (!email) return true // Es opcional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const validatePhone = (phone: string) => {
+    if (!phone) return true // Es opcional
+    const phoneRegex = /^[0-9]{10}$/
+    return phoneRegex.test(phone)
+  }
+
+  const validateIdentityNumber = (number: string) => {
+    const numberRegex = /^[0-9]+$/
+    return numberRegex.test(number)
+  }
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {}
+
+    // Validar campos requeridos
+    if (!name.trim()) newErrors.name = "El nombre es requerido"
+    if (!address.trim()) newErrors.address = "La dirección es requerida"
+    if (!city.trim()) newErrors.city = "La ciudad es requerida"
+    if (!identityNumber.trim()) {
+      newErrors.identityNumber = "El número de identidad es requerido"
+    } else if (!validateIdentityNumber(identityNumber)) {
+      newErrors.identityNumber = "El número de identidad debe contener solo números"
+    }
+
+    // Validar email si se proporciona
+    if (email && !validateEmail(email)) {
+      newErrors.email = "Formato de correo electrónico inválido"
+    }
+
+    // Validar teléfono si se proporciona
+    if (phone && !validatePhone(phone)) {
+      newErrors.phone = "El teléfono debe tener 10 dígitos"
+    }
+
+    // Validar fecha de concesión
+    if (!grantDate) {
+      newErrors.grantDate = "La fecha de concesión es requerida"
+    }
+
+    // Validar plazo
+    if (deadline <= 0) {
+      newErrors.deadline = "El plazo debe ser mayor a 0"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Modificar el handleSubmit existente
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!grantDate || isNaN(new Date(grantDate).getTime())) {
-      alert("Por favor, ingresa una fecha de concesión válida.")
+    // Validar el formulario antes de continuar
+    if (!validateForm()) {
       return
     }
 
     // Verificar que se haya seleccionado una tienda
     const storeId = userRole === 1 ? selectedStore : userStore
     if (!storeId) {
-      alert("Por favor, selecciona una tienda.")
+      setErrors((prev) => ({ ...prev, store: "Por favor, selecciona una tienda" }))
       return
     }
 
@@ -111,7 +182,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
       city,
       identity_number: identityNumber,
       identity_type: identityType,
-      due_date: dueDate,
+      due_date: getLastDayOfMonth(), // Ahora simplemente obtiene el último día del mes actual
       grant_date: grantDate,
       debt_type: debtType,
       deadline: deadline,
@@ -173,38 +244,56 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Nombre
+            Nombre *
           </label>
           <input
             id="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 p-2 w-full border rounded-lg"
+            onChange={(e) => {
+              setName(e.target.value)
+              if (errors.name) {
+                setErrors((prev) => ({ ...prev, name: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.name ? "border-red-500" : ""}`}
           />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
         </div>
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Correo
+            Correo (opcional)
           </label>
           <input
             id="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 p-2 w-full border rounded-lg"
+            onChange={(e) => {
+              setEmail(e.target.value)
+              if (errors.email) {
+                setErrors((prev) => ({ ...prev, email: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.email ? "border-red-500" : ""}`}
           />
+          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Teléfono
+            Teléfono (opcional)
           </label>
           <input
             id="phone"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="mt-1 p-2 w-full border rounded-lg"
+            onChange={(e) => {
+              setPhone(e.target.value)
+              if (errors.phone) {
+                setErrors((prev) => ({ ...prev, phone: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.phone ? "border-red-500" : ""}`}
           />
+          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
 
         <div>
@@ -233,14 +322,20 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
         <div>
           <label htmlFor="identity_number" className="block text-sm font-medium text-gray-700">
-            Número de Identidad
+            Número de Identidad *
           </label>
           <input
             id="identity_number"
             value={identityNumber}
-            onChange={(e) => setIdentityNumber(e.target.value)}
-            className="mt-1 p-2 w-full border rounded-lg"
+            onChange={(e) => {
+              setIdentityNumber(e.target.value)
+              if (errors.identityNumber) {
+                setErrors((prev) => ({ ...prev, identityNumber: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.identityNumber ? "border-red-500" : ""}`}
           />
+          {errors.identityNumber && <p className="text-red-500 text-xs mt-1">{errors.identityNumber}</p>}
         </div>
 
         <div>
@@ -252,19 +347,6 @@ const ClientForm: React.FC<ClientFormProps> = ({
             placeholder="Solo Cédula"
             value={identityType}
             onChange={(e) => setIdentityType(e.target.value)}
-            className="mt-1 p-2 w-full border rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">
-            Fecha de Corte
-          </label>
-          <input
-            id="due_date"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
             className="mt-1 p-2 w-full border rounded-lg"
           />
         </div>
@@ -290,28 +372,56 @@ const ClientForm: React.FC<ClientFormProps> = ({
             id="grant_date"
             type="date"
             value={grantDate}
-            onChange={(e) => setGrantDate(e.target.value)}
+            onChange={(e) => {
+              setGrantDate(e.target.value)
+            }}
             className="mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
+        <div className="flex flex-col">
+          <label htmlFor="due_date" className="text-sm font-medium text-gray-700">
+            Fecha de Corte (automática)
+          </label>
+          <input
+            id="due_date"
+            type="date"
+            value={calculatedDueDate}
+            readOnly
+            className="mt-2 p-2 border border-gray-300 rounded-md bg-gray-50"
+          />
+          <p className="text-xs text-gray-500 mt-1">Último día del mes actual</p>
+        </div>
+
         <div>
           <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
-            Plazo (Meses)
+            Plazo (Meses) *
           </label>
           <input
             id="deadline"
             type="number"
+            min="1"
             value={deadline}
-            onChange={(e) => setDeadline(Number(e.target.value))}
-            className="mt-1 p-2 w-full border rounded-lg"
+            onChange={(e) => {
+              setDeadline(Number(e.target.value))
+              if (errors.deadline) {
+                setErrors((prev) => ({ ...prev, deadline: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.deadline ? "border-red-500" : ""}`}
           />
+          {errors.deadline && <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>}
         </div>
       </div>
 
       <button type="submit" className="mt-6 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
         {selectedClient ? "Actualizar Cliente" : "Agregar Cliente"}
       </button>
+      {Object.keys(errors).length > 0 && (
+        <div className="mt-4 p-2 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">Por favor, corrige los errores antes de continuar.</p>
+        </div>
+      )}
     </form>
   )
 }
