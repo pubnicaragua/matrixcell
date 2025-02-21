@@ -3,7 +3,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from '../components/ui/card';
-import { Alert } from '../components/ui/alert';
+import { Alert } from '../components/ui/alert-message';
 import axiosConfig from '../axiosConfig';
 import { useNavigate } from 'react-router-dom';
 
