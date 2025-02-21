@@ -50,6 +50,9 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Inventory | null>(null);
   const [totalCost, setTotalCost] = useState(0);
+  const [userRole, setUserRole] = useState<number>(0);
+  const [userStore, setUserStore] = useState<number | null>(null);
+
 
   useEffect(() => {
     if (service) {
@@ -75,7 +78,7 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
     }
   };
 
-//
+  //
   const handleStoreChange = async (storeId: number) => {
     try {
       const response = await api.get(`/inventories?store_id=${storeId}`);
@@ -122,22 +125,22 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
 
   const handleSave = async () => {
     if (!formData) return;
-  
+
     try {
       const product = inventories.find((item) => item.product_id === formData.product_id);
-  
+
       if (product) {
         const updatedStock = product.stock + (service!.quantity - formData.quantity);
-  
+
         await api.put(`/inventories/${product.id}`, {
           product_id: product.products.id,
           cantidad: updatedStock,
           store_id: formData.store_id,
         });
       }
-  
+
       const response = await api.put(`/technical_services/${formData.id}`, formData);
-  
+
       onSave(response.data);
       onClose();
     } catch (error) {
@@ -178,13 +181,24 @@ const EditServiceModal: React.FC<EditServiceModalProps> = ({ service, onClose, o
                 <SelectValue placeholder="Seleccione una tienda" />
               </SelectTrigger>
               <SelectContent>
-                {stores.map((store) => (
-                  <SelectItem key={store.id} value={store.id.toString()}>
-                    {store.name}
-                  </SelectItem>
-                ))}
+                {userRole === 1
+                  ? stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id.toString()}>
+                      {store.name}
+                    </SelectItem>
+                  ))
+                  : stores
+                    .filter((store) => store.id === userStore)
+                    .map((store) => (
+                      <SelectItem key={store.id} value={store.id.toString()}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
               </SelectContent>
             </Select>
+
+            {userRole !== 1 && <span className="text-gray-500 text-sm"> (Tienda asignada)</span>}
+
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="product" className="text-right">
