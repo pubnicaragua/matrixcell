@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { LoginModal } from "./LoginModal"
+import { useAuth } from "../context/AuthContext"
 import {
   FaHome,
   FaFileInvoiceDollar,
@@ -18,24 +19,20 @@ import {
   FaBars,
   FaTimes,
   FaMobileAlt,
-  FaBook,
+  FaBook, // Añadido import para el icono de Manual de Usuario
 } from "react-icons/fa"
-import api from "../axiosConfig"
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [targetRoute, setTargetRoute] = useState("")
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
-  const handleLogout = async () => {
-    try {
-      await api.post("auth/logout")
-      localStorage.removeItem("token")
-      navigate("/")
-    } catch (error) {
-      console.error("Error al cerrar sesión", error)
-    }
+  const handleLogout = () => {
+    logout()
+    navigate("/")
+    window.location.reload()
   }
 
   const toggleMenu = () => {
@@ -49,7 +46,7 @@ export default function Sidebar() {
 
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false)
-    navigate(targetRoute)
+    // La navegación y recarga ahora se manejan en el LoginModal
   }
 
   return (
@@ -214,12 +211,14 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Login Modal */}
+      {/* Modal de verificación de contraseña */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+        targetRoute={targetRoute} // Asegúrate de pasar la prop
       />
+
     </aside>
   )
 }
