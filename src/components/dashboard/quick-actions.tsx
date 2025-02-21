@@ -53,7 +53,9 @@ export function QuickActions() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+        targetRoute={targetRoute} // Asegúrate de pasar esta prop
       />
+
     </Card>
   )
 }
