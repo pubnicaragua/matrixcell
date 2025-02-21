@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';  // Importa la configuración de axios
+import { useAuth } from '../context/AuthContext';  // Importa el contexto de autenticación
 
 interface Device {
   id: number;
@@ -22,6 +23,8 @@ const DevicesView: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [clients, setClients] = useState<any[]>([]);
   const [file, setFile] = useState<File | null>(null);  // Estado para el archivo
+
+  const { userRole } = useAuth();  // Obtiene el rol del usuario autenticado
 
   const fetchDevices = async () => {
     try {
@@ -75,16 +78,19 @@ const DevicesView: React.FC = () => {
   };
 
   const toggleDeviceStatus = async (device: Device) => {
-    const newStatus = device.status === 'Bloqueado' ? 'Desbloqueado' : 'Bloqueado';
+    if (userRole !== 1) {
+      alert("No tienes permisos para bloquear o desbloquear dispositivos.");
+      return;
+    }
+
+    const newStatus = device.status === "Bloqueado" ? "Desbloqueado" : "Bloqueado";
     try {
       await api.put(`/devices/${device.id}`, { status: newStatus });
       setDevices((prevDevices) =>
-        prevDevices.map((d) =>
-          d.id === device.id ? { ...d, status: newStatus } : d
-        )
+        prevDevices.map((d) => (d.id === device.id ? { ...d, status: newStatus } : d))
       );
     } catch (err: any) {
-      console.error('Error updating device status:', err.message || err);
+      console.error("Error updating device status:", err.message || err);
     }
   };
 
@@ -143,11 +149,11 @@ const DevicesView: React.FC = () => {
           onClick={handleFileUpload}
           className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600"
         >
-        Subir registros masivos
+          Subir registros masivos
         </button>
       </div>
 
-    
+
 
       <div className="mb-4">
         <p className="text-lg font-semibold">Dispositivos:</p>
@@ -178,12 +184,16 @@ const DevicesView: React.FC = () => {
               <td className="border border-gray-300 px-4 py-2 text-center">{getClientName(device.owner)}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">{device.unlock_code}</td>
               <td className="border border-gray-300 px-4 py-2 text-center">
-                <button
-                  onClick={() => toggleDeviceStatus(device)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  {device.status === 'Bloqueado' ? 'Desbloquear' : 'Bloquear'}
-                </button>
+                {userRole === 1 ? (
+                  <button
+                    onClick={() => toggleDeviceStatus(device)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
+                    {device.status === "Bloqueado" ? "Desbloquear" : "Bloquear"}
+                  </button>
+                ) : (
+                  <span className="text-gray-500">Acción no permitida</span>
+                )}
               </td>
             </tr>
           ))}
