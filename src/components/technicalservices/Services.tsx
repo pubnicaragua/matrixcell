@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../axiosConfig";
+import { useAuth } from "../../context/AuthContext";
 
 interface Store {
   id: number;
@@ -20,19 +21,16 @@ interface Inventory {
 }
 
 const TechnicalServices: React.FC = () => {
+  const { userRole, userStore } = useAuth(); // Mueve esto dentro del componente
+
   const [stores, setStores] = useState<Store[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [selectedStore, setSelectedStore] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Inventory | null>(null);
-  const [selectedItem, setselectedItem] = useState<Inventory | null>(null);
   const [quantity, setQuantity] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [serviceDetails, setServiceDetails] = useState<any | null>(null);
   const [imei, setImei] = useState<string>("");
-  const [activeTab, setActiveTab] = useState("add-service"); // Tab activo
-  const [services, setServices] = useState([]); // Lista de servicios
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     client: "",
     serviceType: "",
@@ -40,7 +38,7 @@ const TechnicalServices: React.FC = () => {
     status: "Pendiente",
     product_id: 0,
     quantity: 0,
-    service_price: 0, // Precio del servicio
+    service_price: 0,
   });
 
   useEffect(() => {
@@ -55,14 +53,14 @@ const TechnicalServices: React.FC = () => {
     const fetchStores = async () => {
       try {
         const response = await api.get("/stores");
-        setStores(response.data);
+        setStores(userRole === 1 ? response.data : response.data.filter((store: { id: number | null; }) => store.id === userStore));
       } catch (error) {
         console.error("Error fetching stores:", error);
       }
     };
 
     fetchStores();
-  }, []);
+  }, [userRole, userStore]);
 
   const handleStoreChange = async (storeId: number) => {
     setSelectedStore(storeId);
@@ -136,6 +134,8 @@ const TechnicalServices: React.FC = () => {
         imei: imei, // IMEI del producto
       });
 
+      alert("Servicio guardado exitosamente.");
+
       // Actualizar el resumen del servicio
       setServiceDetails({
         client: formData.client,
@@ -163,9 +163,20 @@ const TechnicalServices: React.FC = () => {
       setTotalCost(0);
       setImei("");
       alert("Servicio guardado exitosamente.");
-    } catch (error) {
-      console.error("Error saving service or updating inventory:", error);
-      alert("Error al guardar el servicio o actualizar el inventario.");
+    } catch (err: any) {
+      console.error("Error guardando el servicio:", err);
+
+      let errorMessage = "Ocurrió un error, por favor intenta nuevamente.";
+
+      if (err.response) {
+        if (err.response.status === 400) {
+          errorMessage = err.response.data?.error || "Datos incorrectos, revisa la información ingresada.";
+        } else if (err.response.status === 500) {
+          errorMessage = "Error interno del servidor, intenta más tarde.";
+        }
+      }
+
+      alert(errorMessage);
     }
   };
 
@@ -267,6 +278,9 @@ const TechnicalServices: React.FC = () => {
               </option>
             ))}
           </select>
+
+          {userRole !== 1 && <span className="text-gray-500 text-sm"> (Tienda asignada)</span>}
+
         </div>
 
         {/* Productos */}
