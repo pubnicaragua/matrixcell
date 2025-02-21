@@ -4,39 +4,19 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import supabase from "../api/supabase"
 import api from "../axiosConfig"
-import SearchFilters from "../components/SearchFilters"
+import SearchFilters from "../components/inventory/SearchFilters"
+import InventoryTable from "../components/inventory/InventoryTable"
+import FileUploader from "../components/inventory/FileUploader"
+import { Button } from "../components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card"
+import { Alert, AlertDescription } from "../components/ui/alert"
+import { InventoryItem } from "../types"
 
 interface FileInfo {
   name: string
   url: string
 }
 
-interface InventoryItem {
-  id: number
-  store_id: number
-  product_id: number
-  stock: number
-  created_at: string
-  imei: string
-  products: {
-    id: number
-    models: {
-      id: number
-      name: string
-    }
-    categories: {
-      id: number
-      name: string
-    }
-    article: string
-    price: number
-    busines_price: number
-  }
-  store: {
-    id: number
-    name: string
-  }
-}
 
 interface Store {
   id: number
@@ -50,26 +30,35 @@ const Inventory: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [stores, setStores] = useState<Store[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
-  const [selectedStore, setSelectedStore] = useState<number | string>("") // Changed to number for store id
+  const [loading, setLoading] = useState<boolean>(true)
+  const [selectedStore, setSelectedStore] = useState<number | string>("")
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
   const [editingStock, setEditingStock] = useState<number>(0)
-  const [editingProduct, setEditingProduct] = useState<number>(0)
-  const [editingStore, setEditingStore] = useState<number>(0)
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
+  const [userRole, setUserRole] = useState<number>(0)
+  const [userStore, setUserStore] = useState<number | null>(null)
 
   useEffect(() => {
-    checkAuth()
-    fetchFiles()
-    fetchInventory()
-    fetchStores()
+    const perfil = localStorage.getItem("perfil")
+    if (perfil) {
+      const parsedPerfil = JSON.parse(perfil)
+      setUserRole(parsedPerfil.rol_id || 0)
+      setUserStore(parsedPerfil.store_id || null)
+    }
   }, [])
 
-  const checkAuth = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-  }
+  useEffect(() => {
+    if (userRole !== 0) {
+      fetchFiles()
+      fetchInventory()
+
+      if (userRole === 1) {
+        fetchStores()
+      }
+    }
+  }, [userRole])
 
   const fetchFiles = async () => {
     try {
@@ -101,7 +90,19 @@ const Inventory: React.FC = () => {
     try {
       setLoading(true)
       const response = await api.get("/inventories")
+
       setInventory(response.data)
+
+      const uniqueCategories = Array.from(
+        new Set(response.data.map((item: InventoryItem) => item.products.categories.name)),
+      ).map((name) => ({
+        id:
+          response.data.find((item: InventoryItem) => item.products.categories.name === name)?.products.categories.id ??
+          0,
+        name: String(name),
+      }))
+
+      setCategories(uniqueCategories)
     } catch (error) {
       setError("Error fetching inventory")
       console.error(error)
@@ -123,26 +124,19 @@ const Inventory: React.FC = () => {
   const handleEditClick = (item: InventoryItem) => {
     setEditingItem(item)
     setEditingStock(item.stock)
-    setEditingProduct(item.product_id)
-    setEditingStore(item.store_id)
   }
+
   const handleEditSubmit = async () => {
     if (!editingItem) return
 
     try {
       const response = await api.put(`/inventories/${editingItem.id}`, {
         cantidad: editingStock,
-        product_id: editingProduct,
-        imei: "",
-        store_id: editingStore,
+        product_id: editingItem.product_id,
+        imei: editingItem.imei,
+        store_id: editingItem.store_id,
       })
-      setInventory((prev) =>
-        prev.map((item) =>
-          item.id === editingItem.id
-            ? { ...item, stock: editingStock, product_id: editingProduct, store_id: editingStore }
-            : item,
-        ),
-      )
+      setInventory((prev) => prev.map((item) => (item.id === editingItem.id ? { ...item, stock: editingStock } : item)))
       await fetchInventory()
       setEditingItem(null)
       setError(null)
@@ -156,6 +150,7 @@ const Inventory: React.FC = () => {
     setEditingItem(null)
     setEditingStock(0)
   }
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setFile(event.target.files[0])
@@ -172,14 +167,12 @@ const Inventory: React.FC = () => {
     setError(null)
 
     try {
-      // Upload file to Supabase storage
       const { error } = await supabase.storage.from("Inventarios").upload(file.name, file)
 
       if (error) {
         throw error
       }
 
-      // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage.from("Inventarios").getPublicUrl(file.name)
 
       if (!urlData || !urlData.publicUrl) {
@@ -189,14 +182,12 @@ const Inventory: React.FC = () => {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Send file data to the API endpoint
       await api.post("/products/masive-insert", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       })
 
-      // Refresh the file list
       await fetchFiles()
       await fetchInventory()
       setFile(null)
@@ -241,7 +232,6 @@ const Inventory: React.FC = () => {
 
       const updatedStore = stores.find((store) => store.id === selectedStore)
 
-      // If no store is found, handle it appropriately (e.g., set an error or assign a default store)
       if (!updatedStore) {
         setError("Store not found")
         return
@@ -257,9 +247,8 @@ const Inventory: React.FC = () => {
     }
   }
 
-  // Función para manejar el cambio de tienda
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedStore(Number(e.target.value)) // Solo actualizas el estado de selectedStore
+    setSelectedStore(Number(e.target.value))
   }
 
   const handleDelete = async (itemId: number) => {
@@ -273,137 +262,191 @@ const Inventory: React.FC = () => {
     }
   }
 
-  const handleSearch = (searchTerm: string) => {
-    const filtered = inventory.filter((item) => item.products.article.toLowerCase().includes(searchTerm.toLowerCase()))
+  const handleSearch = (searchTerm: string, category?: string) => {
+    let filtered = inventory.filter((item) => item.products.article.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    if (category && category !== "") {
+      filtered = filtered.filter((item) => item.products.categories.name === category)
+    }
+
     setFilteredInventory(filtered)
   }
 
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Inventory Management</h1>
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category)
+    handleSearch("", category)
+  }
 
-      <div className="mb-4">
-        <input type="file" onChange={handleFileChange} className="mb-2" />
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-8">Gestión de Inventario</h1>
+
+      {/* File Upload Section */}
+      <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">Subir archivo</h2>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
+        />
         <button
           onClick={handleUpload}
           disabled={uploading || !file}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
+          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-all disabled:bg-gray-400"
         >
           {uploading ? "Uploading..." : "Upload"}
         </button>
+        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {/* Uploaded Files List */}
+      <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">Archivos cargados:</h2>
+        <ul>
+          {files.map((file, index) => (
+            <li key={index} className="flex justify-between items-center mb-4">
+              <span className="text-gray-700">{file.name}</span>
+              <button
+                onClick={() => handleDownload(file.url, file.name)}
+                className="bg-green-500 text-white px-4 py-1 rounded-lg hover:bg-green-600 transition-all"
+              >
+                Descargar
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <h2 className="text-xl font-semibold mt-8 mb-2">Uploaded Files:</h2>
-      <ul>
-        {files.map((file, index) => (
-          <li key={index} className="mb-2">
-            {file.name}{" "}
-            <button
-              onClick={() => handleDownload(file.url, file.name)}
-              className="bg-green-500 text-white px-2 py-1 rounded text-sm"
-            >
-              Download
-            </button>
-          </li>
-        ))}
-      </ul>
+      {/* Inventory Management */}
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">Inventario</h2>
 
-      <h2 className="text-xl font-semibold mt-8 mb-2">Inventory Management</h2>
+        {/* Search and Filters */}
+        <SearchFilters
+          onSearch={(searchTerm) => handleSearch(searchTerm, selectedCategory)}
+          onCategoryChange={handleCategoryChange}
+          categories={categories ?? []}
+        />
 
-      <SearchFilters onSearch={handleSearch} />
-
-      <table className="table-auto w-full mb-4">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">ID</th>
-            <th className="px-4 py-2">Producto</th>
-            <th className="px-4 py-2">Categoria</th>
-            <th className="px-4 py-2">IMEI</th>
-            <th className="px-4 py-2">Precio del Cliente</th>
-            <th className="px-4 py-2">Precio del Negocio</th>
-            <th className="px-4 py-2">Stock</th>
-            <th className="px-4 py-2">Tienda</th>
-            <th className="px-4 py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
+        {/* Inventory Table */}
+        <table className="table-auto w-full mt-6 bg-white shadow-lg rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 text-gray-700">
             <tr>
-              <td colSpan={9} className="text-center py-4">
-                Loading...
-              </td>
+              <th className="px-4 py-2 text-left">Producto</th>
+              <th className="px-4 py-2 text-left">Categoria</th>
+              <th className="px-4 py-2 text-left">IMEI</th>
+              <th className="px-4 py-2 text-left">Precio del cliente</th>
+              <th className="px-4 py-2 text-left">Precio del vendedor</th>
+              <th className="px-4 py-2 text-left">Stock</th>
+              <th className="px-4 py-2 text-left">Tienda</th>
+              <th className="px-4 py-2 text-left">Acciones</th>
             </tr>
-          ) : (
-            (filteredInventory.length > 0 ? filteredInventory : inventory).map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-2">{item.id}</td>
-                <td className="px-4 py-2">{item.products.article}</td>
-                <td className="px-4 py-2">{item.products.categories.name}</td>
-                <td className="px-4 py-2">{item.imei}</td>
-                <td className="px-4 py-2">{item.products.price}</td>
-                <td className="px-4 py-2">{item.products.busines_price}</td>
-                <td className="px-4 py-2">
-                  {editingItem?.id === item.id ? (
-                    <input
-                      type="number"
-                      value={editingStock}
-                      onChange={(e) => setEditingStock(Number(e.target.value))}
-                      className="border px-2 py-1 w-full"
-                    />
-                  ) : (
-                    item.stock
-                  )}
-                </td>
-                <td className="px-4 py-2">
-                  {item.store.name}
-                  <select value={selectedStore || ""} onChange={handleStoreChange} className="border px-2 py-1">
-                    <option value="">Select Store</option>
-                    {stores.map((store) => (
-                      <option key={store.id} value={store.id}>
-                        {store.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => handleMoveStore(item.store.id, item.stock, item.product_id)}
-                    className="bg-yellow-500 text-white px-2 py-1 rounded ml-2"
-                  >
-                    Move
-                  </button>
-                </td>
-                <td className="px-4 py-2">
-                  {editingItem?.id === item.id ? (
-                    <>
-                      <button onClick={handleEditSubmit} className="bg-green-500 text-white px-2 py-1 rounded mr-2">
-                        Save
-                      </button>
-                      <button onClick={handleEditCancel} className="bg-gray-500 text-white px-2 py-1 rounded">
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleEditClick(item)}
-                        className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
-                      >
-                        Edit
-                      </button>
-                      <button onClick={() => handleDelete(item.id)} className="bg-red-500 text-white px-2 py-1 rounded">
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </td>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={9} className="text-center py-4">Loading...</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              (filteredInventory.length > 0 ? filteredInventory : inventory).map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-2">{item.products.article}</td>
+                  <td className="px-4 py-2">{item.products.categories.name}</td>
+                  <td className="px-4 py-2">{item.imei}</td>
+                  <td className="px-4 py-2">
+                    ${item.products.price != null ? item.products.price.toFixed(2) : "0.00"}
+                  </td>
+                  <td className="px-4 py-2">
+                    ${item.products.busines_price != null ? item.products.busines_price.toFixed(2) : "0.00"}
+                  </td>
+
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="number"
+                        value={editingStock}
+                        onChange={(e) => setEditingStock(Number(e.target.value))}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      item.stock
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span>{item.store.name}</span>
+
+                    {/* Mostrar el select solo si el usuario es admin */}
+                    {userRole === 1 && (
+                      <select
+                        value={selectedStore || ""}
+                        onChange={handleStoreChange}
+                        className="border border-gray-300 rounded-lg px-2 py-1 mt-2 w-full"
+                      >
+                        <option value="">Selecciona una tienda</option>
+                        {stores.map((store) => (
+                          <option key={store.id} value={store.id}>
+                            {store.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {/* Mostrar el botón "Mover" solo si el usuario es admin */}
+                    {userRole === 1 && (
+                      <button
+                        onClick={() => handleMoveStore(item.store.id, item.stock, item.product_id)}
+                        className="bg-green-500 text-white px-2 py-1 rounded-lg mt-2 w-full hover:bg-green-600 transition-all"
+                      >
+                        Mover
+                      </button>
+                    )}
+
+                    {/* Mensaje informativo para usuarios no admins */}
+                    {userRole !== 1 && <span className="text-gray-400 text-sm block mt-2">(Solo lectura)</span>}
+                  </td>
+
+                  <td className="px-4 py-2 flex gap-2">
+                    {editingItem?.id === item.id ? (
+                      <>
+                        <button
+                          onClick={handleEditSubmit}
+                          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all"
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          onClick={handleEditCancel}
+                          className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-all"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEditClick(item)}
+                          className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-all"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"
+                        >
+                          Borrar
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  )
+  );
+
 }
 
 export default Inventory
