@@ -97,7 +97,7 @@ const ClientsList: React.FC<ClientListProps> = ({
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Lista de Clientes</h2>
 
       <div className="py-2">
-        <h2>Total de clientes: {clients.length}</h2>
+        <h2>Total de clientes: {filteredClients.length}</h2>
       </div>
 
       <div className="flex items-center space-x-2 mb-4">

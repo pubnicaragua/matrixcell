@@ -183,7 +183,7 @@ const OperationList: React.FC<OperationListProps> = ({
       <h2 className="text-xl font-semibold mb-4">Lista de Operaciones</h2>
 
       <div className="py-2">
-        <h2>Total de operaciones por cliente: {allOperations.length}</h2>
+        <h2>Total de operaciones por cliente: {filteredOperations.length}</h2>
       </div>
 
       <input
