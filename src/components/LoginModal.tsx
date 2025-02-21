@@ -6,18 +6,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
-import api from "../axiosConfig"
+import { useAuth } from "../context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 interface LoginModalProps {
   isOpen: boolean
   onClose: () => void
   onLoginSuccess: () => void
+  targetRoute: string  // <- Prop obligatoria
 }
 
-export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
+
+export function LoginModal({ isOpen, onClose, onLoginSuccess, targetRoute }: LoginModalProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,14 +34,16 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
     }
 
     try {
-      const response = await api.post("auth/login", {
-        email,
-        password,
-      })
-
-      localStorage.setItem("token", response.data.token)
+      await login(email, password)
+      setEmail("")
+      setPassword("")
       onLoginSuccess()
+
+      // Navegar a la ruta de destino y forzar una recarga
+      navigate(targetRoute, { replace: true })
+      window.location.reload()
     } catch (err: any) {
+      console.error("Login error:", err)
       setError("Usuario o contraseña incorrectos. Por favor verifica tus datos.")
     }
   }
