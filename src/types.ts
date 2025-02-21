@@ -101,3 +101,42 @@ export interface ExportReportProps {
   stores: Store[]
 }
 
+export interface FileInfo {
+  name: string
+  url: string
+  publicURL?: string
+  bucket_id?: string
+  owner?: string
+  id?: string
+  updated_at?: string
+  created_at?: string
+  last_accessed_at?: string
+  metadata?: Record<string, any>
+}
+
+export interface InventoryItem {
+  id: number
+  store_id: number
+  product_id: number
+  stock: number
+  created_at: string
+  imei: string
+  products: {
+    id: number
+    models: {
+      id: number
+      name: string
+    }
+    categories: {
+      id: number
+      name: string
+    }
+    article: string
+    price: number
+    busines_price: number
+  }
+  store: {
+    id: number
+    name: string
+  }
+}
