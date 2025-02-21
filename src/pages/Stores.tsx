@@ -1,5 +1,7 @@
+"use client"
+
 import React, { useEffect, useState } from 'react';
-import api from '../axiosConfig'; // Importa la configuración de Axios
+import api from '../axiosConfig';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 
@@ -22,35 +24,43 @@ const StoreList = () => {
     active: true,
   });
   const [editStore, setEditStore] = useState<Store | null>(null);
+  const [userRole, setUserRole] = useState<number>(0);
 
   useEffect(() => {
-    const fetchStores = async () => {
-      try {
-        const response = await api.get('/stores'); // Usar 'api' en lugar de 'axios'
-        setStores(response.data);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError('Error al obtener las tiendas: ' + err.message);
-        } else {
-          setError('Error desconocido');
-        }
-      }
-    };
-
     fetchStores();
+    getUserRole();
   }, []);
+
+  const getUserRole = () => {
+    const perfil = localStorage.getItem("perfil")
+    if (perfil) {
+      const parsedPerfil = JSON.parse(perfil)
+      setUserRole(parsedPerfil.rol_id || 0)
+    }
+  };
+
+  const fetchStores = async () => {
+    try {
+      const response = await api.get('/stores');
+      setStores(response.data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError('Error al obtener las tiendas: ' + err.message);
+      } else {
+        setError('Error desconocido');
+      }
+    }
+  };
 
   // Filtrar tiendas por nombre
   const filteredStores = stores.filter((store) =>
     store.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Manejar cambio en el campo de búsqueda
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
   };
 
-  // Manejar cambio en el formulario de nueva tienda
   const handleNewInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setNewStore((prevStore) => ({
@@ -59,7 +69,6 @@ const StoreList = () => {
     }));
   };
 
-  // Manejar cambios en el formulario de edición
   const handleEditInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (editStore) {
       const { name, value } = event.target;
@@ -67,11 +76,14 @@ const StoreList = () => {
     }
   };
 
-  // Agregar una nueva tienda
   const handleAddStore = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (userRole !== 1) {
+      alert("No tienes permisos para agregar tiendas.");
+      return;
+    }
     try {
-      const response = await api.post('/stores', newStore); // Usar 'api' en lugar de 'axios'
+      const response = await api.post('/stores', newStore);
       setStores((prevStores) => [...prevStores, response.data]);
       setNewStore({ name: '', address: '', phone: '', active: true });
     } catch (err: unknown) {
@@ -79,16 +91,23 @@ const StoreList = () => {
     }
   };
 
-  // Editar tienda
   const handleEditStore = (store: Store) => {
+    if (userRole !== 1) {
+      alert("No tienes permisos para editar tiendas.");
+      return;
+    }
     setEditStore(store);
   };
 
   const handleUpdateStore = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (userRole !== 1) {
+      alert("No tienes permisos para actualizar tiendas.");
+      return;
+    }
     if (editStore) {
       try {
-        await api.put(`/stores/${editStore.id}`, editStore); // Usar 'api' en lugar de 'axios'
+        await api.put(`/stores/${editStore.id}`, editStore);
         setStores((prevStores) =>
           prevStores.map((store) =>
             store.id === editStore.id ? editStore : store
@@ -101,13 +120,16 @@ const StoreList = () => {
     }
   };
 
-  // Actualizar estado activo/inactivo
   const handleToggleActive = async (id: number) => {
+    if (userRole !== 1) {
+      alert("No tienes permisos para cambiar el estado de las tiendas.");
+      return;
+    }
     const store = stores.find((s) => s.id === id);
     if (store) {
       try {
         const updatedStore = { ...store, active: !store.active };
-        await api.put(`/stores/${id}`, updatedStore); // Usar 'api' en lugar de 'axios'
+        await api.put(`/stores/${id}`, updatedStore);
         setStores((prevStores) =>
           prevStores.map((s) => (s.id === id ? updatedStore : s))
         );
@@ -117,11 +139,14 @@ const StoreList = () => {
     }
   };
 
-  // Eliminar tienda
   const handleDeleteStore = async (id: number) => {
+    if (userRole !== 1) {
+      alert("No tienes permisos para eliminar tiendas.");
+      return;
+    }
     if (window.confirm('¿Estás seguro de eliminar esta tienda?')) {
       try {
-        await api.delete(`/stores/${id}`); // Usar 'api' en lugar de 'axios'
+        await api.delete(`/stores/${id}`);
         setStores((prevStores) => prevStores.filter((store) => store.id !== id));
       } catch (err: unknown) {
         setError('Error al eliminar la tienda: ' + (err instanceof Error ? err.message : 'Desconocido'));
@@ -145,38 +170,40 @@ const StoreList = () => {
         />
       </div>
 
-      <form onSubmit={handleAddStore} className="mb-4 border p-4 rounded">
-        <h2 className="text-2xl mb-2">Agregar Nueva Tienda</h2>
-        <input
-          type="text"
-          name="name"
-          value={newStore.name}
-          onChange={handleNewInputChange}
-          className="border p-2 rounded w-full mb-2"
-          placeholder="Nombre de la tienda"
-        />
-        <input
-          type="text"
-          name="address"
-          value={newStore.address}
-          onChange={handleNewInputChange}
-          className="border p-2 rounded w-full mb-2"
-          placeholder="Dirección"
-        />
-        <input
-          type="text"
-          name="phone"
-          value={newStore.phone}
-          onChange={handleNewInputChange}
-          className="border p-2 rounded w-full mb-2"
-          placeholder="Teléfono"
-        />
-        <button type="submit" className="bg-teal-500 text-white p-2 rounded">
-          Agregar Tienda
-        </button>
-      </form>
+      {userRole === 1 && (
+        <form onSubmit={handleAddStore} className="mb-4 border p-4 rounded">
+          <h2 className="text-2xl mb-2">Agregar Nueva Tienda</h2>
+          <input
+            type="text"
+            name="name"
+            value={newStore.name}
+            onChange={handleNewInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Nombre de la tienda"
+          />
+          <input
+            type="text"
+            name="address"
+            value={newStore.address}
+            onChange={handleNewInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Dirección"
+          />
+          <input
+            type="text"
+            name="phone"
+            value={newStore.phone}
+            onChange={handleNewInputChange}
+            className="border p-2 rounded w-full mb-2"
+            placeholder="Teléfono"
+          />
+          <button type="submit" className="bg-teal-500 text-white p-2 rounded">
+            Agregar Tienda
+          </button>
+        </form>
+      )}
 
-      {editStore && (
+      {editStore && userRole === 1 && (
         <form onSubmit={handleUpdateStore} className="mb-4 border p-4 rounded">
           <h2 className="text-2xl mb-2">Editar Tienda</h2>
           <input
@@ -226,29 +253,37 @@ const StoreList = () => {
               Dirección: {store.address}<br />
               Teléfono: {store.phone}<br />
               Estado: {store.active ? 'Activo' : 'Inactivo'}
-              <div className="mt-2 flex space-x-2">
-                <button
-                  onClick={() => handleEditStore(store)}
-                  className="bg-blue-500 text-white p-2 rounded"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleToggleActive(store.id)}
-                  className="bg-yellow-500 text-white p-2 rounded"
-                >
-                  {store.active ? 'Desactivar' : 'Activar'}
-                </button>
-                <button
-                  onClick={() => handleDeleteStore(store.id)}
-                  className="bg-red-500 text-white p-2 rounded"
-                >
-                  Eliminar
-                </button>
-              </div>
+              {userRole === 1 && (
+                <div className="mt-2 flex space-x-2">
+                  <button
+                    onClick={() => handleEditStore(store)}
+                    className="bg-blue-500 text-white p-2 rounded"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleToggleActive(store.id)}
+                    className="bg-yellow-500 text-white p-2 rounded"
+                  >
+                    {store.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteStore(store.id)}
+                    className="bg-red-500 text-white p-2 rounded"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
+      )}
+
+      {userRole !== 1 && (
+        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          <p>Necesitas permisos de administrador para gestionar tiendas.</p>
+        </div>
       )}
     </div>
   );
