@@ -6,7 +6,6 @@ import supabase from "../api/supabase"
 import api from "../axiosConfig"
 import SearchFilters from "../components/inventory/SearchFilters"
 import type { InventoryItem } from "../types"
-import { useNotification } from "../context/NotificationContext"
 
 interface FileInfo {
   name: string
@@ -34,8 +33,6 @@ const Inventory: React.FC = () => {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
-
-  const { addNotification } = useNotification()
 
   useEffect(() => {
     const perfil = localStorage.getItem("perfil")
@@ -454,4 +451,3 @@ const Inventory: React.FC = () => {
 }
 
 export default Inventory
-
