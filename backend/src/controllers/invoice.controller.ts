@@ -8,7 +8,7 @@ export const InvoiceController = {
     async getAllInvoices(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const invoices = await BaseService.getAll<Invoice>(tableName,['id', 'number', 'amount','status','client_name', 'operation_id', 'created_at'],where);
+            const invoices = await BaseService.getAll<Invoice>(tableName, ['id', 'number', 'amount', 'status', 'client_name', 'operation_id', 'store_id', 'created_at'], where);
             res.json(InvoiceResource.formatInvoices(invoices));
         } catch (error: any) {
             res.status(500).json({ message: error.message });

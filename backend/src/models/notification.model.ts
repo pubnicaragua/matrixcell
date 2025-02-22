@@ -5,11 +5,13 @@ export class Notification {
     user_id?: number | null;
     invoice_id?: number | null;
     status: string | null;
+    store_id?: number | null;
     constructor() {
         this.created_at = null;
         this.message = null;
         this.user_id = null;
         this.invoice_id = null;
         this.status = null;
+        this.store_id = null;
     }
   }

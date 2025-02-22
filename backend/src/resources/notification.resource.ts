@@ -8,7 +8,8 @@ export const NotificationResource = {
             message: notification.message,
             user_id: notification.user_id,
             invoice_id: notification.invoice_id,
-            status: notification.status
+            status: notification.status,
+            store_id: notification.store_id
         };
     },
 

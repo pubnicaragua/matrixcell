@@ -6,6 +6,7 @@ export class Invoice{
     status: string | null;
     created_at: Date|null;
     operation_id: number | null;
+    store_id: number | null;
     constructor(){
         this.amount = null;
         this.number = null;
@@ -13,5 +14,6 @@ export class Invoice{
         this.client_name = null;
         this.created_at = null;
         this.operation_id = null;
+        this.store_id = null;
     }
 }
