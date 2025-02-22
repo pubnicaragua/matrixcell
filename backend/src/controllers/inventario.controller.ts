@@ -169,7 +169,7 @@ export const InventoryController = {
                     .eq('store_id', destino_store);
 
                 if (updateDestError) {
-                    throw new Error('Error al actualizar stock de destino: ' + updateDestError.message);
+                    throw new Error('Error al actualizar stock de destino: '+updateDestError.message);
                 }
             } else {
                 const { error: insertDestError } = await supabase
@@ -182,7 +182,7 @@ export const InventoryController = {
                     });
 
                 if (insertDestError) {
-                    throw new Error('Error al insertar stock en destino: ' + insertDestError.message);
+                    throw new Error('Error al insertar stock en destino: '+insertDestError.message);
                 }
             }
 
@@ -213,10 +213,9 @@ export const InventoryController = {
         const imei_product = imei === undefined ? null : imei;
         try {
             // Verificar que la cantidad a editar sea válida
-            if (cantidad < 0) { // Solo restringimos valores negativos
-                throw new Error('La cantidad no puede ser negativa');
+            if (cantidad <= 0) {
+                throw new Error('La cantidad debe ser mayor a cero');
             }
-
 
             // Verificar si el producto existe en el inventario de la tienda
             const { data: currentStock, error: stockError } = await supabase
@@ -227,11 +226,11 @@ export const InventoryController = {
                 .single();
 
             if (stockError) {
-                throw new Error('Error al verificar el stock: ' + stockError.message);
+                throw new Error( 'Error al verificar el stock: '+ stockError.message);
             }
 
             if (!currentStock) {
-                throw new Error('Producto no encontrado en la tienda');
+                throw new Error( 'Producto no encontrado en la tienda');
             }
 
             // Actualizar el stock en la tienda
@@ -246,7 +245,7 @@ export const InventoryController = {
                 .eq('store_id', store_id);
 
             if (updateError) {
-                throw new Error('Error al actualizar el stock: ' + updateError.message);
+                throw new Error( 'Error al actualizar el stock: '+updateError.message);
             }
             // Responder con éxito
             res.status(200).json({ message: 'Stock editado correctamente' });

@@ -5,18 +5,13 @@ import { useState, useEffect } from "react"
 import supabase from "../api/supabase"
 import api from "../axiosConfig"
 import SearchFilters from "../components/inventory/SearchFilters"
-import InventoryTable from "../components/inventory/InventoryTable"
-import FileUploader from "../components/inventory/FileUploader"
-import { Button } from "../components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card"
-import { Alert, AlertDescription } from "../components/ui/alert"
-import { InventoryItem } from "../types"
+import type { InventoryItem } from "../types"
+import { useNotification } from "../context/NotificationContext"
 
 interface FileInfo {
   name: string
   url: string
 }
-
 
 interface Store {
   id: number
@@ -40,17 +35,24 @@ const Inventory: React.FC = () => {
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
 
+  const { addNotification } = useNotification()
+
   useEffect(() => {
     const perfil = localStorage.getItem("perfil")
     if (perfil) {
       const parsedPerfil = JSON.parse(perfil)
       setUserRole(parsedPerfil.rol_id || 0)
       setUserStore(parsedPerfil.store_id || null)
+      // Set the initial selected store for non-admin users
+      if (parsedPerfil.rol_id !== 1 && parsedPerfil.store_id) {
+        setSelectedStore(parsedPerfil.store_id)
+      }
     }
   }, [])
 
+  // Modificar el useEffect para que fetchInventory se ejecute cuando cambie userStore
   useEffect(() => {
-    if (userRole !== 0) {
+    if (userRole !== 0 && userStore !== null) {
       fetchFiles()
       fetchInventory()
 
@@ -58,7 +60,7 @@ const Inventory: React.FC = () => {
         fetchStores()
       }
     }
-  }, [userRole])
+  }, [userRole, userStore]) // Agregar userStore como dependencia
 
   const fetchFiles = async () => {
     try {
@@ -86,18 +88,23 @@ const Inventory: React.FC = () => {
     }
   }
 
+  // Modificar el fetchInventory para filtrar por tienda del usuario
   const fetchInventory = async () => {
     try {
       setLoading(true)
       const response = await api.get("/inventories")
 
-      setInventory(response.data)
+      // Filtrar el inventario basado en el rol y la tienda del usuario
+      const filteredData =
+        userRole === 1 ? response.data : response.data.filter((item: InventoryItem) => item.store_id === userStore)
+
+      setInventory(filteredData)
 
       const uniqueCategories = Array.from(
-        new Set(response.data.map((item: InventoryItem) => item.products.categories.name)),
+        new Set(filteredData.map((item: InventoryItem) => item.products.categories.name)),
       ).map((name) => ({
         id:
-          response.data.find((item: InventoryItem) => item.products.categories.name === name)?.products.categories.id ??
+          filteredData.find((item: InventoryItem) => item.products.categories.name === name)?.products.categories.id ??
           0,
         name: String(name),
       }))
@@ -248,7 +255,10 @@ const Inventory: React.FC = () => {
   }
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedStore(Number(e.target.value))
+    // Only allow store changes for admin users
+    if (userRole === 1) {
+      setSelectedStore(Number(e.target.value))
+    }
   }
 
   const handleDelete = async (itemId: number) => {
@@ -284,11 +294,7 @@ const Inventory: React.FC = () => {
       {/* File Upload Section */}
       <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
         <h2 className="text-xl font-semibold text-gray-700 mb-4">Subir archivo</h2>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          className="border border-gray-300 rounded-lg p-2 mb-4 w-full"
-        />
+        <input type="file" onChange={handleFileChange} className="border border-gray-300 rounded-lg p-2 mb-4 w-full" />
         <button
           onClick={handleUpload}
           disabled={uploading || !file}
@@ -345,7 +351,9 @@ const Inventory: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-4">Loading...</td>
+                <td colSpan={9} className="text-center py-4">
+                  Loading...
+                </td>
               </tr>
             ) : (
               (filteredInventory.length > 0 ? filteredInventory : inventory).map((item) => (
@@ -376,33 +384,30 @@ const Inventory: React.FC = () => {
                     <span>{item.store.name}</span>
 
                     {/* Mostrar el select solo si el usuario es admin */}
-                    {userRole === 1 && (
-                      <select
-                        value={selectedStore || ""}
-                        onChange={handleStoreChange}
-                        className="border border-gray-300 rounded-lg px-2 py-1 mt-2 w-full"
-                      >
-                        <option value="">Selecciona una tienda</option>
-                        {stores.map((store) => (
-                          <option key={store.id} value={store.id}>
-                            {store.name}
-                          </option>
-                        ))}
-                      </select>
+                    {userRole === 1 ? (
+                      <>
+                        <select
+                          value={selectedStore || ""}
+                          onChange={handleStoreChange}
+                          className="border border-gray-300 rounded-lg px-2 py-1 mt-2 w-full"
+                        >
+                          <option value="">Selecciona una tienda</option>
+                          {stores.map((store) => (
+                            <option key={store.id} value={store.id}>
+                              {store.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleMoveStore(item.store.id, item.stock, item.product_id)}
+                          className="bg-green-500 text-white px-2 py-1 rounded-lg mt-2 w-full hover:bg-green-600 transition-all"
+                        >
+                          Mover
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-sm block mt-2">Tienda asignada: {item.store.name}</span>
                     )}
-
-                    {/* Mostrar el botón "Mover" solo si el usuario es admin */}
-                    {userRole === 1 && (
-                      <button
-                        onClick={() => handleMoveStore(item.store.id, item.stock, item.product_id)}
-                        className="bg-green-500 text-white px-2 py-1 rounded-lg mt-2 w-full hover:bg-green-600 transition-all"
-                      >
-                        Mover
-                      </button>
-                    )}
-
-                    {/* Mensaje informativo para usuarios no admins */}
-                    {userRole !== 1 && <span className="text-gray-400 text-sm block mt-2">(Solo lectura)</span>}
                   </td>
 
                   <td className="px-4 py-2 flex gap-2">
@@ -445,8 +450,7 @@ const Inventory: React.FC = () => {
         </table>
       </div>
     </div>
-  );
-
+  )
 }
 
 export default Inventory
