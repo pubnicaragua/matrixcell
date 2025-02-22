@@ -27,18 +27,17 @@ const OperationList: React.FC<OperationListProps> = ({
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const [activeClients, setActiveClients] = useState<Client[]>([])
-  const [userRole, setUserRole] = useState<number>(0);
-  const [userStore, setUserStore] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<number>(0)
+  const [userStore, setUserStore] = useState<number | null>(null)
 
   useEffect(() => {
-    const perfil = localStorage.getItem("perfil");
+    const perfil = localStorage.getItem("perfil")
     if (perfil) {
-      const parsedPerfil = JSON.parse(perfil);
-      setUserRole(parsedPerfil.rol_id || 0);
-      setUserStore(parsedPerfil.store_id || null);
+      const parsedPerfil = JSON.parse(perfil)
+      setUserRole(parsedPerfil.rol_id || 0)
+      setUserStore(parsedPerfil.store_id || null)
     }
-  }, []);
-
+  }, [])
 
   useEffect(() => {
     const nonDeletedClients = clients.filter((client) => !client.deleted)
@@ -63,23 +62,23 @@ const OperationList: React.FC<OperationListProps> = ({
   }
 
   const filteredOperations = useMemo(() => {
-    return operations.filter(operation => {
-      const client = clients.find(c => c.id === operation.client_id);
-      if (!client) return false; // Excluir operaciones de clientes eliminados
-  
-      // ✅ Si el usuario es admin, ve todas las operaciones
-      if (userRole === 1) return true;
-  
-      // ✅ Si el usuario NO es admin, solo ve operaciones de clientes de su tienda
-      return client.store_id === userStore;
-    })
-    .filter(operation => {
-      const operationNumber = operation.operation_number?.toLowerCase() || "";
-      const clientName = clients.find(c => c.id === operation.client_id)?.name?.toLowerCase() || "";
-      return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase());
-    });
-  }, [operations, clients, userRole, userStore, searchTerm]);
-  
+    return operations
+      .filter((operation) => {
+        const client = clients.find((c) => c.id === operation.client_id)
+        if (!client) return false // Excluir operaciones de clientes eliminados
+
+        // ✅ Si el usuario es admin, ve todas las operaciones
+        if (userRole === 1) return true
+
+        // ✅ Si el usuario NO es admin, solo ve operaciones de clientes de su tienda
+        return client.store_id === userStore
+      })
+      .filter((operation) => {
+        const operationNumber = operation.operation_number?.toLowerCase() || ""
+        const clientName = clients.find((c) => c.id === operation.client_id)?.name?.toLowerCase() || ""
+        return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase())
+      })
+  }, [operations, clients, userRole, userStore, searchTerm])
 
   const createInvoice = async (operation: Operation) => {
     try {
@@ -93,6 +92,7 @@ const OperationList: React.FC<OperationListProps> = ({
         amount: operation.amount_due,
         client_name: client.name,
         operation_id: operation.id,
+        store_id: userStore, // Agregar el store_id del usuario autenticado
       }
 
       await axios.post("/invoices", invoiceData)
