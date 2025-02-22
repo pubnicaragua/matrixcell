@@ -1,31 +1,23 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import api from '../axiosConfig'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-import { PendingInvoicesChart } from '../components/dashboard/pending-invoices-chart'
-import { InvoiceStatusChart } from '../components/dashboard/invoice-status-chart'
-import { DelinquencyChart } from '../components/dashboard/delinquency-chart'
-import { BlockedDevices } from '../components/dashboard/blocked-devices'
-import { ActivityTable } from '../components/dashboard/activity-table'
-import { QuickActions } from '../components/dashboard/quick-actions'
+import { useState, useEffect } from "react"
+import api from "../axiosConfig"
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from "chart.js"
+import { PendingInvoicesChart } from "../components/dashboard/pending-invoices-chart"
+import { InvoiceStatusChart } from "../components/dashboard/invoice-status-chart"
+import { DelinquencyChart } from "../components/dashboard/delinquency-chart"
+import { BlockedDevices } from "../components/dashboard/blocked-devices"
+import { ActivityTable } from "../components/dashboard/activity-table"
+import { QuickActions } from "../components/dashboard/quick-actions"
 import { Card, CardContent } from "../components/ui/card"
 import { Skeleton } from "../components/ui/skeleton"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
-interface Invoice {
-  status: string
-  created_at: string
+interface Operation {
+  amount_due: number
+  due_date: string
+  days_overdue: number
 }
 
 interface Device {
@@ -43,29 +35,26 @@ const Dashboard = () => {
   const [devices, setDevices] = useState<Device[]>([])
 
   const activities = [
-    { id: 1, action: 'Bloqueo', device: 'Dispositivo 1', date: '2024-12-20' },
-    { id: 2, action: 'Pago', device: 'Cliente 2', date: '2024-12-22' },
-    { id: 3, action: 'Desbloqueo', device: 'Dispositivo 3', date: '2024-12-23' },
-    { id: 4, action: 'Cambio de pantalla', device: 'Dispositivo 4', date: '2024-12-24' },
-    { id: 5, action: 'Mantenimiento', device: 'Dispositivo 5', date: '2024-12-25' },
+    { id: 1, action: "Bloqueo", device: "Dispositivo 1", date: "2024-12-20" },
+    { id: 2, action: "Pago", device: "Cliente 2", date: "2024-12-22" },
+    { id: 3, action: "Desbloqueo", device: "Dispositivo 3", date: "2024-12-23" },
+    { id: 4, action: "Cambio de pantalla", device: "Dispositivo 4", date: "2024-12-24" },
+    { id: 5, action: "Mantenimiento", device: "Dispositivo 5", date: "2024-12-25" },
   ]
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [invoicesResponse, devicesResponse] = await Promise.all([
-          api.get('/invoices'),
-          api.get('/devices'),
-        ])
-        
-        const invoices: Invoice[] = invoicesResponse.data
+        const [operationsResponse, devicesResponse] = await Promise.all([api.get("/operations"), api.get("/devices")])
+
+        const operations: Operation[] = operationsResponse.data
         const devices: Device[] = devicesResponse.data
         setDevices(devices)
 
         // Process data for charts
-        processChartData(invoices)
+        processChartData(operations)
       } catch (err: any) {
-        setError(err.message || 'Error fetching data')
+        setError(err.message || "Error fetching data")
       } finally {
         setLoading(false)
       }
@@ -74,64 +63,76 @@ const Dashboard = () => {
     fetchData()
   }, [])
 
-  const processChartData = (invoices: Invoice[]) => {
-    // Pending invoices by month
-    const pendingInvoices = invoices.filter(invoice => invoice.status === 'Pendiente')
-    const invoicesByMonth = Array(12).fill(0)
-    pendingInvoices.forEach(invoice => {
-      const month = new Date(invoice.created_at).getMonth()
-      invoicesByMonth[month]++
+  const processChartData = (operations: Operation[]) => {
+    // Pending operations by month (using amount_due and due_date)
+    const pendingOperations = operations.filter((operation) => operation.amount_due > 0)
+    const operationsByMonth = Array(12).fill(0)
+
+    pendingOperations.forEach((operation) => {
+      const month = new Date(operation.due_date).getMonth()
+      operationsByMonth[month] += operation.amount_due
     })
 
     setBarChartData({
       labels: [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
       ],
-      datasets: [{
-        label: 'Facturas Pendientes',
-        data: invoicesByMonth,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      }],
+      datasets: [
+        {
+          label: "Monto por Vencer ($)",
+          data: operationsByMonth,
+          backgroundColor: "rgba(75, 192, 192, 0.6)",
+          borderColor: "rgba(75, 192, 192, 1)",
+          borderWidth: 1,
+        },
+      ],
     })
 
-    // Invoice status
-    const paidCount = invoices.filter(invoice => invoice.status === 'Pagada').length
-    const pendingCount = invoices.filter(invoice => invoice.status === 'Pendiente').length
+    // Operation status (using amount_due)
+    const paidCount = operations.filter((operation) => operation.amount_due === 0).length
+    const pendingCount = operations.filter((operation) => operation.amount_due > 0).length
 
     setPieChartData({
-      labels: ['Pagadas', 'Pendientes'],
-      datasets: [{
-        data: [paidCount, pendingCount],
-        backgroundColor: ['#4caf50', '#f44336'],
-        hoverBackgroundColor: ['#45a049', '#e53935'],
-      }],
+      labels: ["Pagadas", "Pendientes"],
+      datasets: [
+        {
+          data: [paidCount, pendingCount],
+          backgroundColor: ["#4caf50", "#f44336"],
+          hoverBackgroundColor: ["#45a049", "#e53935"],
+        },
+      ],
     })
 
-    // Delinquency
-    const currentDate = new Date()
-    const morosityBuckets = [0, 0, 0, 0]
+    // Delinquency (using days_overdue in ranges of 100 days)
+    const morosityBuckets = Array(6).fill(0) // 0-100, 101-200, 201-300, 301-400, 401-500, >500
 
-    pendingInvoices.forEach(invoice => {
-      const diffInDays = Math.floor(
-        (currentDate.getTime() - new Date(invoice.created_at).getTime()) / (1000 * 60 * 60 * 24)
-      )
+    operations.forEach((operation) => {
+      if (operation.days_overdue <= 0) return // Skip if not overdue
 
-      if (diffInDays <= 30) morosityBuckets[0]++
-      else if (diffInDays <= 60) morosityBuckets[1]++
-      else if (diffInDays <= 90) morosityBuckets[2]++
-      else morosityBuckets[3]++
+      const bucket = Math.min(Math.floor(operation.days_overdue / 100), 5)
+      morosityBuckets[bucket]++
     })
 
     setMorosityChartData({
-      labels: ['0-30 días', '31-60 días', '61-90 días', '>90 días'],
-      datasets: [{
-        label: 'Morosidad de Facturas',
-        data: morosityBuckets,
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-      }],
+      labels: ["0-100 días", "101-200 días", "201-300 días", "301-400 días", "401-500 días", ">500 días"],
+      datasets: [
+        {
+          label: "Operaciones por Días de Retraso",
+          data: morosityBuckets,
+          backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
+        },
+      ],
     })
   }
 
@@ -163,7 +164,9 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-bold text-center">Dashboard</h1>
-      <p className="text-center text-blue-600"><a href="/apk">Descarga nuestra app</a></p>
+      <p className="text-center text-blue-600">
+        <a href="/apk">Descarga nuestra app</a>
+      </p>
 
       {/* QR Code with proper sizing and aspect ratio */}
       <Card className="w-full max-w-xs mx-auto">
@@ -196,3 +199,4 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+
