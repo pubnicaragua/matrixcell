@@ -62,4 +62,6 @@ router.get('/', sessionAuth, ProductController.getAllProducts);
  */
 router.post('/masive-insert', upload.single('file'), sessionAuth, ProductController.masiveProductInventory);
 
+router.get("/models", ProductController.getModels);
+
 export default router;
