@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 interface User {
   id: string
   name: string
-  email: string
+  user?: {
+    email: string
+  }
   perfil?: {
     name: string
     roles: {
@@ -120,7 +122,7 @@ const Users = () => {
     setFormData({
       id: user.id,
       name: user.perfil?.name || "",
-      email: user.email,
+      email: user.user?.email || "",
       rol_id: user.perfil?.rol_id?.toString() || "",
       store_id: user.perfil?.store_id?.toString() || "",
       password: "",
@@ -250,7 +252,7 @@ const Users = () => {
             {users.map((user) => (
               <tr key={user.id} className="border-b">
                 <td className="px-6 py-4">{user.perfil?.name || "Sin nombre"}</td>
-                <td className="px-6 py-4">{user.email}</td>
+                <td className="px-6 py-4">{user.user?.email}</td>
                 <td className="px-6 py-4">{user.perfil?.roles?.name || "Sin rol"}</td>
                 <td className="px-6 py-4">{user.perfil?.store?.name || "Sin tienda"}</td>
                 <td className="px-6 py-4">
