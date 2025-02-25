@@ -17,6 +17,47 @@ export const InventoryController = {
             res.status(500).send('Error al obtener inventarios');
         }
     },
+    async createInventoryWithProduct(req: Request, res: Response): Promise<void> {
+        try {
+            const { article, price, model_id, category_id, stock, store_id } = req.body;
+
+            // if (!article || !price || !model_id || !category_id || !stock || !store_id) {
+            //     const response = res.status(400).json({ message: "Todos los campos son obligatorios." });
+            //     console.log(response);
+            // }
+
+            // 1️⃣ Insertar el producto en la tabla `products`
+            const { data: product, error: productError } = await supabase
+                .from("products")
+                .insert([{ article, price, model_id, category_id }])
+                .select()
+                .single();
+
+            if (productError) {
+                throw productError;
+            }
+
+            // 2️⃣ Insertar en la tabla `inventory` con el `product_id` recién creado
+            const { data: inventory, error: inventoryError } = await supabase
+                .from("inventory")
+                .insert([{ product_id: product.id, stock, store_id }])
+                .select()
+                .single();
+
+            if (inventoryError) {
+                throw inventoryError;
+            }
+
+            res.status(201).json({
+                message: "Producto e inventario creados exitosamente.",
+                product,
+                inventory
+            });
+        } catch (error: any) {
+            console.error("Error al crear producto e inventario:", error);
+            res.status(400).json({ message: error.message || "Error en la operación." });
+        }
+    },
     async inventoryMoved(req: Request, res: Response) {
         try {
             // Datos recibidos desde el frontend
@@ -169,7 +210,7 @@ export const InventoryController = {
                     .eq('store_id', destino_store);
 
                 if (updateDestError) {
-                    throw new Error('Error al actualizar stock de destino: '+updateDestError.message);
+                    throw new Error('Error al actualizar stock de destino: ' + updateDestError.message);
                 }
             } else {
                 const { error: insertDestError } = await supabase
@@ -182,7 +223,7 @@ export const InventoryController = {
                     });
 
                 if (insertDestError) {
-                    throw new Error('Error al insertar stock en destino: '+insertDestError.message);
+                    throw new Error('Error al insertar stock en destino: ' + insertDestError.message);
                 }
             }
 
@@ -226,11 +267,11 @@ export const InventoryController = {
                 .single();
 
             if (stockError) {
-                throw new Error( 'Error al verificar el stock: '+ stockError.message);
+                throw new Error('Error al verificar el stock: ' + stockError.message);
             }
 
             if (!currentStock) {
-                throw new Error( 'Producto no encontrado en la tienda');
+                throw new Error('Producto no encontrado en la tienda');
             }
 
             // Actualizar el stock en la tienda
@@ -245,7 +286,7 @@ export const InventoryController = {
                 .eq('store_id', store_id);
 
             if (updateError) {
-                throw new Error( 'Error al actualizar el stock: '+updateError.message);
+                throw new Error('Error al actualizar el stock: ' + updateError.message);
             }
             // Responder con éxito
             res.status(200).json({ message: 'Stock editado correctamente' });

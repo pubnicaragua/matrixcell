@@ -6,6 +6,7 @@ import supabase from "../api/supabase"
 import api from "../axiosConfig"
 import SearchFilters from "../components/inventory/SearchFilters"
 import type { InventoryItem } from "../types"
+import AddProductModal from "../components/inventory/add-product-modal";
 
 interface FileInfo {
   name: string
@@ -329,6 +330,13 @@ const Inventory: React.FC = () => {
           onSearch={(searchTerm) => handleSearch(searchTerm, selectedCategory)}
           onCategoryChange={handleCategoryChange}
           categories={categories ?? []}
+        />
+
+        <AddProductModal
+          userRole={userRole}
+          userStore={userStore}
+          stores={stores}
+          onProductAdded={fetchInventory} // Para actualizar el inventario después de agregar un producto
         />
 
         {/* Inventory Table */}
