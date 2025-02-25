@@ -111,6 +111,7 @@ export const UsuarioController = {
 
             const profileUpdate = {
                 name: updatedData.name,
+                email: updatedData.email,
                 rol_id: Number.parseInt(updatedData.rol_id),
                 store_id: Number.parseInt(updatedData.store_id),
             }
