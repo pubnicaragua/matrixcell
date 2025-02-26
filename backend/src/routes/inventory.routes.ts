@@ -14,4 +14,7 @@ router.delete('/:id', sessionAuth, InventoryController.deleteInventory);
 
 router.post('/', sessionAuth, InventoryController.createInventoryWithProduct);
 
+router.put('/:id', sessionAuth, InventoryController.updateInventory);
+
+
 export default router;
