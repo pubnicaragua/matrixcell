@@ -127,13 +127,18 @@ const TechnicalServices: React.FC = () => {
       // Calcular el nuevo stock restante
       const updatedStock = selectedProduct.stock - quantity;
 
-      // Actualizar el stock en la tabla `inventories`
-      await api.put(`/inventories/${selectedProduct.id}`, {
-        product_id: selectedProduct.products.id, // ID del producto
-        cantidad: updatedStock, // Cantidad restante
-        store_id: selectedStore,
-        imei: imei, // IMEI del producto
-      });
+      try {
+        const response = await api.put(`/inventories/${selectedProduct.product_id}`, {
+          product_id: selectedProduct.products.id,
+          stock: updatedStock,
+          store_id: selectedStore,
+          imei: imei,
+        });
+        console.log("Respuesta del servidor:", response.data);
+      } catch (error: any) {
+        console.error("Error actualizando inventario:", error.response?.data || error.message);
+      }
+
 
       alert("Servicio guardado exitosamente.");
 
@@ -234,23 +239,22 @@ const TechnicalServices: React.FC = () => {
           </select>
         </div>
 
-        {formData.serviceType === "reparación" && (
-          <div>
-            <label htmlFor="service_price">Precio del Servicio</label>
-            <input
-              id="service_price"
-              type="number"
-              step="0.01"
-              className="block w-full p-3 rounded-lg border border-gray-300"
-              value={formData.service_price}
-              onChange={(e) =>
-                setFormData({ ...formData, service_price: parseFloat(e.target.value) })
-              }
-              min="0"
-              required
-            />
-          </div>
-        )}
+        <div>
+          <label htmlFor="service_price">Precio del Servicio</label>
+          <input
+            id="service_price"
+            type="number"
+            step="0.01"
+            className="block w-full p-3 rounded-lg border border-gray-300"
+            value={formData.service_price}
+            onChange={(e) =>
+              setFormData({ ...formData, service_price: parseFloat(e.target.value) })
+            }
+            min="0"
+            required
+          />
+        </div>
+
 
         <div>
           <label htmlFor="description">Descripción</label>
@@ -340,7 +344,7 @@ const TechnicalServices: React.FC = () => {
               />
             </div>
             <p>
-              <strong>Costo total:</strong> ${totalCost.toFixed(2)}
+              <strong>Costo total:</strong> ${formData.service_price + selectedProduct.products.price}
             </p>
           </div>
         )}
