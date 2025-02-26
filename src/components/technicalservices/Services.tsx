@@ -49,6 +49,7 @@ const TechnicalServices: React.FC = () => {
     }
   }, [formData.service_price, formData.quantity, selectedProduct, formData.serviceType]);
 
+  //ACTUALIZADO
   useEffect(() => {
     const fetchStores = async () => {
       try {
