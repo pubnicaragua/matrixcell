@@ -212,7 +212,7 @@ const OperationForm: React.FC<
           // Crear registro de pago inicial con el valor total de la operación
           const paymentData = {
             amount_paid: amountDue,
-            amount: operationValue,
+            amount: amountDue,
             receipt_number: operationNumber,
             client_id: Number(clientId),
             operation_id: response.data.id,
