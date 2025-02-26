@@ -9,6 +9,8 @@ const paymentSchema = Joi.object({
     amount_paid: Joi.number().required(),
     payment_method: Joi.string().required(),
     receipt_number: Joi.string().required(),
+    //contract_id: Joi.number().required(),
+    amount: Joi.number().required(),
 });
 
 export const validatePayment = (payment: Payment) => {

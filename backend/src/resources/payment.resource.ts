@@ -8,6 +8,10 @@ export const PaymentResource = {
             payment_date: payment.payment_date,
             amount: payment.amount,
             created_at: payment.created_at,
+            operation_id: payment.operation_id,
+            client_id: payment.client_id,
+            amount_paid: payment.amount_paid,
+            receipt_number: payment.receipt_number,
         };
     },
 

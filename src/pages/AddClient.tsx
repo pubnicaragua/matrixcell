@@ -10,10 +10,11 @@ import ClientsList from "../components/addclient/ClientList"
 import OperationsList from "../components/addclient/OperationList"
 import SendInvoiceForm from "../components/SendInvoiceForm"
 import ExportReport from "../components/addclient/ExportReport"
+import PaymentHistoryByStore from "../components/addclient/PaymentHistoryByStore"
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([])
-  const [stores, setStores] = useState<{ id: number; name: string }[]>([]);
+  const [stores, setStores] = useState<{ id: number; name: string }[]>([])
   const [operations, setOperations] = useState<Operation[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null)
@@ -48,7 +49,11 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
   const fetchClientsAndOperations = async () => {
     try {
       setLoading(true)
-      const [clientsResponse, operationsResponse, storesResponse] = await Promise.all([api.get("/clients"), api.get("/operations"), api.get("/stores")])
+      const [clientsResponse, operationsResponse, storesResponse] = await Promise.all([
+        api.get("/clients"),
+        api.get("/operations"),
+        api.get("/stores"),
+      ])
       setClients(clientsResponse.data)
       setOperations(operationsResponse.data)
       setStores(storesResponse.data)
@@ -170,6 +175,12 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           Lista de Operaciones
         </button>
         <button
+          onClick={() => setActiveTab("payment-history")}
+          className={`px-4 py-2 ${activeTab === "payment-history" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Historial de Pagos
+        </button>
+        <button
           onClick={() => setActiveTab("send-invoice")}
           className={`px-4 py-2 ${activeTab === "send-invoice" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
@@ -217,6 +228,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
           deleteOperation={deleteOperation}
         />
       )}
+      {activeTab === "payment-history" && <PaymentHistoryByStore />}
     </div>
   )
 }
