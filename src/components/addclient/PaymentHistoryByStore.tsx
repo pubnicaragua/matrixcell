@@ -1,480 +1,659 @@
-"use client"
+// "use client"
 
-import React, { useState, useEffect, useMemo, useCallback } from "react"
-import axios from "../../axiosConfig"
-import { format } from "date-fns"
-import { Search, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react'
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
+// import type React from "react"
+// import { useState, useEffect, useMemo, useCallback } from "react"
+// import axios from "../../axiosConfig"
+// import { format } from "date-fns"
+// import { Search, ChevronDown, ChevronUp, Download, Printer, Edit, Trash2, X } from "lucide-react"
+// import jsPDF from "jspdf"
+// import autoTable from "jspdf-autotable"
+// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog"
+// import { toast } from "react-hot-toast"
 
-interface Payment {
-  id: number
-  client_id: number
-  operation_id: number
-  amount_paid: number
-  amount: number
-  receipt_number: string
-  payment_date: string
-  created_at: string
-}
+// interface Payment {
+//   id: number
+//   client_id: number
+//   operation_id: number
+//   amount_paid: number
+//   amount: number
+//   receipt_number: string
+//   payment_date: string
+//   created_at: string
+// }
 
-interface Client {
-  id: number
-  name: string
-  email: string
-  phone: string
-  store_id: number
-}
+// interface Client {
+//   id: number
+//   name: string
+//   email: string
+//   phone: string
+//   store_id: number
+// }
 
-interface Operation {
-  id: number
-  operation_number: string
-  client_id: number
-}
+// interface Operation {
+//   id: number
+//   operation_number: string
+//   client_id: number
+// }
 
-interface Store {
-  id: number
-  name: string
-}
+// interface Store {
+//   id: number
+//   name: string
+// }
 
-const PaymentHistoryByStore: React.FC = () => {
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [operations, setOperations] = useState<Operation[]>([])
-  const [stores, setStores] = useState<Store[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [startDate, setStartDate] = useState<string>("")
-  const [endDate, setEndDate] = useState<string>("")
-  const [sortField, setSortField] = useState<string>("payment_date")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
-  const [searchTerm, setSearchTerm] = useState<string>("")
+// interface EditPaymentData {
+//   id: number
+//   amount_paid: number
+//   receipt_number: string
+//   payment_date: string
+// }
 
-  // Usuario actual
-  const [userRole, setUserRole] = useState<number>(0)
-  const [userStore, setUserStore] = useState<number | null>(null)
+// const PaymentHistoryByStore: React.FC = () => {
+//   const [payments, setPayments] = useState<Payment[]>([])
+//   const [clients, setClients] = useState<Client[]>([])
+//   const [operations, setOperations] = useState<Operation[]>([])
+//   const [stores, setStores] = useState<Store[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [error, setError] = useState<string | null>(null)
+//   const [startDate, setStartDate] = useState<string>("")
+//   const [endDate, setEndDate] = useState<string>("")
+//   const [sortField, setSortField] = useState<string>("payment_date")
+//   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+//   const [searchTerm, setSearchTerm] = useState<string>("")
 
-  useEffect(() => {
-    // Obtener información del usuario desde localStorage
-    const perfil = localStorage.getItem("perfil")
-    if (perfil) {
-      try {
-        const parsedPerfil = JSON.parse(perfil)
-        setUserRole(parsedPerfil.rol_id || 0)
-        setUserStore(parsedPerfil.store_id || null)
-      } catch (error) {
-        console.error("Error al obtener información del usuario:", error)
-      }
-    }
+//   // Usuario actual
+//   const [userRole, setUserRole] = useState<number>(0)
+//   const [userStore, setUserStore] = useState<number | null>(null)
+//   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+//   const [isDeleting, setIsDeleting] = useState(false)
+//   const [currentPayment, setCurrentPayment] = useState<EditPaymentData | null>(null)
 
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const [paymentsRes, clientsRes, operationsRes, storesRes] = await Promise.all([
-          axios.get("/payments"),
-          axios.get("/clients"),
-          axios.get("/operations"),
-          axios.get("/stores")
-        ])
+//   useEffect(() => {
+//     // Obtener información del usuario desde localStorage
+//     const perfil = localStorage.getItem("perfil")
+//     if (perfil) {
+//       try {
+//         const parsedPerfil = JSON.parse(perfil)
+//         setUserRole(parsedPerfil.rol_id || 0)
+//         setUserStore(parsedPerfil.store_id || null)
+//       } catch (error) {
+//         console.error("Error al obtener información del usuario:", error)
+//       }
+//     }
 
-        setPayments(paymentsRes.data)
-        setClients(clientsRes.data)
-        setOperations(operationsRes.data)
-        setStores(storesRes.data)
-      } catch (err: any) {
-        setError(err.message || "Error al cargar los datos")
-      } finally {
-        setLoading(false)
-      }
-    }
+//     const fetchData = async () => {
+//       try {
+//         setLoading(true)
+//         const [paymentsRes, clientsRes, operationsRes, storesRes] = await Promise.all([
+//           axios.get("/payments"),
+//           axios.get("/clients"),
+//           axios.get("/operations"),
+//           axios.get("/stores"),
+//         ])
 
-    fetchData()
-  }, [])
+//         setPayments(paymentsRes.data)
+//         setClients(clientsRes.data)
+//         setOperations(operationsRes.data)
+//         setStores(storesRes.data)
+//       } catch (err: any) {
+//         setError(err.message || "Error al cargar los datos")
+//       } finally {
+//         setLoading(false)
+//       }
+//     }
 
-  const getClientName = useCallback((clientId: number) => {
-    const client = clients.find(c => c.id === clientId)
-    return client ? client.name : "Cliente desconocido"
-  }, [clients])
+//     fetchData()
+//   }, [])
 
-  const getClientStoreId = useCallback((clientId: number) => {
-    const client = clients.find(c => c.id === clientId)
-    return client ? client.store_id : null
-  }, [clients])
+//   const getClientName = useCallback(
+//     (clientId: number) => {
+//       const client = clients.find((c) => c.id === clientId)
+//       return client ? client.name : "Cliente desconocido"
+//     },
+//     [clients],
+//   )
 
-  const getStoreName = useCallback((storeId: number) => {
-    const store = stores.find(s => s.id === storeId)
-    return store ? store.name : "Tienda desconocida"
-  }, [stores])
+//   const getClientStoreId = useCallback(
+//     (clientId: number) => {
+//       const client = clients.find((c) => c.id === clientId)
+//       return client ? client.store_id : null
+//     },
+//     [clients],
+//   )
 
-  const getOperationNumber = useCallback((operationId: number) => {
-    const operation = operations.find(o => o.id === operationId)
-    return operation ? operation.operation_number : "Operación desconocida"
-  }, [operations])
+//   const getStoreName = useCallback(
+//     (storeId: number) => {
+//       const store = stores.find((s) => s.id === storeId)
+//       return store ? store.name : "Tienda desconocida"
+//     },
+//     [stores],
+//   )
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      setSortField(field)
-      setSortDirection("asc")
-    }
-  }
+//   const getOperationNumber = useCallback(
+//     (operationId: number) => {
+//       const operation = operations.find((o) => o.id === operationId)
+//       return operation ? operation.operation_number : "Operación desconocida"
+//     },
+//     [operations],
+//   )
 
-  // Filtrar pagos según el rol del usuario y términos de búsqueda
-  const filteredPayments = useMemo(() => {
-    return payments
-      .filter(payment => {
-        // Filtrar por tienda según el rol
-        if (userRole === 1) {
-          // Si es admin, ve todos los pagos
-          return true
-        } else {
-          // Si no es admin, solo ve los pagos de clientes de su tienda
-          const clientStoreId = getClientStoreId(payment.client_id)
-          return clientStoreId === userStore
-        }
-      })
-      .filter(payment => {
-        // Filtrar por rango de fechas
-        if (startDate && endDate) {
-          const paymentDate = new Date(payment.payment_date)
-          const start = new Date(startDate)
-          const end = new Date(endDate)
-          end.setHours(23, 59, 59) // Incluir todo el día final
-          return paymentDate >= start && paymentDate <= end
-        } else if (startDate) {
-          const paymentDate = new Date(payment.payment_date)
-          const start = new Date(startDate)
-          return paymentDate >= start
-        } else if (endDate) {
-          const paymentDate = new Date(payment.payment_date)
-          const end = new Date(endDate)
-          end.setHours(23, 59, 59) // Incluir todo el día final
-          return paymentDate <= end
-        }
-        return true
-      })
-      .filter(payment => {
-        // Filtrar por término de búsqueda
-        if (!searchTerm) return true
+//   const handleSort = (field: string) => {
+//     if (sortField === field) {
+//       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+//     } else {
+//       setSortField(field)
+//       setSortDirection("asc")
+//     }
+//   }
 
-        const searchLower = searchTerm.toLowerCase()
-        const clientName = getClientName(payment.client_id).toLowerCase()
-        const operationNumber = getOperationNumber(payment.operation_id).toLowerCase()
-        const receiptNumber = payment.receipt_number.toLowerCase()
-        const storeName = getStoreName(getClientStoreId(payment.client_id) || 0).toLowerCase()
+//   // Filtrar pagos según el rol del usuario y términos de búsqueda
+//   const filteredPayments = useMemo(() => {
+//     return payments
+//       .filter((payment) => {
+//         // Filtrar por tienda según el rol
+//         if (userRole === 1) {
+//           // Si es admin, ve todos los pagos
+//           return true
+//         } else {
+//           // Si no es admin, solo ve los pagos de clientes de su tienda
+//           const clientStoreId = getClientStoreId(payment.client_id)
+//           return clientStoreId === userStore
+//         }
+//       })
+//       .filter((payment) => {
+//         // Filtrar por rango de fechas
+//         if (startDate && endDate) {
+//           const paymentDate = new Date(payment.payment_date)
+//           const start = new Date(startDate)
+//           const end = new Date(endDate)
+//           end.setHours(23, 59, 59) // Incluir todo el día final
+//           return paymentDate >= start && paymentDate <= end
+//         } else if (startDate) {
+//           const paymentDate = new Date(payment.payment_date)
+//           const start = new Date(startDate)
+//           return paymentDate >= start
+//         } else if (endDate) {
+//           const paymentDate = new Date(payment.payment_date)
+//           const end = new Date(endDate)
+//           end.setHours(23, 59, 59) // Incluir todo el día final
+//           return paymentDate <= end
+//         }
+//         return true
+//       })
+//       .filter((payment) => {
+//         // Filtrar por término de búsqueda
+//         if (!searchTerm) return true
 
-        return (
-          clientName.includes(searchLower) ||
-          operationNumber.includes(searchLower) ||
-          receiptNumber.includes(searchLower) ||
-          storeName.includes(searchLower) ||
-          payment.amount_paid.toString().includes(searchLower)
-        )
-      })
-      .sort((a, b) => {
-        if (sortField === "payment_date") {
-          const dateA = new Date(a.payment_date).getTime()
-          const dateB = new Date(b.payment_date).getTime()
-          return sortDirection === "asc" ? dateA - dateB : dateB - dateA
-        } else if (sortField === "amount_paid") {
-          return sortDirection === "asc"
-            ? a.amount_paid - b.amount_paid
-            : b.amount_paid - a.amount_paid
-        } else if (sortField === "amount") {
-          return sortDirection === "asc"
-            ? a.amount - b.amount
-            : b.amount - a.amount
-        } else if (sortField === "client_id") {
-          const clientA = getClientName(a.client_id).toLowerCase()
-          const clientB = getClientName(b.client_id).toLowerCase()
-          return sortDirection === "asc"
-            ? clientA.localeCompare(clientB)
-            : clientB.localeCompare(clientA)
-        } else if (sortField === "store_id") {
-          const storeA = getStoreName(getClientStoreId(a.client_id) || 0).toLowerCase()
-          const storeB = getStoreName(getClientStoreId(b.client_id) || 0).toLowerCase()
-          return sortDirection === "asc"
-            ? storeA.localeCompare(storeB)
-            : storeB.localeCompare(storeA)
-        }
-        return 0
-      })
-  }, [payments, userRole, userStore, searchTerm, startDate, endDate, sortField, sortDirection, getClientName, getOperationNumber, getClientStoreId, getStoreName])
+//         const searchLower = searchTerm.toLowerCase()
+//         const clientName = getClientName(payment.client_id).toLowerCase()
+//         const operationNumber = getOperationNumber(payment.operation_id).toLowerCase()
+//         const receiptNumber = payment.receipt_number.toLowerCase()
+//         const storeName = getStoreName(getClientStoreId(payment.client_id) || 0).toLowerCase()
 
-  const resetFilters = () => {
-    setStartDate("")
-    setEndDate("")
-    setSearchTerm("")
-  }
+//         return (
+//           clientName.includes(searchLower) ||
+//           operationNumber.includes(searchLower) ||
+//           receiptNumber.includes(searchLower) ||
+//           storeName.includes(searchLower) ||
+//           payment.amount_paid.toString().includes(searchLower)
+//         )
+//       })
+//       .sort((a, b) => {
+//         if (sortField === "payment_date") {
+//           const dateA = new Date(a.payment_date).getTime()
+//           const dateB = new Date(b.payment_date).getTime()
+//           return sortDirection === "asc" ? dateA - dateB : dateB - dateA
+//         } else if (sortField === "amount_paid") {
+//           return sortDirection === "asc" ? a.amount_paid - b.amount_paid : b.amount_paid - a.amount_paid
+//         } else if (sortField === "amount") {
+//           return sortDirection === "asc" ? a.amount - b.amount : b.amount - a.amount
+//         } else if (sortField === "client_id") {
+//           const clientA = getClientName(a.client_id).toLowerCase()
+//           const clientB = getClientName(b.client_id).toLowerCase()
+//           return sortDirection === "asc" ? clientA.localeCompare(clientB) : clientB.localeCompare(clientA)
+//         } else if (sortField === "store_id") {
+//           const storeA = getStoreName(getClientStoreId(a.client_id) || 0).toLowerCase()
+//           const storeB = getStoreName(getClientStoreId(b.client_id) || 0).toLowerCase()
+//           return sortDirection === "asc" ? storeA.localeCompare(storeB) : storeB.localeCompare(storeA)
+//         }
+//         return 0
+//       })
+//   }, [
+//     payments,
+//     userRole,
+//     userStore,
+//     searchTerm,
+//     startDate,
+//     endDate,
+//     sortField,
+//     sortDirection,
+//     getClientName,
+//     getOperationNumber,
+//     getClientStoreId,
+//     getStoreName,
+//   ])
 
-  const generatePDF = () => {
-    const doc = new jsPDF()
+//   const resetFilters = () => {
+//     setStartDate("")
+//     setEndDate("")
+//     setSearchTerm("")
+//   }
 
-    // Título
-    doc.setFontSize(18)
-    doc.text("Historial de Pagos", 14, 20)
+//   const generatePDF = () => {
+//     const doc = new jsPDF()
 
-    // Información de usuario y filtros
-    doc.setFontSize(10)
-    let yPos = 30
+//     // Título
+//     doc.setFontSize(18)
+//     doc.text("Historial de Pagos", 14, 20)
 
-    // Mostrar tienda si no es admin
-    if (userRole !== 1 && userStore) {
-      const storeName = getStoreName(userStore)
-      doc.text(`Tienda: ${storeName}`, 14, yPos)
-      yPos += 6
-    }
+//     // Información de usuario y filtros
+//     doc.setFontSize(10)
+//     let yPos = 30
 
-    if (startDate || endDate) {
-      const dateRange = `Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Inicio'} - ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Actualidad'}`
-      doc.text(dateRange, 14, yPos)
-      yPos += 10
-    } else {
-      yPos += 4
-    }
+//     // Mostrar tienda si no es admin
+//     if (userRole !== 1 && userStore) {
+//       const storeName = getStoreName(userStore)
+//       doc.text(`Tienda: ${storeName}`, 14, yPos)
+//       yPos += 6
+//     }
 
-    // Datos para la tabla
-    const tableData = filteredPayments.map(payment => [
-      format(new Date(payment.payment_date), 'dd/MM/yyyy'),
-      getClientName(payment.client_id),
-      getStoreName(getClientStoreId(payment.client_id) || 0),
-      getOperationNumber(payment.operation_id),
-      payment.receipt_number,
-      `$${payment.amount_paid}`,
-      `$${payment.amount}`
-    ])
+//     if (startDate || endDate) {
+//       const dateRange = `Período: ${startDate ? format(new Date(startDate), "dd/MM/yyyy") : "Inicio"} - ${endDate ? format(new Date(endDate), "dd/MM/yyyy") : "Actualidad"}`
+//       doc.text(dateRange, 14, yPos)
+//       yPos += 10
+//     } else {
+//       yPos += 4
+//     }
 
-    // Crear tabla
-    autoTable(doc, {
-      head: [['Fecha', 'Cliente', 'Tienda', 'Operación', 'Recibo', 'Monto Pagado', 'Total Pagado']],
-      body: tableData,
-      startY: yPos,
-      theme: 'grid',
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] }
-    })
+//     // Datos para la tabla
+//     const tableData = filteredPayments.map((payment) => [
+//       format(new Date(payment.payment_date), "dd/MM/yyyy"),
+//       getClientName(payment.client_id),
+//       getStoreName(getClientStoreId(payment.client_id) || 0),
+//       getOperationNumber(payment.operation_id),
+//       payment.receipt_number,
+//       `$${payment.amount_paid}`,
+//       `$${payment.amount}`,
+//     ])
 
-    // Calcular totales
-    const totalPaid = filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)
-    const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)
+//     // Crear tabla
+//     autoTable(doc, {
+//       head: [["Fecha", "Cliente", "Tienda", "Operación", "Recibo", "Monto Pagado", "Total Pagado"]],
+//       body: tableData,
+//       startY: yPos,
+//       theme: "grid",
+//       styles: { fontSize: 8 },
+//       headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
+//     })
 
-    // Agregar totales al final
-    const finalY = (doc as any).lastAutoTable.finalY + 10
-    doc.text(`Total Pagado: $${totalPaid}`, 14, finalY)
-    doc.text(`Total Adeudado: $${totalAmount}`, 14, finalY + 6)
+//     // Calcular totales
+//     const totalPaid = filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)
+//     const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)
 
-    // Guardar PDF
-    doc.save("historial_pagos.pdf")
-  }
+//     // Agregar totales al final
+//     const finalY = (doc as any).lastAutoTable.finalY + 10
+//     doc.text(`Total Pagado: $${totalPaid}`, 14, finalY)
+//     doc.text(`Total Adeudado: $${totalAmount}`, 14, finalY + 6)
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
-      </div>
-    )
-  }
+//     // Guardar PDF
+//     doc.save("historial_pagos.pdf")
+//   }
 
-  if (error) {
-    return <div className="text-red-500 text-center p-4">{error}</div>
-  }
+//   const handleEditClick = (payment: Payment) => {
+//     setCurrentPayment({
+//       id: payment.id,
+//       amount_paid: payment.amount_paid,
+//       receipt_number: payment.receipt_number,
+//       payment_date: payment.payment_date.split("T")[0], // Formatear fecha para input date
+//     })
+//     setIsEditModalOpen(true)
+//   }
 
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">
-        Historial de Pagos {userRole !== 1 && userStore && `- ${getStoreName(userStore)}`}
-      </h2>
+//   const handleDeleteClick = async (paymentId: number) => {
+//     if (window.confirm("¿Está seguro que desea eliminar este pago? Esta acción no se puede deshacer.")) {
+//       try {
+//         setIsDeleting(true)
+//         await axios.delete(`/payments/${paymentId}`)
+//         setPayments(payments.filter((p) => p.id !== paymentId))
+//         toast.success("Pago eliminado correctamente")
+//       } catch (error) {
+//         console.error("Error al eliminar el pago:", error)
+//         toast.error("Error al eliminar el pago")
+//       } finally {
+//         setIsDeleting(false)
+//       }
+//     }
+//   }
 
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          {/* Buscador */}
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar por cliente, operación, recibo o tienda..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     if (!currentPayment) return
 
-          {/* Filtros de fecha */}
-          <div className="flex flex-col md:flex-row gap-2">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="Fecha inicio"
-              className="p-2 border rounded-md"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="Fecha fin"
-              className="p-2 border rounded-md"
-            />
-          </div>
-        </div>
+//     const { name, value } = e.target
+//     setCurrentPayment({
+//       ...currentPayment,
+//       [name]: name === "amount_paid" ? Number.parseFloat(value) : value,
+//     })
+//   }
 
-        {/* Botones de acción */}
-        <div className="flex flex-wrap justify-between">
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-          >
-            Limpiar Filtros
-          </button>
+//   const handleSaveEdit = async () => {
+//     if (!currentPayment) return
 
-          <div className="flex gap-2">
-            <button
-              onClick={generatePDF}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar PDF
-            </button>
+//     try {
+//       const response = await axios.put(`/payments/${currentPayment.id}`, currentPayment)
 
-            <button
-              onClick={() => window.print()}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Imprimir
-            </button>
-          </div>
-        </div>
-      </div>
+//       // Actualizar el estado de pagos con el pago actualizado
+//       setPayments(payments.map((p) => (p.id === currentPayment.id ? { ...p, ...response.data } : p)))
 
-      {/* Tabla de pagos */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border">
-          <thead className="bg-gray-100">
-            <tr>
-              <th
-                className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSort("payment_date")}
-              >
-                <div className="flex items-center">
-                  Fecha
-                  {sortField === "payment_date" && (
-                    sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />
-                  )}
-                </div>
-              </th>
-              <th
-                className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSort("client_id")}
-              >
-                <div className="flex items-center">
-                  Cliente
-                  {sortField === "client_id" && (
-                    sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />
-                  )}
-                </div>
-              </th>
-              <th
-                className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSort("store_id")}
-              >
-                <div className="flex items-center">
-                  Tienda
-                  {sortField === "store_id" && (
-                    sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />
-                  )}
-                </div>
-              </th>
-              <th className="py-2 px-4 border">Operación</th>
-              <th className="py-2 px-4 border">Recibo</th>
-              <th
-                className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSort("amount_paid")}
-              >
-                <div className="flex items-center">
-                  Monto Pagado
-                  {sortField === "amount_paid" && (
-                    sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />
-                  )}
-                </div>
-              </th>
-              <th
-                className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSort("amount")}
-              >
-                <div className="flex items-center">
-                  Total Pagado
-                  {sortField === "amount" && (
-                    sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />
-                  )}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPayments.length > 0 ? (
-              filteredPayments.map(payment => (
-                <tr key={payment.id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border">
-                    {format(new Date(payment.payment_date), 'dd/MM/yyyy')}
-                  </td>
-                  <td className="py-2 px-4 border">{getClientName(payment.client_id)}</td>
-                  <td className="py-2 px-4 border">{getStoreName(getClientStoreId(payment.client_id) || 0)}</td>
-                  <td className="py-2 px-4 border">{getOperationNumber(payment.operation_id)}</td>
-                  <td className="py-2 px-4 border">{payment.receipt_number}</td>
-                  <td className="py-2 px-4 border text-right">${payment.amount_paid}</td>
-                  <td className="py-2 px-4 border text-right">${payment.amount}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="py-4 text-center text-gray-500">
-                  No se encontraron pagos con los filtros seleccionados
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot className="bg-gray-100 font-semibold">
-            <tr>
-              <td colSpan={5} className="py-2 px-4 border text-right">Totales:</td>
-              <td className="py-2 px-4 border text-right">
-                ${filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)}
-              </td>
-              <td className="py-2 px-4 border text-right">
-                ${filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+//       setIsEditModalOpen(false)
+//       toast.success("Pago actualizado correctamente")
+//     } catch (error) {
+//       console.error("Error al actualizar el pago:", error)
+//       toast.error("Error al actualizar el pago")
+//     }
+//   }
 
-      {/* Resumen */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-md">
-        <h3 className="text-lg font-medium mb-2">Resumen</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-3 rounded shadow">
-            <p className="text-sm text-gray-500">Total de pagos</p>
-            <p className="text-xl font-bold">{filteredPayments.length}</p>
-          </div>
-          <div className="bg-white p-3 rounded shadow">
-            <p className="text-sm text-gray-500">Total pagado</p>
-            <p className="text-xl font-bold text-green-600">
-              ${filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)}
-            </p>
-          </div>
-          <div className="bg-white p-3 rounded shadow">
-            <p className="text-sm text-gray-500">Total adeudado</p>
-            <p className="text-xl font-bold text-blue-600">
-              ${filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-40">
+//         <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+//       </div>
+//     )
+//   }
 
-export default PaymentHistoryByStore
+//   if (error) {
+//     return <div className="text-red-500 text-center p-4">{error}</div>
+//   }
+
+//   return (
+//     <div className="bg-white p-6 rounded-lg shadow-md">
+//       <h2 className="text-xl font-semibold mb-4">
+//         Historial de Pagos {userRole !== 1 && userStore && `- ${getStoreName(userStore)}`}
+//       </h2>
+
+//       <div className="mb-6">
+//         <div className="flex flex-col md:flex-row gap-4 mb-4">
+//           {/* Buscador */}
+//           <div className="relative flex-grow">
+//             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+//               <Search className="h-5 w-5 text-gray-400" />
+//             </div>
+//             <input
+//               type="text"
+//               placeholder="Buscar por cliente, operación, recibo o tienda..."
+//               value={searchTerm}
+//               onChange={(e) => setSearchTerm(e.target.value)}
+//               className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//             />
+//           </div>
+
+//           {/* Filtros de fecha */}
+//           <div className="flex flex-col md:flex-row gap-2">
+//             <input
+//               type="date"
+//               value={startDate}
+//               onChange={(e) => setStartDate(e.target.value)}
+//               placeholder="Fecha inicio"
+//               className="p-2 border rounded-md"
+//             />
+//             <input
+//               type="date"
+//               value={endDate}
+//               onChange={(e) => setEndDate(e.target.value)}
+//               placeholder="Fecha fin"
+//               className="p-2 border rounded-md"
+//             />
+//           </div>
+//         </div>
+
+//         {/* Botones de acción */}
+//         <div className="flex flex-wrap justify-between">
+//           <button onClick={resetFilters} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+//             Limpiar Filtros
+//           </button>
+
+//           <div className="flex gap-2">
+//             <button
+//               onClick={generatePDF}
+//               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+//             >
+//               <Download className="w-4 h-4 mr-2" />
+//               Exportar PDF
+//             </button>
+
+//             <button
+//               onClick={() => window.print()}
+//               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
+//             >
+//               <Printer className="w-4 h-4 mr-2" />
+//               Imprimir
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Tabla de pagos */}
+//       <div className="overflow-x-auto">
+//         <table className="min-w-full bg-white border">
+//           <thead className="bg-gray-100">
+//             <tr>
+//               <th
+//                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
+//                 onClick={() => handleSort("payment_date")}
+//               >
+//                 <div className="flex items-center">
+//                   Fecha
+//                   {sortField === "payment_date" &&
+//                     (sortDirection === "asc" ? (
+//                       <ChevronUp className="w-4 h-4 ml-1" />
+//                     ) : (
+//                       <ChevronDown className="w-4 h-4 ml-1" />
+//                     ))}
+//                 </div>
+//               </th>
+//               <th className="py-2 px-4 border cursor-pointer hover:bg-gray-200" onClick={() => handleSort("client_id")}>
+//                 <div className="flex items-center">
+//                   Cliente
+//                   {sortField === "client_id" &&
+//                     (sortDirection === "asc" ? (
+//                       <ChevronUp className="w-4 h-4 ml-1" />
+//                     ) : (
+//                       <ChevronDown className="w-4 h-4 ml-1" />
+//                     ))}
+//                 </div>
+//               </th>
+//               <th className="py-2 px-4 border cursor-pointer hover:bg-gray-200" onClick={() => handleSort("store_id")}>
+//                 <div className="flex items-center">
+//                   Tienda
+//                   {sortField === "store_id" &&
+//                     (sortDirection === "asc" ? (
+//                       <ChevronUp className="w-4 h-4 ml-1" />
+//                     ) : (
+//                       <ChevronDown className="w-4 h-4 ml-1" />
+//                     ))}
+//                 </div>
+//               </th>
+//               <th className="py-2 px-4 border">Operación</th>
+//               <th className="py-2 px-4 border">Recibo</th>
+//               <th
+//                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
+//                 onClick={() => handleSort("amount_paid")}
+//               >
+//                 <div className="flex items-center">
+//                   Monto Pagado
+//                   {sortField === "amount_paid" &&
+//                     (sortDirection === "asc" ? (
+//                       <ChevronUp className="w-4 h-4 ml-1" />
+//                     ) : (
+//                       <ChevronDown className="w-4 h-4 ml-1" />
+//                     ))}
+//                 </div>
+//               </th>
+//               <th className="py-2 px-4 border cursor-pointer hover:bg-gray-200" onClick={() => handleSort("amount")}>
+//                 <div className="flex items-center">
+//                   Total Pagadosssssss
+//                   {sortField === "amount" &&
+//                     (sortDirection === "asc" ? (
+//                       <ChevronUp className="w-4 h-4 ml-1" />
+//                     ) : (
+//                       <ChevronDown className="w-4 h-4 ml-1" />
+//                     ))}
+//                 </div>
+//               </th>
+//               <th className="py-2 px-4 border">Acciones</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {filteredPayments.length > 0 ? (
+//               filteredPayments.map((payment) => (
+//                 <tr key={payment.id} className="hover:bg-gray-50">
+//                   <td className="py-2 px-4 border">{format(new Date(payment.payment_date), "dd/MM/yyyy")}</td>
+//                   <td className="py-2 px-4 border">{getClientName(payment.client_id)}</td>
+//                   <td className="py-2 px-4 border">{getStoreName(getClientStoreId(payment.client_id) || 0)}</td>
+//                   <td className="py-2 px-4 border">{getOperationNumber(payment.operation_id)}</td>
+//                   <td className="py-2 px-4 border">{payment.receipt_number}</td>
+//                   <td className="py-2 px-4 border text-right">${payment.amount_paid}</td>
+//                   <td className="py-2 px-4 border text-right">${payment.amount}</td>
+//                   <td className="py-2 px-4 border">
+//                     <div className="flex space-x-2 justify-center">
+//                       <button
+//                         onClick={() => handleEditClick(payment)}
+//                         className="p-1 text-blue-600 hover:text-blue-800"
+//                         title="Editar pago"
+//                       >
+//                         <Edit className="h-4 w-4" />
+//                       </button>
+//                       <button
+//                         onClick={() => handleDeleteClick(payment.id)}
+//                         className="p-1 text-red-600 hover:text-red-800"
+//                         title="Eliminar pago"
+//                         disabled={isDeleting}
+//                       >
+//                         <Trash2 className="h-4 w-4" />
+//                       </button>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ))
+//             ) : (
+//               <tr>
+//                 <td colSpan={8} className="py-4 text-center text-gray-500">
+//                   No se encontraron pagos con los filtros seleccionados
+//                 </td>
+//               </tr>
+//             )}
+//           </tbody>
+//           <tfoot className="bg-gray-100 font-semibold">
+//             <tr>
+//               <td colSpan={6} className="py-2 px-4 border text-right">
+//                 Totales:
+//               </td>
+//               <td className="py-2 px-4 border text-right">
+//                 ${filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)}
+//               </td>
+//               <td className="py-2 px-4 border text-right">
+//                 ${filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)}
+//               </td>
+//             </tr>
+//           </tfoot>
+//         </table>
+//       </div>
+
+//       {/* Resumen */}
+//       <div className="mt-6 p-4 bg-gray-50 rounded-md">
+//         <h3 className="text-lg font-medium mb-2">Resumen</h3>
+//         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//           <div className="bg-white p-3 rounded shadow">
+//             <p className="text-sm text-gray-500">Total de pagos</p>
+//             <p className="text-xl font-bold">{filteredPayments.length}</p>
+//           </div>
+//           <div className="bg-white p-3 rounded shadow">
+//             <p className="text-sm text-gray-500">Total pagado</p>
+//             <p className="text-xl font-bold text-green-600">
+//               ${filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)}
+//             </p>
+//           </div>
+//           <div className="bg-white p-3 rounded shadow">
+//             <p className="text-sm text-gray-500">Total adeudado</p>
+//             <p className="text-xl font-bold text-blue-600">
+//               ${filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)}
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Modal de edición */}
+//       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+//         <DialogContent className="sm:max-w-md">
+//           <DialogHeader>
+//             <DialogTitle>
+//               Editar Pago
+//               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+//                 <X className="h-4 w-4" />
+//               </button>
+//             </DialogTitle>
+//           </DialogHeader>
+
+//           {currentPayment && (
+//             <div className="grid gap-4 py-4">
+//               <div className="grid grid-cols-4 items-center gap-4">
+//                 <label htmlFor="receipt_number" className="text-right">
+//                   Número de Recibo
+//                 </label>
+//                 <input
+//                   id="receipt_number"
+//                   name="receipt_number"
+//                   value={currentPayment.receipt_number}
+//                   onChange={handleInputChange}
+//                   className="col-span-3 p-2 border rounded-md"
+//                 />
+//               </div>
+
+//               <div className="grid grid-cols-4 items-center gap-4">
+//                 <label htmlFor="amount_paid" className="text-right">
+//                   Monto Pagado
+//                 </label>
+//                 <input
+//                   id="amount_paid"
+//                   name="amount_paid"
+//                   type="number"
+//                   step="0.01"
+//                   value={currentPayment.amount_paid}
+//                   onChange={handleInputChange}
+//                   className="col-span-3 p-2 border rounded-md"
+//                 />
+//               </div>
+
+//               <div className="grid grid-cols-4 items-center gap-4">
+//                 <label htmlFor="payment_date" className="text-right">
+//                   Fecha de Pago
+//                 </label>
+//                 <input
+//                   id="payment_date"
+//                   name="payment_date"
+//                   type="date"
+//                   value={currentPayment.payment_date}
+//                   onChange={handleInputChange}
+//                   className="col-span-3 p-2 border rounded-md"
+//                 />
+//               </div>
+//             </div>
+//           )}
+
+//           <DialogFooter>
+//             <button
+//               onClick={() => setIsEditModalOpen(false)}
+//               className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+//             >
+//               Cancelar
+//             </button>
+//             <button onClick={handleSaveEdit} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+//               Guardar Cambios
+//             </button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   )
+// }
+
+// export default PaymentHistoryByStore
+
