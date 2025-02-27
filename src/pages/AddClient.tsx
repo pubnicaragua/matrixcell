@@ -10,7 +10,7 @@ import ClientsList from "../components/addclient/ClientList"
 import OperationsList from "../components/addclient/OperationList"
 import SendInvoiceForm from "../components/SendInvoiceForm"
 import ExportReport from "../components/addclient/ExportReport"
-import PaymentHistoryByStore from "../components/addclient/PaymentHistoryByStore"
+import PaymentHistoryByStore from "../components/addclient/PaymentHistory"
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([])
