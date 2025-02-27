@@ -183,8 +183,35 @@ export const ProductController = {
             console.error("Error al obtener modelos:", error);
             res.status(500).json({ message: "Error al obtener modelos." });
         }
+    },
+    async updateProduct(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const { article, price, busines_price, category_id } = req.body;
+
+            // Ejecutar la actualización en Supabase
+            const { data: product, error } = await supabase
+                .from("products")
+                .update({ article, price, busines_price, category_id })
+                .eq("id", id)
+                .select()
+                .single(); // Para asegurarnos de obtener un único resultado
+
+            // Manejar errores de Supabase
+            if (error) {
+                console.error("Error al actualizar producto:", error.message);
+                res.status(500).json({ message: "Error al actualizar el producto en la base de datos", error: error.message });
+            }
+
+            // Si no se encuentra el producto, devolver un 404
+            if (!product) {
+                res.status(404).json({ message: "Producto no encontrado" });
+            }
+
+            res.json({ message: "Producto actualizado correctamente", product });
+        } catch (error) {
+            console.error("Error interno al actualizar producto:", error);
+            res.status(500).json({ message: "Error interno del servidor" });
+        }
     }
-
-
-
 }
