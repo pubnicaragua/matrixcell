@@ -121,6 +121,7 @@ export interface InventoryItem {
   stock: number
   created_at: string
   imei: string
+  category_id?: number | null;
   products: {
     id: number
     models: {
