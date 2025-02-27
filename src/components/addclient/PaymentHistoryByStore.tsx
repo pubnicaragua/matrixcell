@@ -49,7 +49,7 @@ const PaymentHistoryByStore: React.FC = () => {
   const [sortField, setSortField] = useState<string>("payment_date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [searchTerm, setSearchTerm] = useState<string>("")
-  
+
   // Usuario actual
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
@@ -76,7 +76,7 @@ const PaymentHistoryByStore: React.FC = () => {
           axios.get("/operations"),
           axios.get("/stores")
         ])
-        
+
         setPayments(paymentsRes.data)
         setClients(clientsRes.data)
         setOperations(operationsRes.data)
@@ -157,13 +157,13 @@ const PaymentHistoryByStore: React.FC = () => {
       .filter(payment => {
         // Filtrar por término de búsqueda
         if (!searchTerm) return true
-        
+
         const searchLower = searchTerm.toLowerCase()
         const clientName = getClientName(payment.client_id).toLowerCase()
         const operationNumber = getOperationNumber(payment.operation_id).toLowerCase()
         const receiptNumber = payment.receipt_number.toLowerCase()
         const storeName = getStoreName(getClientStoreId(payment.client_id) || 0).toLowerCase()
-        
+
         return (
           clientName.includes(searchLower) ||
           operationNumber.includes(searchLower) ||
@@ -178,24 +178,24 @@ const PaymentHistoryByStore: React.FC = () => {
           const dateB = new Date(b.payment_date).getTime()
           return sortDirection === "asc" ? dateA - dateB : dateB - dateA
         } else if (sortField === "amount_paid") {
-          return sortDirection === "asc" 
-            ? a.amount_paid - b.amount_paid 
+          return sortDirection === "asc"
+            ? a.amount_paid - b.amount_paid
             : b.amount_paid - a.amount_paid
         } else if (sortField === "amount") {
-          return sortDirection === "asc" 
-            ? a.amount - b.amount 
+          return sortDirection === "asc"
+            ? a.amount - b.amount
             : b.amount - a.amount
         } else if (sortField === "client_id") {
           const clientA = getClientName(a.client_id).toLowerCase()
           const clientB = getClientName(b.client_id).toLowerCase()
-          return sortDirection === "asc" 
-            ? clientA.localeCompare(clientB) 
+          return sortDirection === "asc"
+            ? clientA.localeCompare(clientB)
             : clientB.localeCompare(clientA)
         } else if (sortField === "store_id") {
           const storeA = getStoreName(getClientStoreId(a.client_id) || 0).toLowerCase()
           const storeB = getStoreName(getClientStoreId(b.client_id) || 0).toLowerCase()
-          return sortDirection === "asc" 
-            ? storeA.localeCompare(storeB) 
+          return sortDirection === "asc"
+            ? storeA.localeCompare(storeB)
             : storeB.localeCompare(storeA)
         }
         return 0
@@ -210,22 +210,22 @@ const PaymentHistoryByStore: React.FC = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF()
-    
+
     // Título
     doc.setFontSize(18)
     doc.text("Historial de Pagos", 14, 20)
-    
+
     // Información de usuario y filtros
     doc.setFontSize(10)
     let yPos = 30
-    
+
     // Mostrar tienda si no es admin
     if (userRole !== 1 && userStore) {
       const storeName = getStoreName(userStore)
       doc.text(`Tienda: ${storeName}`, 14, yPos)
       yPos += 6
     }
-    
+
     if (startDate || endDate) {
       const dateRange = `Período: ${startDate ? format(new Date(startDate), 'dd/MM/yyyy') : 'Inicio'} - ${endDate ? format(new Date(endDate), 'dd/MM/yyyy') : 'Actualidad'}`
       doc.text(dateRange, 14, yPos)
@@ -233,7 +233,7 @@ const PaymentHistoryByStore: React.FC = () => {
     } else {
       yPos += 4
     }
-    
+
     // Datos para la tabla
     const tableData = filteredPayments.map(payment => [
       format(new Date(payment.payment_date), 'dd/MM/yyyy'),
@@ -244,7 +244,7 @@ const PaymentHistoryByStore: React.FC = () => {
       `$${payment.amount_paid}`,
       `$${payment.amount}`
     ])
-    
+
     // Crear tabla
     autoTable(doc, {
       head: [['Fecha', 'Cliente', 'Tienda', 'Operación', 'Recibo', 'Monto Pagado', 'Total Pagado']],
@@ -254,16 +254,16 @@ const PaymentHistoryByStore: React.FC = () => {
       styles: { fontSize: 8 },
       headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] }
     })
-    
+
     // Calcular totales
     const totalPaid = filteredPayments.reduce((sum, payment) => sum + payment.amount_paid, 0)
     const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)
-    
+
     // Agregar totales al final
     const finalY = (doc as any).lastAutoTable.finalY + 10
     doc.text(`Total Pagado: $${totalPaid}`, 14, finalY)
     doc.text(`Total Adeudado: $${totalAmount}`, 14, finalY + 6)
-    
+
     // Guardar PDF
     doc.save("historial_pagos.pdf")
   }
@@ -285,7 +285,7 @@ const PaymentHistoryByStore: React.FC = () => {
       <h2 className="text-xl font-semibold mb-4">
         Historial de Pagos {userRole !== 1 && userStore && `- ${getStoreName(userStore)}`}
       </h2>
-      
+
       <div className="mb-6">
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           {/* Buscador */}
@@ -301,7 +301,7 @@ const PaymentHistoryByStore: React.FC = () => {
               className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
+
           {/* Filtros de fecha */}
           <div className="flex flex-col md:flex-row gap-2">
             <input
@@ -320,26 +320,26 @@ const PaymentHistoryByStore: React.FC = () => {
             />
           </div>
         </div>
-        
+
         {/* Botones de acción */}
         <div className="flex flex-wrap justify-between">
-          <button 
+          <button
             onClick={resetFilters}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
           >
             Limpiar Filtros
           </button>
-          
+
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={generatePDF}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
             >
               <Download className="w-4 h-4 mr-2" />
               Exportar PDF
             </button>
-            
-            <button 
+
+            <button
               onClick={() => window.print()}
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
             >
@@ -349,13 +349,13 @@ const PaymentHistoryByStore: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Tabla de pagos */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border">
           <thead className="bg-gray-100">
             <tr>
-              <th 
+              <th
                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSort("payment_date")}
               >
@@ -366,7 +366,7 @@ const PaymentHistoryByStore: React.FC = () => {
                   )}
                 </div>
               </th>
-              <th 
+              <th
                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSort("client_id")}
               >
@@ -377,7 +377,7 @@ const PaymentHistoryByStore: React.FC = () => {
                   )}
                 </div>
               </th>
-              <th 
+              <th
                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSort("store_id")}
               >
@@ -390,7 +390,7 @@ const PaymentHistoryByStore: React.FC = () => {
               </th>
               <th className="py-2 px-4 border">Operación</th>
               <th className="py-2 px-4 border">Recibo</th>
-              <th 
+              <th
                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSort("amount_paid")}
               >
@@ -401,7 +401,7 @@ const PaymentHistoryByStore: React.FC = () => {
                   )}
                 </div>
               </th>
-              <th 
+              <th
                 className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSort("amount")}
               >
@@ -450,7 +450,7 @@ const PaymentHistoryByStore: React.FC = () => {
           </tfoot>
         </table>
       </div>
-      
+
       {/* Resumen */}
       <div className="mt-6 p-4 bg-gray-50 rounded-md">
         <h3 className="text-lg font-medium mb-2">Resumen</h3>
