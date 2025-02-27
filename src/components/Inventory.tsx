@@ -34,6 +34,11 @@ const Inventory: React.FC = () => {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
+  const [editingImei, setEditingImei] = useState<string>("");
+  const [editingPrice, setEditingPrice] = useState<number>(0);
+  const [editingBusinessPrice, setEditingBusinessPrice] = useState<number>(0);
+  const [editingArticle, setEditingArticle] = useState<string>("");
+
 
   useEffect(() => {
     const perfil = localStorage.getItem("perfil")
@@ -127,34 +132,58 @@ const Inventory: React.FC = () => {
   }
 
   const handleEditClick = (item: InventoryItem) => {
-    setEditingItem(item)
-    setEditingStock(item.stock)
-  }
+    console.log("Datos del producto seleccionado:", item);
+
+    setEditingItem({
+      ...item,
+      category_id: item.products.categories?.id ?? undefined, // 🔥 Usa `undefined` en vez de `null`
+    });
+
+    setEditingStock(item.stock);
+    setEditingImei(item.imei);
+    setEditingPrice(item.products.price);
+    setEditingBusinessPrice(item.products.busines_price);
+    setEditingArticle(item.products.article);
+  };
+
 
   const handleEditSubmit = async () => {
-    if (!editingItem) return
+    if (!editingItem) return;
 
     try {
-      const response = await api.put(`/inventories/${editingItem.id}`, {
+      // Actualizar el producto
+      await api.put(`/products/${editingItem.product_id}`, {
+        article: editingArticle,
+        price: editingPrice,
+        busines_price: editingBusinessPrice,
+        category_id: editingItem.category_id, // 🔥 Ya no marcará error
+      });
+
+      // Actualizar inventario
+      await api.put(`/inventories/${editingItem.id}`, {
         cantidad: editingStock,
         product_id: editingItem.product_id,
-        imei: editingItem.imei,
+        imei: editingImei,
         store_id: editingItem.store_id,
-      })
-      setInventory((prev) => prev.map((item) => (item.id === editingItem.id ? { ...item, stock: editingStock } : item)))
-      await fetchInventory()
-      setEditingItem(null)
-      setError(null)
+      });
+
+      await fetchInventory();
+      setEditingItem(null);
+      setError(null);
     } catch (error) {
-      console.error("Failed to update item:", error)
-      setError("Failed to update item")
+      console.error("Failed to update item:", error);
+      setError("Failed to update item");
     }
-  }
+  };
 
   const handleEditCancel = () => {
-    setEditingItem(null)
-    setEditingStock(0)
-  }
+    setEditingItem(null);
+    setEditingStock(0);
+    setEditingImei("");
+    setEditingPrice(0);
+    setEditingBusinessPrice(0);
+    setEditingArticle(""); // Resetea el artículo
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -344,7 +373,7 @@ const Inventory: React.FC = () => {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-4 py-2 text-left">Producto</th>
-              <th className="px-4 py-2 text-left">Categoria</th>
+              <th className="px-4 py-2 text-left">Categoría</th>
               <th className="px-4 py-2 text-left">IMEI</th>
               <th className="px-4 py-2 text-left">Precio del cliente</th>
               <th className="px-4 py-2 text-left">Precio del vendedor</th>
@@ -356,23 +385,93 @@ const Inventory: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-4">
-                  Loading...
-                </td>
+                <td colSpan={9} className="text-center py-4">Loading...</td>
               </tr>
             ) : (
               (filteredInventory.length > 0 ? filteredInventory : inventory).map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-2">{item.products.article}</td>
-                  <td className="px-4 py-2">{item.products.categories.name}</td>
-                  <td className="px-4 py-2">{item.imei}</td>
+
+                  {/* Columna Producto */}
                   <td className="px-4 py-2">
-                    ${item.products.price != null ? item.products.price.toFixed(2) : "0.00"}
-                  </td>
-                  <td className="px-4 py-2">
-                    ${item.products.busines_price != null ? item.products.busines_price.toFixed(2) : "0.00"}
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="text"
+                        value={editingArticle}
+                        onChange={(e) => setEditingArticle(e.target.value)}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      item.products.article
+                    )}
                   </td>
 
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <select
+                        value={editingItem.category_id || ""}
+                        onChange={(e) =>
+                          setEditingItem((prev) => ({
+                            ...prev!,
+                            category_id: Number(e.target.value), // Guardar el nuevo ID seleccionado
+                          }))
+                        }
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      >
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      item.products.categories.name // Muestra el nombre de la categoría en vista normal
+                    )}
+                  </td>
+
+
+                  {/* Columna IMEI */}
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="text"
+                        value={editingImei}
+                        onChange={(e) => setEditingImei(e.target.value)}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      item.imei
+                    )}
+                  </td>
+
+                  {/* Precio del Cliente */}
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="number"
+                        value={editingPrice}
+                        onChange={(e) => setEditingPrice(Number(e.target.value))}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      `$${item.products.price.toFixed(2)}`
+                    )}
+                  </td>
+
+                  {/* Precio del Vendedor */}
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="number"
+                        value={editingBusinessPrice}
+                        onChange={(e) => setEditingBusinessPrice(Number(e.target.value))}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      `$${item.products.busines_price ? item.products.busines_price.toFixed(2) : "0.00"}`
+                    )}
+                  </td>
+
+                  {/* Stock */}
                   <td className="px-4 py-2">
                     {editingItem?.id === item.id ? (
                       <input
@@ -385,6 +484,7 @@ const Inventory: React.FC = () => {
                       item.stock
                     )}
                   </td>
+
                   <td className="px-4 py-2">
                     <span>{item.store.name}</span>
 
@@ -415,6 +515,7 @@ const Inventory: React.FC = () => {
                     )}
                   </td>
 
+                  {/* Botones de Acción */}
                   <td className="px-4 py-2 flex gap-2">
                     {editingItem?.id === item.id ? (
                       <>
@@ -453,6 +554,7 @@ const Inventory: React.FC = () => {
             )}
           </tbody>
         </table>
+
       </div>
     </div>
   )

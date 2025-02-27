@@ -307,4 +307,4 @@ export const InventoryController = {
             res.status(400).json({ message: error.message });
         }
     }
-}
+}   
