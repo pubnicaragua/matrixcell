@@ -18,6 +18,15 @@ const steps = [
   { id: "sign-contract", title: "Firmar Contrato" },
 ]
 
+interface PaymentPlanData {
+  product_id: number
+  months: number
+  weekly_payment: number
+  monthly_payment: number
+  total_cost: number
+  monthlyPayment: number
+}
+
 const QuoteClientPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("create-quote")
   const [currentStep, setCurrentStep] = useState(0)
@@ -27,22 +36,22 @@ const QuoteClientPage: React.FC = () => {
     marca: string
     modelo: string
   } | null>(null)
-  const [paymentPlan, setPaymentPlan] = useState<{ id: number; monthlyPayment: number } | null>(null)
+  const [paymentPlanData, setPaymentPlanData] = useState<PaymentPlanData | null>(null)
 
   const handleDeviceSelect = (device: { id: number; price: number; marca: string; modelo: string }) => {
     setSelectedDevice(device)
     setCurrentStep(1)
   }
 
-  const handleSavePlan = (plan: { id: number; monthlyPayment: number }) => {
-    setPaymentPlan(plan)
+  const handleSavePlan = (plan: PaymentPlanData) => {
+    setPaymentPlanData(plan)
     setCurrentStep(2)
   }
 
   const handleContractSigned = () => {
     setCurrentStep(0)
     setSelectedDevice(null)
-    setPaymentPlan(null)
+    setPaymentPlanData(null)
     setActiveTab("contract-list")
   }
 
@@ -54,7 +63,7 @@ const QuoteClientPage: React.FC = () => {
         return (
           selectedDevice && (
             <PaymentPlan
-              deviceId={selectedDevice.id}
+              productId={selectedDevice.id}
               price={selectedDevice.price}
               marca={selectedDevice.marca}
               modelo={selectedDevice.modelo}
@@ -64,12 +73,11 @@ const QuoteClientPage: React.FC = () => {
         )
       case 2:
         return (
-          paymentPlan &&
+          paymentPlanData &&
           selectedDevice && (
-            //actualizamos el componente SignContract para que reciba la marca y modelo del dispositivo
             <SignContract
-              deviceId={selectedDevice.id}
-              monthlyPayment={paymentPlan.monthlyPayment}
+              productId={selectedDevice.id}
+              paymentPlanData={paymentPlanData}
               onContractSigned={handleContractSigned}
               marca={selectedDevice.marca}
               modelo={selectedDevice.modelo}
@@ -100,8 +108,9 @@ const QuoteClientPage: React.FC = () => {
                   {steps.map((step, index) => (
                     <li key={step.id} className="flex w-full items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full lg:h-12 lg:w-12 shrink-0 ${index <= currentStep ? "bg-blue-100" : "bg-gray-100"
-                          }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full lg:h-12 lg:w-12 shrink-0 ${
+                          index <= currentStep ? "bg-blue-100" : "bg-gray-100"
+                        }`}
                       >
                         {index < currentStep ? (
                           <Check className="w-5 h-5 text-blue-600" />
@@ -139,7 +148,7 @@ const QuoteClientPage: React.FC = () => {
                   disabled={
                     currentStep === steps.length - 1 ||
                     (currentStep === 0 && !selectedDevice) ||
-                    (currentStep === 1 && !paymentPlan)
+                    (currentStep === 1 && !paymentPlanData)
                   }
                 >
                   {currentStep === steps.length - 1 ? "Finalizar" : "Siguiente"}

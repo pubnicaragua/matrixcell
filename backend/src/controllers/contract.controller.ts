@@ -12,7 +12,7 @@ export const ContractController = {
         try {
             // Obtener los datos directamente del cuerpo de la solicitud
             const {
-                device_id,
+                product_id,
                 payment_plan_id,
                 down_payment,
                 next_payment_date,
@@ -29,7 +29,7 @@ export const ContractController = {
             const { data: contract, error } = await supabase
                 .from('contracts')
                 .insert({
-                    device_id,
+                    product_id,
                     payment_plan_id,
                     down_payment,
                     next_payment_date,
@@ -80,9 +80,8 @@ export const ContractController = {
               payment_progress,
               status,
               nombre_cliente,
-              devices (
-                marca,
-                modelo,
+              products (
+                article,
                 price
               )
             `)

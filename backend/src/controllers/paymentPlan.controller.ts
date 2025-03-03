@@ -1,4 +1,4 @@
-import { Request,Response } from "express";
+import { Request, Response } from "express";
 import { PaymentPlan } from "../models/paymentPlan.model";
 import { BaseService } from "../services/base.service";
 import { validatePaymentPlan } from "../requests/paymentPlan.request";
@@ -6,10 +6,10 @@ import supabase from "../config/supabaseClient";
 const tableName = 'payment_plans'; // Nombre de la tabla en la base de datos
 
 export const PaymentPlanController = {
-async getAllPaymentPlans(req: Request, res: Response) {
+    async getAllPaymentPlans(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const paymentplans = await BaseService.getAll<PaymentPlan>(tableName,['id', 'device_id', 'months', 'weekly_payment', 'monthly_payment', 'total_cost', 'created_at'],where);
+            const paymentplans = await BaseService.getAll<PaymentPlan>(tableName, ['id', 'product_id', 'months', 'weekly_payment', 'monthly_payment', 'total_cost', 'created_at'], where);
             res.json(paymentplans);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -42,18 +42,18 @@ async getAllPaymentPlans(req: Request, res: Response) {
     async createPaymentPlan(req: Request, res: Response): Promise<void> {
         try {
             const {
-                device_id,
+                product_id,
                 months,
                 weekly_payment,
                 monthly_payment,
                 total_cost,
             } = req.body;
-    
+
             const { data: paymentPlan, error } = await supabase
                 .from("payment_plans")
                 .insert([
                     {
-                        device_id,
+                        product_id,
                         months,
                         weekly_payment,
                         monthly_payment,
@@ -62,13 +62,13 @@ async getAllPaymentPlans(req: Request, res: Response) {
                 ])
                 .select()
                 .single();
-    
+
             if (error) {
                 console.error("Error de Supabase:", error);
                 res.status(400).json({ message: error.message });
                 return;
             }
-    
+
             console.log("Plan de pago creado:", paymentPlan);
             res.status(201).json(paymentPlan);
         } catch (error: any) {
@@ -76,6 +76,6 @@ async getAllPaymentPlans(req: Request, res: Response) {
             res.status(500).json({ message: "Error interno del servidor" });
         }
     }
-    
-    
+
+
 }

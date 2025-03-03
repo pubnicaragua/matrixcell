@@ -5,7 +5,7 @@ import { PaymentPlan } from './paymentPlan.model';
 export class Contract {
     id?: number;
     created_at: string;
-    device_id: number;
+    product_id: number;
     payment_plan_id: number;
     down_payment: number;
     next_payment_amount: number;
@@ -19,7 +19,7 @@ export class Contract {
     paymentPlan?: PaymentPlan; // Asociar con plan de pago
 
     constructor() {
-        this.device_id = 0;
+        this.product_id = 0;
         this.payment_plan_id = 0;
         this.down_payment = 0;
         this.next_payment_date = '';

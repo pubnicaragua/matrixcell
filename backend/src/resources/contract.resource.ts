@@ -5,7 +5,7 @@ export const ContractResource = {
         return {
             id: contract.id,
             created_at: contract.created_at,
-            device_id: contract.device_id,
+            product_id: contract.product_id,
             payment_plan_id: contract.payment_plan_id,
             down_payment: contract.down_payment,
             next_payment_date: contract.next_payment_date,

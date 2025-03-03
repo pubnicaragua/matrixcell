@@ -2,7 +2,6 @@
 
 import type React from "react"
 import { useState } from "react"
-import axios from "../../axiosConfig"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../components/ui/card"
 import { Button } from "../../components/ui/button"
 import { Calendar, DollarSign, Clock, CreditCard } from "lucide-react"
@@ -11,14 +10,21 @@ import { Input } from "../../components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 
 interface PaymentPlanProps {
-  deviceId: number
+  productId: number
   price: number
   marca: string
   modelo: string
-  onSavePlan: (plan: { id: number; monthlyPayment: number }) => void
+  onSavePlan: (plan: {
+    product_id: number
+    months: number
+    weekly_payment: number
+    monthly_payment: number
+    total_cost: number
+    monthlyPayment: number
+  }) => void
 }
 
-const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, modelo, onSavePlan }) => {
+const PaymentPlan: React.FC<PaymentPlanProps> = ({ productId, price, marca, modelo, onSavePlan }) => {
   const [selectedMonths, setSelectedMonths] = useState<number | null>(null)
   const [paymentDetails, setPaymentDetails] = useState({
     weekly: 200,
@@ -40,29 +46,21 @@ const PaymentPlan: React.FC<PaymentPlanProps> = ({ deviceId, price, marca, model
     setSelectedMonths(months)
   }
 
-  const savePaymentPlan = async () => {
+  const savePaymentPlan = () => {
     if (!selectedMonths) {
       alert("Seleccione un plazo de meses antes de guardar el plan.")
       return
     }
 
-    try {
-      const response = await axios.post("/payment-plans", {
-        device_id: deviceId,
-        months: selectedMonths,
-        weekly_payment: paymentDetails.weekly,
-        monthly_payment: paymentDetails.monthly,
-        total_cost: paymentDetails.total,
-      })
-
-      alert("Plan de financiamiento guardado exitosamente.")
-      onSavePlan({
-        id: response.data.id,
-        monthlyPayment: paymentDetails.monthly,
-      })
-    } catch (error) {
-      console.error("Error al guardar el plan de financiamiento:", error)
-    }
+    // En lugar de guardar en la base de datos, solo pasamos los datos al componente padre
+    onSavePlan({
+      product_id: productId,
+      months: selectedMonths,
+      weekly_payment: paymentDetails.weekly,
+      monthly_payment: paymentDetails.monthly,
+      total_cost: paymentDetails.total,
+      monthlyPayment: paymentDetails.monthly, // Para mantener compatibilidad con el código existente
+    })
   }
 
   const planOptions = [

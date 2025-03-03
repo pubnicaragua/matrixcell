@@ -5,9 +5,9 @@ import type { UserOptions } from "jspdf-autotable"
 interface Contract {
   id: number
   nombre_cliente: string | null
-  devices: {
-    marca: string
-    modelo: string
+  products: {
+    article: string
+    price: number
   }
   payment_plans: {
     total_cost: number | null
@@ -38,7 +38,7 @@ const PDFVoucher = {
     // Add logo (replace with your actual logo)
     const logo = "/assets/logo.jpg"
     doc.addImage(logo, "JPEG", 10, 10, 30, 30)
-    
+
 
     // Title
     doc.setFontSize(28)
@@ -61,7 +61,7 @@ const PDFVoucher = {
 
     const data = [
       ["Cliente", contract.nombre_cliente || "No asignado"],
-      ["Dispositivo", `${contract.devices.marca} ${contract.devices.modelo}`],
+      ["Dispositivo", `${contract.products.article} ${contract.products.price}`],
       ["Monto total", `$${totalCost.toFixed(2)}`],
       ["Pago mensual", `$${contract.payment_plans.monthly_payment?.toFixed(2) || "N/A"}`],
       ["Monto pagado", `$${amountPaid.toFixed(2)}`],

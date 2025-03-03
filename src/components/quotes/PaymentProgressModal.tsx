@@ -1,8 +1,8 @@
-import React from 'react'
+import type React from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog"
 import { Progress } from "../../components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { CalendarIcon, DollarSignIcon } from 'lucide-react'
+import { CalendarIcon, DollarSignIcon } from "lucide-react"
 
 interface PaymentProgressModalProps {
   isOpen: boolean
@@ -12,9 +12,9 @@ interface PaymentProgressModalProps {
     payment_progress: number | null
     next_payment_amount: number | null
     next_payment_date: string | null
-    devices: {
-      marca: string
-      modelo: string
+    products: {
+      article: string
+      price: number
     }
     payment_plans: {
       total_cost: number | null
@@ -23,13 +23,13 @@ interface PaymentProgressModalProps {
 }
 
 const PaymentProgressModal: React.FC<PaymentProgressModalProps> = ({ isOpen, onClose, contract }) => {
-  const formattedNextPaymentDate = contract.next_payment_date 
-    ? new Date(contract.next_payment_date).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    : 'No disponible'
+  const formattedNextPaymentDate = contract.next_payment_date
+    ? new Date(contract.next_payment_date).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+    : "No disponible"
 
   const paymentProgress = contract.payment_progress ?? 0
   const totalCost = contract.payment_plans.total_cost ?? 0
@@ -42,7 +42,7 @@ const PaymentProgressModal: React.FC<PaymentProgressModalProps> = ({ isOpen, onC
         <DialogHeader>
           <DialogTitle>Progreso de Pago</DialogTitle>
           <DialogDescription>
-            {contract.devices.marca} {contract.devices.modelo} - Contrato #{contract.id}
+            {contract.products.article} - Contrato #{contract.id}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -73,7 +73,7 @@ const PaymentProgressModal: React.FC<PaymentProgressModalProps> = ({ isOpen, onC
               </div>
               <div className="mt-2 flex items-center space-x-2">
                 <DollarSignIcon className="h-4 w-4 text-muted-foreground" />
-                <span>${contract.next_payment_amount?.toFixed(2) ?? 'No disponible'}</span>
+                <span>${contract.next_payment_amount?.toFixed(2) ?? "No disponible"}</span>
               </div>
             </CardContent>
           </Card>
@@ -84,3 +84,4 @@ const PaymentProgressModal: React.FC<PaymentProgressModalProps> = ({ isOpen, onC
 }
 
 export default PaymentProgressModal
+

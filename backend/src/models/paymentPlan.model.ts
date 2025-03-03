@@ -1,6 +1,6 @@
 export class PaymentPlan{
     id?: number|null;
-    device_id:number|null;
+    product_id:number|null;
     months:number|null;
     weekly_payment:number|null;
     monthly_payment:number|null;
@@ -8,7 +8,7 @@ export class PaymentPlan{
     created_at:Date|string|null;
     
     constructor(){
-        this.device_id = null;
+        this.product_id = null;
         this.months = null;
         this.weekly_payment = null;
         this.monthly_payment = null;

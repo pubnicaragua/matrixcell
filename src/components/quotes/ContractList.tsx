@@ -8,15 +8,13 @@ import { Button } from "../../components/ui/button"
 import { Loader2, Eye, FileText } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Badge } from "../../components/ui/badge"
-import * as XLSX from "xlsx"
 import ContactActions from "./ContractActions"
-import { Progress } from "../../components/ui/progress"
 import PaymentProgressModal from "./PaymentProgressModal"
 import PDFVoucher from "./PDFVoucher"
 
 interface Contract {
   id: number
-  device_id: number
+  product_id: number
   payment_plan_id: number
   down_payment: number | null
   next_payment_amount: number | null
@@ -24,9 +22,8 @@ interface Contract {
   payment_progress: number | null
   status: string | null
   nombre_cliente: string | null
-  devices: {
-    marca: string
-    modelo: string
+  products: {
+    article: string
     price: number
   }
   payment_plans: {
@@ -37,6 +34,11 @@ interface Contract {
 }
 
 const generatePDF = (contract: Contract) => {
+  // Asegurarse de que contract.products existe antes de generar el PDF
+  if (!contract.products) {
+    console.error("No se puede generar el PDF: datos de producto no disponibles")
+    return
+  }
   PDFVoucher.generate(contract)
 }
 
@@ -105,7 +107,7 @@ const ContractList: React.FC = () => {
                 <TableHead>Pago Inicial</TableHead>
                 <TableHead>Pago Semanal</TableHead>
                 <TableHead>Pago Mensual</TableHead>
-                <TableHead>Costo Total (+12%)</TableHead>
+                <TableHead>Costo Total</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
@@ -113,7 +115,6 @@ const ContractList: React.FC = () => {
             <TableBody>
               {contracts.map((contract) => (
                 <TableRow key={contract.id}>
-                  {/* Nueva columna para mostrar el cliente */}
                   <TableCell>
                     {contract.nombre_cliente ? (
                       <span>{contract.nombre_cliente}</span>
@@ -124,8 +125,10 @@ const ContractList: React.FC = () => {
 
                   <TableCell>
                     <div>
-                      <div className="font-medium">{contract.devices.marca}</div>
-                      <div className="text-sm text-muted-foreground">{contract.devices.modelo}</div>
+                      <div className="font-medium">{contract.products?.article || "No disponible"}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ${contract.products?.price?.toFixed(2) || "0.00"}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>${contract.down_payment?.toFixed(2) || "N/A"}</TableCell>
