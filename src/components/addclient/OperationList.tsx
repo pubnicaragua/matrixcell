@@ -64,7 +64,7 @@ const OperationList: React.FC<OperationListProps> = ({
   const filteredOperations = useMemo(() => {
     return operations
       .filter((operation) => {
-        const client = clients.find((c) => c.id === operation.client_id)
+        const client = activeClients.find((c) => c.id === operation.client_id)
         if (!client) return false // Excluir operaciones de clientes eliminados
 
         // ✅ Si el usuario es admin, ve todas las operaciones
@@ -78,7 +78,7 @@ const OperationList: React.FC<OperationListProps> = ({
         const clientName = clients.find((c) => c.id === operation.client_id)?.name?.toLowerCase() || ""
         return operationNumber.includes(searchTerm.toLowerCase()) || clientName.includes(searchTerm.toLowerCase())
       })
-  }, [operations, clients, userRole, userStore, searchTerm])
+  }, [operations, activeClients, clients, userRole, userStore, searchTerm])
 
   const createInvoice = async (operation: Operation) => {
     try {
