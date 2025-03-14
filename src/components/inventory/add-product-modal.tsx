@@ -28,21 +28,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
     const [stock, setStock] = useState("");
     const [selectedStore, setSelectedStore] = useState<number | null>(userStore);
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-    const [models, setModels] = useState<{ id: number; name: string }[]>([]);
+    const [modelName, setModelName] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
-
-    useEffect(() => {
-        fetchModels();
-    }, []);
-
-    const fetchModels = async () => {
-        try {
-            const response = await api.get("products/models"); // Nueva ruta para obtener modelos
-            setModels(response.data);
-        } catch (error) {
-            console.error("Error fetching models:", error);
-        }
-    };
 
 
     useEffect(() => {
@@ -75,7 +62,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
             await api.post("/inventories", {
                 article: productName,
                 price: Number(price),
-                model_id: Number(selectedModel),
+                name: modelName,
                 category_id: Number(category),
                 stock: Number(stock),
                 store_id: userRole === 1 ? selectedStore : userStore,
@@ -95,6 +82,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
         setCategory("");
         setPrice("");
         setStock("");
+        setModelName("");
         setSelectedStore(userStore);
     };
 
@@ -133,23 +121,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
 
                         <div>
                             <Label htmlFor="model">Modelo</Label>
-                            <Select value={selectedModel || ""} onValueChange={setSelectedModel}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona un modelo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {models.length === 0 ? (
-                                        <SelectItem disabled value="null">No hay modelos disponibles</SelectItem>
-                                    ) : (
-                                        models.map((model) => (
-                                            <SelectItem key={model.id} value={model.id.toString()}>
-                                                {model.name}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
 
+                            <Input id="modelName" value={modelName} onChange={(e) => setModelName(e.target.value)} required />
                         </div>
 
                         <div>

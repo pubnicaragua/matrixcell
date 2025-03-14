@@ -38,6 +38,7 @@ const Inventory: React.FC = () => {
   const [editingPrice, setEditingPrice] = useState<number>(0);
   const [editingBusinessPrice, setEditingBusinessPrice] = useState<number>(0);
   const [editingArticle, setEditingArticle] = useState<string>("");
+  const [editingModel, setEditingModel] = useState("")
 
 
   useEffect(() => {
@@ -375,8 +376,9 @@ const Inventory: React.FC = () => {
               <th className="px-4 py-2 text-left">Producto</th>
               <th className="px-4 py-2 text-left">Categoría</th>
               <th className="px-4 py-2 text-left">IMEI</th>
-              <th className="px-4 py-2 text-left">Precio del cliente</th>
-              <th className="px-4 py-2 text-left">Precio del vendedor</th>
+              <th className="px-4 py-2 text-left">Modelo</th>
+              <th className="px-4 py-2 text-left">Precio cliente</th>
+              <th className="px-4 py-2 text-left">Precio vendedor</th>
               <th className="px-4 py-2 text-left">Stock</th>
               <th className="px-4 py-2 text-left">Tienda</th>
               <th className="px-4 py-2 text-left">Acciones</th>
@@ -440,6 +442,20 @@ const Inventory: React.FC = () => {
                       />
                     ) : (
                       item.imei
+                    )}
+                  </td>
+
+                  {/* Columna Modelo */}
+                  <td className="px-4 py-2">
+                    {editingItem?.id === item.id ? (
+                      <input
+                        type="text"
+                        value={editingModel || item.products.models?.name || ""}
+                        onChange={(e) => setEditingModel(e.target.value)}
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                      />
+                    ) : (
+                      item.products.models?.name || "N/A"
                     )}
                   </td>
 
