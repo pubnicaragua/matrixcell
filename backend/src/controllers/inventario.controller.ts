@@ -4,6 +4,7 @@ import { BaseService } from "../services/base.service";
 import { MovimientoInventario } from "../models/movimientoInventario.model";
 import { Inventory } from "../models/inventory.model";
 import { error } from "console";
+import { date } from "joi";
 
 const tableName = 'inventory'
 export const InventoryController = {
@@ -19,12 +20,26 @@ export const InventoryController = {
     },
     async createInventoryWithProduct(req: Request, res: Response): Promise<void> {
         try {
-            const { article, price, model_id, category_id, stock, store_id } = req.body;
+            const { article, price, name, category_id, stock, store_id } = req.body;
 
             // if (!article || !price || !model_id || !category_id || !stock || !store_id) {
             //     const response = res.status(400).json({ message: "Todos los campos son obligatorios." });
             //     console.log(response);
             // }
+
+            const { data: modelData, error: modelError } = await supabase
+                .from("models")
+                .insert([{ name }])
+                .select()
+                .single();
+
+            if (modelError) {
+                throw modelError
+            }
+
+            console.log('Modelo: ', modelData)
+
+            const model_id = modelData.id
 
             // 1️⃣ Insertar el producto en la tabla `products`
             const { data: product, error: productError } = await supabase
@@ -51,7 +66,8 @@ export const InventoryController = {
             res.status(201).json({
                 message: "Producto e inventario creados exitosamente.",
                 product,
-                inventory
+                inventory,
+                modelData
             });
         } catch (error: any) {
             console.error("Error al crear producto e inventario:", error);
