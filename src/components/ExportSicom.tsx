@@ -1,13 +1,15 @@
-import React, { useState } from "react";
-import api from "../axiosConfig";
-import * as XLSX from "xlsx";
-import Loader from "./ui/loader";
+"use client"
+
+import type React from "react"
+import { useState } from "react"
+import api from "../axiosConfig"
+import * as XLSX from "xlsx"
+import Loader from "./ui/loader"
 
 const ExportEquifax: React.FC = () => {
-  const [data, setData] = useState<any[]>([]);
-  const [paymentData, setPaymentData] = useState<any[]>([]);
-  const [fileName, setFileName] = useState("macro_sicom_export.xlsx");
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<any[]>([])
+  const [fileName, setFileName] = useState("macro_sicom_export.xlsx")
+  const [isLoading, setIsLoading] = useState(false)
   const columns = [
     "COD_TIPO_ID",
     "CODIGO_ID_SUJETO",
@@ -31,190 +33,166 @@ const ExportEquifax: React.FC = () => {
     //"PLAZO_EN_MESES",
     "VALOR_MENSUAL",
     "FRECUENCIA_PAGO",
-  ];
+  ]
 
   const generateUniqueCode = (cedula: string): string => {
-    const lastFiveDigits = cedula.slice(-5);
+    const lastFiveDigits = cedula.slice(-5)
     const randomLetters = Array.from({ length: 3 }, () =>
-      String.fromCharCode(65 + Math.floor(Math.random() * 26))
-    ).join("");
-    return `${lastFiveDigits}${randomLetters}`;
-  };
+      String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+    ).join("")
+    return `${lastFiveDigits}${randomLetters}`
+  }
 
   const calculateFields = (client: any) => {
-    const paymentInfo = paymentData.find(
-      (item: any) =>
-        String(item["CODIGO_ID_SUJETO"]).trim() ===
-        String(client["CODIGO_ID_SUJETO"]).trim()
-    );
+    const valOperacion = Number.parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0
+    const valAVencer = Number.parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion
 
-    const valOperacion = parseFloat(client["VAL_OPERACION"]?.replace(/,/g, "")) || 0;
-    const valAVencer = parseFloat(client["VAL_A_VENCER"]?.replace(/,/g, "")) || valOperacion;
+    // Valor vencido igual al valor a vencer si no existe
+    const valVencido = client["VAL_VENCIDO"] ? Number.parseFloat(client["VAL_VENCIDO"]?.replace(/,/g, "")) : valAVencer
 
-    let creditTerm = 0; // Plazo en meses
-    let paymentFrequency = "MENSUAL";
-
-    if (paymentInfo) {
-      const creditTermStr = paymentInfo["PLAZO DEL CREDITO"]?.toString().toUpperCase() || "";
-      if (creditTermStr.includes("MESES")) {
-        creditTerm = parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0;
-      } else if (creditTermStr.includes("SEMANAS")) {
-        creditTerm = Math.ceil((parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0) / 4);
-      }
+    let creditTerm = 0
+    const creditTermStr = client["PLAZO_EN_MESES"]?.toString().toUpperCase() || ""
+    if (creditTermStr) {
+      creditTerm = Number.parseInt(creditTermStr.replace(/\D/g, ""), 10) || 0
     }
 
-    const startDate = new Date(client["FECHA_CONCESION"]);
+    const paymentFrequency = "MENSUAL"
+
+    const startDate = new Date(client["FECHA_CONCESION"])
     if (isNaN(startDate.getTime())) {
       return {
         ...client,
-        FEC_CORTE_SALDO: "N/A",
+        FEC_CORTE_SALDO: getLastDayOfCurrentMonth(),
         FRECUENCIA_PAGO: "MENSUAL",
         FECHA_DE_VENCIMIENTO: "N/A",
         FECHA_SIG_VENCIMIENTO: "N/A",
-      };
+      }
     }
 
-    const firstDueDate = new Date(startDate);
-    firstDueDate.setMonth(firstDueDate.getMonth() + 1);
+    const firstDueDate = new Date(client["FECHA_DE_VENCIMIENTO"]) || new Date(startDate)
+    if (!isNaN(firstDueDate.getTime())) {
+      firstDueDate.setMonth(firstDueDate.getMonth() + 1)
+    } else {
+      firstDueDate.setMonth(startDate.getMonth() + 1)
+    }
 
-    const finalDueDate = new Date(startDate);
-    finalDueDate.setMonth(finalDueDate.getMonth() + creditTerm);
+    // Fecha de siguiente vencimiento = un mes después de la fecha de vencimiento
+    const nextDueDate = new Date(client["FECHA_DE_VENCIMIENTO"])
+    if (!isNaN(nextDueDate.getTime())) {
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1)
+    } else {
+      nextDueDate.setMonth(startDate.getMonth() + 2)
+    }
 
-    const today = new Date();
-    const daysOverdue =
-      today > finalDueDate
-        ? Math.floor((today.getTime() - finalDueDate.getTime()) / (1000 * 60 * 60 * 24))
-        : 0;
+    const today = new Date()
+    const dueDate = new Date(client["FECHA_DE_VENCIMIENTO"]) || firstDueDate
+    const daysOverdue = today > dueDate ? Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0
 
-    const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"]);
-    const valVencido = valOperacion - valAVencer;
+    const operationNumber = generateUniqueCode(client["CODIGO_ID_SUJETO"])
 
     function getLastDayOfCurrentMonth() {
-      const today = new Date(); // Fecha actual del sistema
-      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1); // Primer día del próximo mes
-      const lastDayOfMonth = new Date(nextMonth.getTime() - 1); // Último día del mes actual
-      return lastDayOfMonth.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+      const today = new Date()
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+      const lastDayOfMonth = new Date(nextMonth.getTime() - 1)
+      return lastDayOfMonth.toISOString().split("T")[0]
     }
 
-    const FEC_CORTE_SALDO = getLastDayOfCurrentMonth();
-    console.log("FEC_CORTE_SALDO:", FEC_CORTE_SALDO);
+    // Usar la fecha de corte del documento o el último día del mes actual
+    const cutoffDate = client["FEC_CORTE_SALDO"] || getLastDayOfCurrentMonth()
 
     return {
       ...client,
-      "NUMERO_DE_OPERACION": operationNumber,
+      NUMERO_DE_OPERACION: operationNumber,
       VAL_A_VENCER: valAVencer.toFixed(2),
       VAL_VENCIDO: valVencido.toFixed(2),
       NUM_DIAS_VENCIDOS: `${daysOverdue} días`,
-      FEC_CORTE_SALDO: getLastDayOfCurrentMonth(),
+      FEC_CORTE_SALDO: cutoffDate,
       FRECUENCIA_PAGO: paymentFrequency,
-      PLAZO_EN_MESES: ` ${creditTerm} meses`,
-      FECHA_DE_VENCIMIENTO: firstDueDate.toISOString().split("T")[0],
-      FECHA_SIG_VENCIMIENTO: finalDueDate.toISOString().split("T")[0],
-    };
-  };
-
-
+      PLAZO_EN_MESES: creditTerm ? ` ${creditTerm} meses` : client["PLAZO_EN_MESES"] || "",
+      FECHA_DE_VENCIMIENTO: client["FECHA_DE_VENCIMIENTO"] || firstDueDate.toISOString().split("T")[0],
+      FECHA_SIG_VENCIMIENTO: nextDueDate.toISOString().split("T")[0],
+    }
+  }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const file = event.target.files?.[0]
+    if (!file) return
 
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const binaryStr = e.target?.result as string;
-        const workbook = XLSX.read(binaryStr, { type: "binary" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+        const binaryStr = e.target?.result as string
+        const workbook = XLSX.read(binaryStr, { type: "binary" })
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false })
 
         const formattedData = jsonData.map((row: any) => {
-          const newRow: Record<string, any> = {};
+          const newRow: Record<string, any> = {}
           columns.forEach((col) => {
-            newRow[col] = row[col] || "";
-          });
-          return calculateFields(newRow);
-        });
+            newRow[col] = row[col] || ""
+          })
+          return calculateFields(newRow)
+        })
 
-        setData(formattedData);
+        setData(formattedData)
       } catch (error) {
-        alert(`Error al procesar el archivo: ${(error as Error).message}`);
+        alert(`Error al procesar el archivo: ${(error as Error).message}`)
       }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  const handlePaymentFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const binaryStr = e.target?.result as string;
-        const workbook = XLSX.read(binaryStr, { type: "binary" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        setPaymentData(jsonData);
-      } catch (error) {
-        alert(`Error al procesar el archivo de pagos: ${(error as Error).message}`);
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
+    }
+    reader.readAsBinaryString(file)
+  }
 
   const handleExport = () => {
     if (!data.length) {
-      alert("No hay datos para exportar.");
-      return;
+      alert("No hay datos para exportar.")
+      return
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
+    const worksheet = XLSX.utils.json_to_sheet(data)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados")
 
-    XLSX.writeFile(workbook, fileName);
-  };
+    XLSX.writeFile(workbook, fileName)
+  }
   const handleSend = async () => {
     if (!data.length) {
-      alert("No hay datos para enviar.");
-      return;
+      alert("No hay datos para enviar.")
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const worksheet = XLSX.utils.json_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados");
+      const worksheet = XLSX.utils.json_to_sheet(data)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Exportados")
 
-      const excelFile = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+      const excelFile = XLSX.write(workbook, { type: "array", bookType: "xlsx" })
 
-      const formData = new FormData();
-      formData.append("file", new Blob([excelFile], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), fileName);
+      const formData = new FormData()
+      formData.append(
+        "file",
+        new Blob([excelFile], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+        fileName,
+      )
 
       await api.post("/clients/insercion-consolidado", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-      });
+      })
 
-      alert("Archivo enviado exitosamente.");
+      alert("Archivo enviado exitosamente.")
     } catch (error) {
-      alert(`Error al enviar el archivo: ${error}`);
+      alert(`Error al enviar el archivo: ${error}`)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
   return (
     <div style={{ padding: "20px" }}>
       <h2>Gestión de Macro Sicom</h2>
 
       <div style={{ marginBottom: "20px" }}>
-        <label htmlFor="paymentFileUpload">Cargar archivo de valores y pagos mensuales:</label>
-        <input id="paymentFileUpload" type="file" accept=".xlsm, .xlsx" onChange={handlePaymentFileUpload} />
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <label htmlFor="fileUpload">Cargar archivo macro_sicom:</label>
+        <label htmlFor="fileUpload">Cargar archivo Excel:</label>
         <input id="fileUpload" type="file" accept=".xlsm, .xlsx" onChange={handleFileUpload} />
       </div>
 
@@ -230,66 +208,48 @@ const ExportEquifax: React.FC = () => {
               "Enviando..."
               <Loader />
             </>
-
-          ) : "Enviar Consolidado"}
+          ) : (
+            "Enviar Consolidado"
+          )}
         </button>
       </div>
 
       <div style={{ marginTop: "20px", padding: "10px", backgroundColor: "#f3f4f6", borderRadius: "5px" }}>
-        <h3 style={{ fontWeight: "bold", marginBottom: "10px" }}>¿Cómo cargar los archivos?</h3>
+        <h3 style={{ fontWeight: "bold", marginBottom: "10px" }}>¿Cómo cargar el archivo?</h3>
         <p>
-          Asegúrese de cargar los siguientes archivos en formato <strong>.xlsx</strong>:
+          Asegúrese de cargar el archivo en formato <strong>.xlsx</strong> con las siguientes columnas:
         </p>
         <ul style={{ listStyleType: "disc", paddingLeft: "20px" }}>
-          <li>
-            <strong>Formato_para_Equifax.xlsx</strong>: Este archivo debe contener las siguientes columnas:
-            <ul style={{ listStyleType: "circle", paddingLeft: "20px" }}>
-              {[
-                "COD_TIPO_ID",
-                "CODIGO_ID_SUJETO",
-                "NOMBRE_SUJETO",
-                "DIRECCION",
-                "CIUDAD",
-                "TELEFONO",
-                "FEC_CORTE_SALDO",
-                "TIPO_DEUDOR",
-                "FECHA_CONCESION",
-                "VAL_OPERACION",
-                "VAL_A_VENCER",
-                "VAL_VENCIDO",
-                "VA_DEM_JUDICIAL",
-                "VAL_CART_CASTIGADA",
-                "NUM_DIAS_VENCIDOS",
-                "FECHA_DE_VENCIMIENTO",
-                "DEUDA_REFINANCIADA",
-                "FECHA_SIG_VENCIMIENTO",
-                "PLAZO_EN_MESES",
-                "VALOR_MENSUAL",
-              ].map((col) => (
-                <li key={col}>{col}</li>
-              ))}
-            </ul>
-          </li>
-          <li>
-            <strong>Valores_y_Pagos_Mensuales.xlsx</strong>: Este archivo debe contener las siguientes columnas:
-            <ul style={{ listStyleType: "circle", paddingLeft: "20px" }}>
-              {[
-                "COD_TIPO_ID",
-                "CODIGO_ID_SUJETO",
-                "NOMBRE_SUJETO",
-                "VALOR A PAGAR",
-                "VALOR MENSUAL",
-                "PLAZO DEL CREDITO",
-              ].map((col) => (
-                <li key={col}>{col}</li>
-              ))}
-            </ul>
-          </li>
+          {[
+            "COD_TIPO_ID",
+            "CODIGO_ID_SUJETO",
+            "NOMBRE_SUJETO",
+            "DIRECCION",
+            "CIUDAD",
+            "TELEFONO",
+            "FEC_CORTE_SALDO",
+            "TIPO_DEUDOR",
+            "FECHA_CONCESION",
+            "VAL_OPERACION",
+            "VAL_A_VENCER",
+            "VAL_VENCIDO",
+            "VA_DEM_JUDICIAL",
+            "VAL_CART_CASTIGADA",
+            "NUM_DIAS_VENCIDOS",
+            "FECHA_DE_VENCIMIENTO",
+            "DEUDA_REFINANCIADA",
+            "FECHA_SIG_VENCIMIENTO",
+            "PLAZO_EN_MESES",
+            "VALOR_MENSUAL",
+          ].map((col) => (
+            <li key={col}>{col}</li>
+          ))}
         </ul>
-        <p>Ambos archivos son necesarios para procesar correctamente el reporte.</p>
+        <p>El sistema calculará automáticamente los campos faltantes y procesará el reporte.</p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ExportEquifax;
+export default ExportEquifax
+
