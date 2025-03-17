@@ -23,6 +23,7 @@ import statusRoutes from './routes/status.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import productRoutes from './routes/product.routes';
 import paymentPlanRoutes from './routes/paymentPlan.routes';
+import categoryRoutes from "./routes/category.routes"
 import contractRoutes from './routes/contract.routes';
 import { ClientController } from './controllers/client.controller';
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -112,6 +113,7 @@ app.use('/status', statusRoutes);
 app.use('/clients', clientRoutes);
 app.use('/inventories', inventoryRoutes);
 app.use('/products', productRoutes);
+app.use("/categories", categoryRoutes)
 
 // Ruta independiente para generar el informe
 app.post('/generate-report', sessionAuth, ClientController.generateEquifaxReport);

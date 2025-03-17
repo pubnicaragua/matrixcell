@@ -11,7 +11,7 @@ export const InventoryController = {
     async getAllInventory(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const inventarios = await BaseService.getAll<Inventory>(tableName, ['id', 'store_id', 'product_id', 'stock', 'created_at', 'products(id,article,price,busines_price,models(id,name),categories(id,name))', 'store(id,name)', 'imei'], where);
+            const inventarios = await BaseService.getAll<Inventory>(tableName, ['id', 'store_id', 'product_id', 'stock', 'imei', 'created_at', 'products(id,article,price,busines_price,models(id,name),categories(id,name))', 'store(id,name)', 'imei'], where);
             res.json(inventarios);
         } catch (error) {
             console.error(error);
@@ -20,7 +20,7 @@ export const InventoryController = {
     },
     async createInventoryWithProduct(req: Request, res: Response): Promise<void> {
         try {
-            const { article, price, name, category_id, stock, store_id } = req.body;
+            const { article, price, name, category_id, stock, store_id, imei } = req.body;
 
             // if (!article || !price || !model_id || !category_id || !stock || !store_id) {
             //     const response = res.status(400).json({ message: "Todos los campos son obligatorios." });
@@ -55,7 +55,7 @@ export const InventoryController = {
             // 2️⃣ Insertar en la tabla `inventory` con el `product_id` recién creado
             const { data: inventory, error: inventoryError } = await supabase
                 .from("inventory")
-                .insert([{ product_id: product.id, stock, store_id }])
+                .insert([{ product_id: product.id, stock, store_id, imei }])
                 .select()
                 .single();
 

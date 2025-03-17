@@ -6,7 +6,7 @@ import supabase from "../api/supabase"
 import api from "../axiosConfig"
 import SearchFilters from "../components/inventory/SearchFilters"
 import type { InventoryItem } from "../types"
-import AddProductModal from "../components/inventory/add-product-modal";
+import AddProductModal from "../components/inventory/add-product-modal"
 
 interface FileInfo {
   name: string
@@ -34,12 +34,11 @@ const Inventory: React.FC = () => {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
-  const [editingImei, setEditingImei] = useState<string>("");
-  const [editingPrice, setEditingPrice] = useState<number>(0);
-  const [editingBusinessPrice, setEditingBusinessPrice] = useState<number>(0);
-  const [editingArticle, setEditingArticle] = useState<string>("");
+  const [editingImei, setEditingImei] = useState<string>("")
+  const [editingPrice, setEditingPrice] = useState<number>(0)
+  const [editingBusinessPrice, setEditingBusinessPrice] = useState<number>(0)
+  const [editingArticle, setEditingArticle] = useState<string>("")
   const [editingModel, setEditingModel] = useState("")
-
 
   useEffect(() => {
     const perfil = localStorage.getItem("perfil")
@@ -59,6 +58,7 @@ const Inventory: React.FC = () => {
     if (userRole !== 0 && userStore !== null) {
       fetchFiles()
       fetchInventory()
+      fetchCategories() // Agregar esta línea
 
       if (userRole === 1) {
         fetchStores()
@@ -132,24 +132,34 @@ const Inventory: React.FC = () => {
     }
   }
 
+  // Agregar una nueva función fetchCategories después de la función fetchStores
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/categories")
+      setCategories(response.data)
+    } catch (error) {
+      setError("Error fetching categories")
+      console.error(error)
+    }
+  }
+
   const handleEditClick = (item: InventoryItem) => {
-    console.log("Datos del producto seleccionado:", item);
+    console.log("Datos del producto seleccionado:", item)
 
     setEditingItem({
       ...item,
       category_id: item.products.categories?.id ?? undefined, // 🔥 Usa `undefined` en vez de `null`
-    });
+    })
 
-    setEditingStock(item.stock);
-    setEditingImei(item.imei);
-    setEditingPrice(item.products.price);
-    setEditingBusinessPrice(item.products.busines_price);
-    setEditingArticle(item.products.article);
-  };
-
+    setEditingStock(item.stock)
+    setEditingImei(item.imei)
+    setEditingPrice(item.products.price)
+    setEditingBusinessPrice(item.products.busines_price)
+    setEditingArticle(item.products.article)
+  }
 
   const handleEditSubmit = async () => {
-    if (!editingItem) return;
+    if (!editingItem) return
 
     try {
       // Actualizar el producto
@@ -158,7 +168,7 @@ const Inventory: React.FC = () => {
         price: editingPrice,
         busines_price: editingBusinessPrice,
         category_id: editingItem.category_id, // 🔥 Ya no marcará error
-      });
+      })
 
       // Actualizar inventario
       await api.put(`/inventories/${editingItem.id}`, {
@@ -166,25 +176,25 @@ const Inventory: React.FC = () => {
         product_id: editingItem.product_id,
         imei: editingImei,
         store_id: editingItem.store_id,
-      });
+      })
 
-      await fetchInventory();
-      setEditingItem(null);
-      setError(null);
+      await fetchInventory()
+      setEditingItem(null)
+      setError(null)
     } catch (error) {
-      console.error("Failed to update item:", error);
-      setError("Failed to update item");
+      console.error("Failed to update item:", error)
+      setError("Failed to update item")
     }
-  };
+  }
 
   const handleEditCancel = () => {
-    setEditingItem(null);
-    setEditingStock(0);
-    setEditingImei("");
-    setEditingPrice(0);
-    setEditingBusinessPrice(0);
-    setEditingArticle(""); // Resetea el artículo
-  };
+    setEditingItem(null)
+    setEditingStock(0)
+    setEditingImei("")
+    setEditingPrice(0)
+    setEditingBusinessPrice(0)
+    setEditingArticle("") // Resetea el artículo
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -387,12 +397,13 @@ const Inventory: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-4">Loading...</td>
+                <td colSpan={9} className="text-center py-4">
+                  Loading...
+                </td>
               </tr>
             ) : (
               (filteredInventory.length > 0 ? filteredInventory : inventory).map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-
                   {/* Columna Producto */}
                   <td className="px-4 py-2">
                     {editingItem?.id === item.id ? (
@@ -429,7 +440,6 @@ const Inventory: React.FC = () => {
                       item.products.categories.name // Muestra el nombre de la categoría en vista normal
                     )}
                   </td>
-
 
                   {/* Columna IMEI */}
                   <td className="px-4 py-2">
@@ -570,10 +580,10 @@ const Inventory: React.FC = () => {
             )}
           </tbody>
         </table>
-
       </div>
     </div>
   )
 }
 
 export default Inventory
+

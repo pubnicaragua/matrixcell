@@ -1,61 +1,57 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Label } from "../ui/label";
-import api from "../../axiosConfig";
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
+import { Button } from "../ui/button"
+import { Input } from "../ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { Label } from "../ui/label"
+import api from "../../axiosConfig"
 
 interface Store {
-    id: number;
-    name: string;
+    id: number
+    name: string
 }
 
 interface AddProductModalProps {
-    userRole: number;
-    userStore: number | null;
-    stores: Store[];
-    onProductAdded: () => void;
+    userRole: number
+    userStore: number | null
+    stores: Store[]
+    onProductAdded: () => void
 }
 
 const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, stores, onProductAdded }) => {
-    const [open, setOpen] = useState(false);
-    const [productName, setProductName] = useState("");
-    const [category, setCategory] = useState("");
-    const [price, setPrice] = useState("");
-    const [stock, setStock] = useState("");
-    const [selectedStore, setSelectedStore] = useState<number | null>(userStore);
-    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-    const [modelName, setModelName] = useState("");
-    const [selectedModel, setSelectedModel] = useState("");
-
+    const [open, setOpen] = useState(false)
+    const [productName, setProductName] = useState("")
+    const [category, setCategory] = useState("")
+    const [price, setPrice] = useState("")
+    const [stock, setStock] = useState("")
+    const [selectedStore, setSelectedStore] = useState<number | null>(userStore)
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
+    const [modelName, setModelName] = useState("")
+    const [selectedModel, setSelectedModel] = useState("")
+    const [imei, setImei] = useState("")
 
     useEffect(() => {
-        fetchCategories();
-    }, []);
+        fetchCategories()
+    }, [])
 
     const fetchCategories = async () => {
         try {
-            const response = await api.get("/inventories");
-            const uniqueCategories = Array.from(
-                new Set(response.data.map((item: any) => item.products.categories.name))
-            ).map((name) => ({
-                id: response.data.find((item: any) => item.products.categories.name === name)?.products.categories.id ?? 0,
-                name: String(name),
-            }));
-            setCategories(uniqueCategories);
+            const response = await api.get("/categories")
+            setCategories(response.data)
         } catch (error) {
-            console.error("Error fetching categories:", error);
+            console.error("Error fetching categories:", error)
         }
-    };
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (!category) {
-            console.error("No se ha seleccionado ninguna categoría");
-            return;
+            console.error("No se ha seleccionado ninguna categoría")
+            return
         }
 
         try {
@@ -66,25 +62,26 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
                 category_id: Number(category),
                 stock: Number(stock),
                 store_id: userRole === 1 ? selectedStore : userStore,
-            });
+                imei: imei, // Agregar el IMEI
+            })
 
-
-            onProductAdded();
-            setOpen(false);
-            resetForm();
+            onProductAdded()
+            setOpen(false)
+            resetForm()
         } catch (error) {
-            console.error("Error adding product:", error);
+            console.error("Error adding product:", error)
         }
-    };
+    }
 
     const resetForm = () => {
-        setProductName("");
-        setCategory("");
-        setPrice("");
-        setStock("");
-        setModelName("");
-        setSelectedStore(userStore);
-    };
+        setProductName("")
+        setCategory("")
+        setPrice("")
+        setStock("")
+        setModelName("")
+        setSelectedStore(userStore)
+        setImei("") // Resetear el IMEI
+    }
 
     return (
         <>
@@ -107,7 +104,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.length === 0 ? (
-                                        <SelectItem disabled value="">No hay categorías</SelectItem>
+                                        <SelectItem disabled value="">
+                                            No hay categorías
+                                        </SelectItem>
                                     ) : (
                                         categories.map((cat) => (
                                             <SelectItem key={cat.id} value={cat.id.toString()}>
@@ -132,6 +131,10 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
                         <div>
                             <Label htmlFor="stock">Stock</Label>
                             <Input id="stock" type="number" value={stock} onChange={(e) => setStock(e.target.value)} required />
+                        </div>
+                        <div>
+                            <Label htmlFor="imei">IMEI</Label>
+                            <Input id="imei" value={imei} onChange={(e) => setImei(e.target.value)} placeholder="Opcional" />
                         </div>
                         {userRole === 1 && (
                             <div>
@@ -158,7 +161,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ userRole, userStore, 
                 </DialogContent>
             </Dialog>
         </>
-    );
-};
+    )
+}
 
-export default AddProductModal;
+export default AddProductModal
+
