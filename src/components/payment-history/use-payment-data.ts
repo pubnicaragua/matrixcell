@@ -87,6 +87,11 @@ export const usePaymentData = () => {
     }
   }
 
+  const getOperationData = (operationId: number): Operation | null => {
+    return operations.find(op => op.id === operationId) || null
+  }
+  
+
   const updatePayment = async (paymentData: any) => {
     try {
       const response = await axios.put(`/payments/${paymentData.id}`, paymentData)
@@ -114,6 +119,7 @@ export const usePaymentData = () => {
     getOperationNumber,
     handleDeletePayment,
     updatePayment,
+    getOperationData
   }
 }
 

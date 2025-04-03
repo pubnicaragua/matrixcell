@@ -17,11 +17,11 @@ export const ClientController = {
     async getAllClients(req: Request, res: Response) {
         try {
             const where = { ...req.query }; // Convertir los parámetros de consulta en filtros
-            const clients = await BaseService.getAll<Client>(tableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'debt_type', 'grant_date', 'deadline', 'email', 'created_at', 'deleted', 'store_id', 'store(name)'], where);
+            const clients = await BaseService.getAll<Client>(tableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'debt_type', 'grant_date', 'deadline', 'email', 'contract_number', 'created_at', 'deleted', 'store_id', 'store(name)'], where);
 
             console.log(clients)
             res.json(ClientResource.formatClients(clients));
-            
+
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
@@ -55,7 +55,7 @@ export const ClientController = {
             const { id } = req.params;
             const { userId } = req;
             const { data, error } = await supabase.from('operations').delete().eq('client_id', id);
-            const { data:dataDevices, error:errorDevices } = await supabase.from('devices').delete().eq('owner', id);
+            const { data: dataDevices, error: errorDevices } = await supabase.from('devices').delete().eq('owner', id);
             if (error) throw new Error(error.message);
             await BaseService.delete<Client>(tableName, id, userId);
             res.json({ message: 'Client eliminada correctamente' });

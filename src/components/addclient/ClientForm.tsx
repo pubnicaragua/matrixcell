@@ -34,6 +34,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [grantDate, setGrantDate] = useState(selectedClient?.grant_date || "")
   const [debtType, setDebtType] = useState(selectedClient?.debt_type || "")
   const [deadline, setDeadline] = useState(selectedClient?.deadline || 0)
+  const [contract_number, setContractNumber] = useState(selectedClient?.contract_number || '')
   const [selectedStore, setSelectedStore] = useState<number | null>(null)
   const [stores, setStores] = useState<Store[]>([])
   const [userRole, setUserRole] = useState<number>(0)
@@ -97,6 +98,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
     setDebtType("")
     setDeadline(0)
     setEmail("")
+    setContractNumber("")
     if (userRole === 1) {
       setSelectedStore(null)
     }
@@ -108,12 +110,6 @@ const ClientForm: React.FC<ClientFormProps> = ({
     if (!email) return true // Es opcional
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
-  }
-
-  const validatePhone = (phone: string) => {
-    if (!phone) return true // Es opcional
-    const phoneRegex = /^[0-9]{10}$/
-    return phoneRegex.test(phone)
   }
 
   const validateIdentityNumber = (number: string) => {
@@ -140,8 +136,8 @@ const ClientForm: React.FC<ClientFormProps> = ({
     }
 
     // Validar teléfono si se proporciona
-    if (phone && !validatePhone(phone)) {
-      newErrors.phone = "El teléfono debe tener 10 dígitos"
+    if (!phone) {
+      newErrors.phone = "El número de teléfono es requerido"
     }
 
     // Validar fecha de concesión
@@ -189,6 +185,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
       email,
       deleted: false,
       store_id: storeId, // Agregamos el store_id
+      contract_number
     }
 
     try {
@@ -349,6 +346,24 @@ const ClientForm: React.FC<ClientFormProps> = ({
             onChange={(e) => setIdentityType(e.target.value)}
             className="mt-1 p-2 w-full border rounded-lg"
           />
+        </div>
+
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Numero de contrato *
+          </label>
+          <input
+            id="contract_number"
+            value={contract_number}
+            onChange={(e) => {
+              setContractNumber(e.target.value)
+              if (errors.contract_number) {
+                setErrors((prev) => ({ ...prev, contract_number: "" }))
+              }
+            }}
+            className={`mt-1 p-2 w-full border rounded-lg ${errors.contract_number ? "border-red-500" : ""}`}
+          />
+          {errors.contract_number && <p className="text-red-500 text-xs mt-1">{errors.contract_number}</p>}
         </div>
 
         <div>

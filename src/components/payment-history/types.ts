@@ -21,6 +21,7 @@ export interface Operation {
   id: number
   operation_number: string
   client_id: number
+  amount_paid: number
 }
 
 export interface Store {

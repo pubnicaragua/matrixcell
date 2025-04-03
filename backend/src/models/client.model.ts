@@ -14,6 +14,7 @@ export class Client {
     email: string | null;
     deleted: boolean;
     store_id: number | null;
+    contract_number: string | null;
 
     constructor() {
         this.identity_number = null;
@@ -31,5 +32,6 @@ export class Client {
         this.id = null;
         this.deleted = false;
         this.store_id = null;
+        this.contract_number = null;
     }
 }

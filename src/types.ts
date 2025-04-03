@@ -30,6 +30,7 @@ export interface Client {
   store?: {
     name: string
   }
+  contract_number: string
 }
 
 export interface Store {

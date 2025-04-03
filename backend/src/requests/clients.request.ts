@@ -14,7 +14,8 @@ const clientSchema = Joi.object({
     debt_type: Joi.string().required(),
     operation_number: Joi.number().required(),
     status: Joi.string().required(),
-    category: Joi.string().required()
+    category: Joi.string().required(),
+    contract_number: Joi.string().required(),
 });
 
 export const validateClient = (client: Client) => {

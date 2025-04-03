@@ -26,6 +26,7 @@ const PaymentHistoryByStore: React.FC = () => {
     getOperationNumber,
     handleDeletePayment,
     updatePayment,
+    getOperationData
   } = usePaymentData()
 
   // Estado para filtros
@@ -97,8 +98,11 @@ const PaymentHistoryByStore: React.FC = () => {
       .filter((payment) => {
         // Filtrar por fecha de pago
         if (filters.paymentDate) {
-          const paymentDate = new Date(payment.payment_date).toISOString().split("T")[0]
-          return paymentDate === filters.paymentDate
+          // Obtener la fecha del pago sin considerar la zona horaria
+          const paymentDate = new Date(payment.payment_date)
+          const paymentDateStr = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, "0")}-${String(paymentDate.getDate()).padStart(2, "0")}`
+
+          return paymentDateStr === filters.paymentDate
         }
         return true
       })
@@ -199,6 +203,7 @@ const PaymentHistoryByStore: React.FC = () => {
         onEditClick={handleEditClick}
         onDeleteClick={handleDeletePayment}
         isDeleting={isDeleting}
+        getOperationData={getOperationData}
       />
 
       {/* Resumen de pagos */}

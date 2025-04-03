@@ -4,19 +4,20 @@ import type React from "react"
 
 import { format } from "date-fns"
 import { ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react"
-import type { Payment, SortConfig } from "./types"
+import type { Payment, SortConfig, Operation } from "./types";
 
 interface PaymentTableProps {
-  payments: Payment[]
-  sortConfig: SortConfig
-  onSortChange: (field: string) => void
-  getClientName: (clientId: number) => string
-  getStoreName: (storeId: number) => string
-  getOperationNumber: (operationId: number) => string
-  getClientStoreId: (clientId: number) => number | null
-  onEditClick: (payment: Payment) => void
-  onDeleteClick: (paymentId: number) => void
-  isDeleting: boolean
+  payments: Payment[];
+  sortConfig: SortConfig;
+  onSortChange: (field: string) => void;
+  getClientName: (clientId: number) => string;
+  getStoreName: (storeId: number) => string;
+  getOperationNumber: (operationId: number) => string;
+  getOperationData: (operationId: number) => Operation | null;
+  getClientStoreId: (clientId: number) => number | null;
+  onEditClick: (payment: Payment) => void;
+  onDeleteClick: (paymentId: number) => void;
+  isDeleting: boolean;
 }
 
 export const PaymentTable: React.FC<PaymentTableProps> = ({
@@ -26,6 +27,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
   getClientName,
   getStoreName,
   getOperationNumber,
+  getOperationData,
   getClientStoreId,
   onEditClick,
   onDeleteClick,
@@ -79,7 +81,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
               onClick={() => onSortChange("amount_paid")}
             >
               <div className="flex items-center">
-                Monto Pagado
+                Cuota pagada
                 {sortConfig.field === "amount_paid" &&
                   (sortConfig.direction === "asc" ? (
                     <ChevronUp className="w-4 h-4 ml-1" />
@@ -90,8 +92,22 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
             </th>
             <th className="py-2 px-4 border cursor-pointer hover:bg-gray-200" onClick={() => onSortChange("amount")}>
               <div className="flex items-center">
-                Total Pagado
+                Total pagado
                 {sortConfig.field === "amount" &&
+                  (sortConfig.direction === "asc" ? (
+                    <ChevronUp className="w-4 h-4 ml-1" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  ))}
+              </div>
+            </th>
+            <th
+              className="py-2 px-4 border cursor-pointer hover:bg-gray-200"
+              onClick={() => onSortChange("amount_paid")}
+            >
+              <div className="flex items-center">
+                Total pendiente
+                {sortConfig.field === "amount_paid" &&
                   (sortConfig.direction === "asc" ? (
                     <ChevronUp className="w-4 h-4 ml-1" />
                   ) : (
@@ -103,8 +119,11 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {payments.length > 0 ? (
-            payments.map((payment) => (
+          {payments.map((payment) => {
+            const operation = getOperationData(payment.operation_id)
+            const amountDue = operation?.amount_paid ?? null
+
+            return (
               <tr key={payment.id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border">{format(new Date(payment.payment_date), "dd/MM/yyyy")}</td>
                 <td className="py-2 px-4 border">{getClientName(payment.client_id)}</td>
@@ -113,6 +132,9 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                 <td className="py-2 px-4 border">{payment.receipt_number}</td>
                 <td className="py-2 px-4 border text-right">${payment.amount_paid}</td>
                 <td className="py-2 px-4 border text-right">${payment.amount}</td>
+                <td className="py-2 px-4 border text-right">
+                  {amountDue !== null ? `$${amountDue.toFixed(2)}` : "N/A"}
+                </td>
                 <td className="py-2 px-4 border">
                   <div className="flex space-x-2 justify-center">
                     <button
@@ -133,14 +155,9 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
                   </div>
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={8} className="py-4 text-center text-gray-500">
-                No se encontraron pagos con los filtros seleccionados
-              </td>
-            </tr>
-          )}
+            )
+          })}
+
         </tbody>
         <tfoot className="bg-gray-100 font-semibold">
           <tr>

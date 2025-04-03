@@ -8,9 +8,9 @@ import ClientForm from "../components/addclient/ClientForm"
 import OperationForm from "../components/addclient/OperationForm"
 import ClientsList from "../components/addclient/ClientList"
 import OperationsList from "../components/addclient/OperationList"
-import SendInvoiceForm from "../components/SendInvoiceForm"
 import ExportReport from "../components/addclient/ExportReport"
 import PaymentHistoryByStore from "../components/addclient/PaymentHistory"
+import EmailClientList from "../components/addclient/EmailClientList"
 
 const ClientsAndOperationsWithTabs: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([])
@@ -189,7 +189,7 @@ const ClientsAndOperationsWithTabs: React.FC = () => {
         <ExportReport clients={clients} operations={operations} stores={stores} />
       </div>
 
-      {activeTab === "send-invoice" && <SendInvoiceForm />}
+      {activeTab === "send-invoice" && <EmailClientList clients={clients} operations={operations} stores={stores} />}
 
       {activeTab === "add-client" && (
         <ClientForm
