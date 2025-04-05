@@ -5,6 +5,8 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import axios from "../../axiosConfig" // Importamos Axios
 import type { Client } from "../../types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { Label } from "../ui/label"
 
 interface ClientFormProps {
   clients: Client[]
@@ -33,13 +35,13 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [identityType, setIdentityType] = useState(selectedClient?.identity_type || "Cédula")
   const [grantDate, setGrantDate] = useState(selectedClient?.grant_date || "")
   const [debtType, setDebtType] = useState(selectedClient?.debt_type || "")
-  const [deadline, setDeadline] = useState(selectedClient?.deadline || 0)
-  const [contract_number, setContractNumber] = useState(selectedClient?.contract_number || '')
+  const [deadline, setDeadline] = useState(selectedClient?.deadline || 3)
+  const [frequency, setFrequency] = useState(selectedClient?.frequency || "Mensual") // Nuevo estado para frecuencia
+  const [contract_number, setContractNumber] = useState(selectedClient?.contract_number || "")
   const [selectedStore, setSelectedStore] = useState<number | null>(null)
   const [stores, setStores] = useState<Store[]>([])
   const [userRole, setUserRole] = useState<number>(0)
   const [userStore, setUserStore] = useState<number | null>(null)
-
 
   // Agregar estos estados para manejar errores después de los estados existentes
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
@@ -63,7 +65,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
     if (perfil) {
       const parsedPerfil = JSON.parse(perfil)
       setUserRole(parsedPerfil.rol_id || 0)
-      setUserStore(parsedPerfil.store_id || null)
+      setUserStore(parsedPerfil.store?.id || null)
 
       // Si no es admin, establecer la tienda automáticamente
       if (parsedPerfil.rol_id !== 1) {
@@ -182,10 +184,11 @@ const ClientForm: React.FC<ClientFormProps> = ({
       grant_date: grantDate,
       debt_type: debtType,
       deadline: deadline,
+      frequency: frequency, // Agregar el nuevo campo frequency
       email,
       deleted: false,
       store_id: storeId, // Agregamos el store_id
-      contract_number
+      contract_number,
     }
 
     try {
@@ -408,24 +411,44 @@ const ClientForm: React.FC<ClientFormProps> = ({
           <p className="text-xs text-gray-500 mt-1">Último día del mes actual</p>
         </div>
 
-        <div>
-          <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
+        <div className="">
+          <Label htmlFor="frequency" className="text-sm font-medium text-gray-700">
+            Frecuencia de Pago
+          </Label>
+          <Select value={frequency} onValueChange={(value) => setFrequency(value)}>
+            <SelectTrigger id="frequency" className="col-span-3">
+              <SelectValue placeholder="Seleccione frecuencia" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Semanal">Semanal</SelectItem>
+              <SelectItem value="Mensual">Mensual</SelectItem>
+              <SelectItem value="Quincenal">Quincenal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="">
+          <Label htmlFor="deadline"  className="text-sm font-medium text-gray-700">
             Plazo (Meses) *
-          </label>
-          <input
-            id="deadline"
-            type="number"
-            min="1"
-            value={deadline}
-            onChange={(e) => {
-              setDeadline(Number(e.target.value))
+          </Label>
+          <Select
+            value={deadline.toString()}
+            onValueChange={(value) => {
+              setDeadline(Number(value))
               if (errors.deadline) {
                 setErrors((prev) => ({ ...prev, deadline: "" }))
               }
             }}
-            className={`mt-1 p-2 w-full border rounded-lg ${errors.deadline ? "border-red-500" : ""}`}
-          />
-          {errors.deadline && <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>}
+          >
+            <SelectTrigger id="deadline" className="col-span-3">
+              <SelectValue placeholder="Seleccione plazo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 meses</SelectItem>
+              <SelectItem value="6">6 meses</SelectItem>
+              <SelectItem value="9">9 meses</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.deadline && <p className="text-red-500 text-xs mt-1 col-span-3 col-start-2">{errors.deadline}</p>}
         </div>
       </div>
 

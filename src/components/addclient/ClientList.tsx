@@ -121,11 +121,12 @@ const ClientsList: React.FC<ClientListProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <InfoItem label="Correo" value={client.email} />
+                <InfoItem label="Correo" value={client.email ? client.email : 'Correo no disponible'} />
                 <InfoItem label="Teléfono" value={client.phone} />
                 <InfoItem label="Número de Identificación" value={client.identity_number} />
                 <InfoItem label="Ciudad" value={client.city} />
                 <InfoItem label="Plazo" value={client.deadline ? `${client.deadline} meses` : "No hay plazo"} />
+                <InfoItem label="Frecuencia de Pago" value={client.frequency ? client.frequency : 'Frecuencia de pago no disponible'} />
                 <InfoItem label="Tienda" value={getStoreName(client.store_id)} />
               </div>
             </CardContent>

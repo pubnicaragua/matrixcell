@@ -16,6 +16,7 @@ const clientSchema = Joi.object({
     status: Joi.string().required(),
     category: Joi.string().required(),
     contract_number: Joi.string().required(),
+    frequency: Joi.string().required(),
 });
 
 export const validateClient = (client: Client) => {

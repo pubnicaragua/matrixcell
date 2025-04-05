@@ -24,6 +24,7 @@ export interface Client {
   grant_date: string //fecha de concesión
   debt_type: string //tipo de deudor
   deadline: number //plazo
+  frequency: string //frecuencia de pago (Mensual o Quincenal)
   email: string
   deleted: boolean
   store_id: number
@@ -32,7 +33,6 @@ export interface Client {
   }
   contract_number: string
 }
-
 export interface Store {
   id?: number,
   name: string

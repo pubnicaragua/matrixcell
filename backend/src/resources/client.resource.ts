@@ -18,6 +18,7 @@ export const ClientResource = {
             email: client.email,
             deleted: client.deleted,
             store_id: client.store_id,
+            frequency: client.frequency,
             contract_number: client.contract_number
         };
     },

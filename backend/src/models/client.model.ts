@@ -13,6 +13,7 @@ export class Client {
     deadline: number | null; // plazo
     email: string | null;
     deleted: boolean;
+    frequency: string | null; // frecuencia de pago
     store_id: number | null;
     contract_number: string | null;
 
@@ -30,6 +31,7 @@ export class Client {
         this.created_at = null;
         this.email = null;
         this.id = null;
+        this.frequency = null;
         this.deleted = false;
         this.store_id = null;
         this.contract_number = null;

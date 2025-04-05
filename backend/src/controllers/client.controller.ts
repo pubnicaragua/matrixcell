@@ -67,7 +67,7 @@ export const ClientController = {
         // Define el nombre de las tablas (asegúrate de que sean válidas)
         const clientsTableName = 'clients';
         const operationsTableName = 'operations';
-        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'deubt_type', 'created_at']);
+        const clients = await BaseService.getAll<Client>(clientsTableName, ['id', 'identity_number', 'identity_type', 'name', 'address', 'phone', 'city', 'due_date', 'deubt_type', 'frequency', 'created_at']);
         const operations = await BaseService.getAll<Operation>(operationsTableName, ['id', 'operation_number', 'operation_date', 'due_date', 'amount_due', 'amount_paid', 'days_overdue', 'status', 'judicial_action', 'created_at', 'updated_at']);
         // Procesar datos y generar archivo
         // Procesar datos y preparar información para el reporte
