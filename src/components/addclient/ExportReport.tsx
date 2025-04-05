@@ -68,6 +68,7 @@ const ExportReport: React.FC<ExportReportProps> = ({ clients, operations, stores
         DEUDA_REFINANCIADA: operation.refinanced_debt,
         FECHA_SIG_VENCIMIENTO: operation.prox_due_date,
         PLAZO_EN_MESES: client.deadline,
+        FRECUENCIA: client.frequency ? client.frequency : 'MENSUAL',
         NUMERO_DE_OPERACION: operation.operation_number,
         TIENDA: stores?.find((store) => store.id === client.store_id)?.name || "Desconocido",
       }))

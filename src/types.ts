@@ -57,6 +57,7 @@ export interface Operation {
     name: string
     phone: string
   }
+  frequency: string 
 }
 
 export interface Dataset {
